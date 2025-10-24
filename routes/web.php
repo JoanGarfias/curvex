@@ -2,19 +2,13 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use Laravel\Fortify\Features;
 use App\Http\Controllers\StatisticsController;
 
 Route::post('/calculate-statistics', [StatisticsController::class, 'calculate']);
 
+// Home page: render the Welcome page only
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canRegister' => Features::enabled(Features::registration()),
-    ]);
+    return Inertia::render('Welcome');
 })->name('home');
 
-Route::get('dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-require __DIR__.'/settings.php';
+// Dashboard and auth-related routes removed intentionally.

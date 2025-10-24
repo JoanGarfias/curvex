@@ -28,9 +28,8 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->configureActions();
-        $this->configureViews();
-        $this->configureRateLimiting();
+        // Authentication has been disabled per project request.
+        // The Fortify views and actions are intentionally not registered.
     }
 
     /**
