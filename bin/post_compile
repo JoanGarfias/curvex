@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-
-echo "-----> Running post_compile script"
-
-# Asegurar permisos en storage y bootstrap/cache
-chmod -R 755 storage bootstrap/cache
-
-echo "-----> Post compile script completed"
