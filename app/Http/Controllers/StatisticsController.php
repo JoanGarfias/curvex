@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StatisticRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -15,24 +16,33 @@ class StatisticsController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function calculate(Request $request): JsonResponse
+    public function calculate(StatisticRequest $request): JsonResponse
     {
         // 1. VALIDACIÓN (Equivalente a jTextArea1.getText().isBlank() y NumberFormatException)
-        $validator = Validator::make($request->all(), [
-            'numbers' => 'required|array|min:1', // Requerimos un array llamado 'numbers'
-            'numbers.*' => 'numeric',          // Cada item debe ser numérico
-        ]);
+        $data = $request->validated();
 
-        if ($validator->fails()) {
-            // Si la validación falla, devuelve un error JSON 422
-            // (Equivalente a "Error en la conversión!")
-            return response()->json(['errors' => $validator->errors()], 422);
+        if (isset($data['file'])) {
+            $numbers = [];
+            $path = $data['file']->getRealPath();
+            $file = fopen($path, 'r');
+            if ($file !== false) {
+                while (($line = fgetcsv($file)) !== false) {
+                    foreach ($line as $value) {
+                        $trimmed = trim($value);
+                        if (is_numeric($trimmed)) {
+                            $numbers[] = floatval($trimmed);
+                        }
+                    }
+                }
+                fclose($file);
+            }
+        } else {
+            $numbers = preg_split('/[\s,]+/', str_replace(["\r\n", "\r"], "\n", $data['values']));
+            $numbers = array_map('floatval', $numbers);
         }
 
         try {
-            // 2. OBTENER DATOS (Equivalente a obtenerLista y obtenerCantNumeros)
-            // Laravel ya convierte el JSON en un array de PHP.
-            $listaNumeros = $request->input('numbers');
+            $listaNumeros = $numbers;
 
             // 3. GUARDAR VARIABLES (Equivalente al bloque principal de tu 'try')
             
