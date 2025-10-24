@@ -21,6 +21,8 @@ class StatisticsController extends Controller
         // 1. VALIDACIÓN (Equivalente a jTextArea1.getText().isBlank() y NumberFormatException)
         $data = $request->validated();
 
+        // 2. OBTENER NÚMEROS (Equivalente a tu bloque 'try' inicial)
+
         if (isset($data['file'])) {
             $numbers = [];
             $path = $data['file']->getRealPath();
