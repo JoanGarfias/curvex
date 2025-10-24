@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
+use App\Http\Controllers\StatisticsController;
+
+Route::post('/calculate-statistics', [StatisticsController::class, 'calculate']);
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
