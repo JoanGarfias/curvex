@@ -6,6 +6,7 @@ use App\Http\Requests\StatisticRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 use Exception; // Para el try-catch general
 
 class StatisticsController extends Controller
@@ -184,19 +185,22 @@ class StatisticsController extends Controller
         return ($res / $denominador) - 3;
     }
 
-    private function obtenerPercentiles(array $lista, int $cant): array
+    private function obtenerPercentiles($lista,$cant): array
     {
-        $lista = sort($lista);
+        
         $n = count($lista);
+        sort($lista);
         $percentiles = array();
 
         $i = 1;
         while($i < $cant){
-            $dummy = (1/$cant) * $n;
+            $dummy = ($i/$cant) * $n;
             if($dummy % 2 == 0){
-                $percentiles = Arr::add($percentiles, "".$i, ($lista[$dummy]+$lista[$dummy+1])/2);
+                //Log::debug($cant." impar ".$i."  ".$dummy);
+                array_push($percentiles, ["".$i => ($lista[$dummy]+$lista[$dummy+1])/2]);
             }else{
-                $percentiles = Arr::add($percentiles, "".$i, $lista[$dummy]);
+                //Log::debug($cant." par ".$i."  ".$dummy);
+                array_push($percentiles, ["".$i => $lista[$dummy]]);
             }
             $i+=1;
         }
