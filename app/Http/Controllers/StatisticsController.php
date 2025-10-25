@@ -72,6 +72,10 @@ class StatisticsController extends Controller
             // double curtosis = obtenerCurtosis(mat,n,promedio,Math.sqrt(varianza))
             $curtosis = $this->obtenerCurtosis($listaNumeros, $n, $promedio, $desviacionEstandar);
 
+            $cuartiles = $this->obtenerPercentiles($listaNumeros, 4);
+            $deciles = $this->obtenerPercentiles($listaNumeros, 10);
+            $percentiles = $this->obtenerPercentiles($listaNumeros, 100);
+
 
             // 4. CREAR EL JSON DE RESPUESTA
             // (Equivalente a jTextArea2.setText(...))
@@ -85,6 +89,9 @@ class StatisticsController extends Controller
                 'variance' => $varianza, // Varianza poblacional
                 'standard_deviation' => $desviacionEstandar,
                 'kurtosis' => $curtosis, // Curtosis excesiva
+                'cuartiles' => $cuartiles,
+                'deciles' => $deciles,
+                'percentiles' => $percentiles,
             ];
 
             // 5. DEVOLVER RESPUESTA
@@ -175,6 +182,26 @@ class StatisticsController extends Controller
         
         // (res / denominador) - 3 es la "Curtosis Excesiva"
         return ($res / $denominador) - 3;
+    }
+
+    private function obtenerPercentiles(array $lista, int $cant): array
+    {
+        $lista = sort($lista);
+        $n = count($lista);
+        $percentiles = array();
+
+        $i = 1;
+        while($i < $cant){
+            $dummy = (1/$cant) * $n;
+            if($dummy % 2 == 0){
+                $percentiles = Arr::add($percentiles, "".$i, ($lista[$dummy]+$lista[$dummy+1])/2);
+            }else{
+                $percentiles = Arr::add($percentiles, "".$i, $lista[$dummy]);
+            }
+            $i+=1;
+        }
+        
+        return $percentiles;
     }
 }
 
