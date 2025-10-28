@@ -6,6 +6,7 @@ use App\Http\Requests\StatisticRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 use Exception; // Para el try-catch general
 
 class StatisticsController extends Controller
@@ -72,6 +73,10 @@ class StatisticsController extends Controller
             // double curtosis = obtenerCurtosis(mat,n,promedio,Math.sqrt(varianza))
             $curtosis = $this->obtenerCurtosis($listaNumeros, $n, $promedio, $desviacionEstandar);
 
+            $cuartiles = $this->obtenerPercentiles($listaNumeros, 4);
+            $deciles = $this->obtenerPercentiles($listaNumeros, 10);
+            $percentiles = $this->obtenerPercentiles($listaNumeros, 100);
+
 
             // 4. CREAR EL JSON DE RESPUESTA
             // (Equivalente a jTextArea2.setText(...))
@@ -85,6 +90,9 @@ class StatisticsController extends Controller
                 'variance' => $varianza, // Varianza poblacional
                 'standard_deviation' => $desviacionEstandar,
                 'kurtosis' => $curtosis, // Curtosis excesiva
+                'cuartiles' => $cuartiles,
+                'deciles' => $deciles,
+                'percentiles' => $percentiles,
             ];
 
             // 5. DEVOLVER RESPUESTA
@@ -175,6 +183,29 @@ class StatisticsController extends Controller
         
         // (res / denominador) - 3 es la "Curtosis Excesiva"
         return ($res / $denominador) - 3;
+    }
+
+    private function obtenerPercentiles($lista,$cant): array
+    {
+        
+        $n = count($lista);
+        sort($lista);
+        $percentiles = array();
+
+        $i = 1;
+        while($i < $cant){
+            $dummy = ($i/$cant) * $n;
+            if($dummy % 2 == 0){
+                //Log::debug($cant." impar ".$i."  ".$dummy);
+                array_push($percentiles, ["".$i => ($lista[$dummy]+$lista[$dummy+1])/2]);
+            }else{
+                //Log::debug($cant." par ".$i."  ".$dummy);
+                array_push($percentiles, ["".$i => $lista[$dummy]]);
+            }
+            $i+=1;
+        }
+        
+        return $percentiles;
     }
 }
 
