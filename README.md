@@ -1,6 +1,9 @@
 # Curvex
 
-> Proyecto final para la materia de Probabilidad y Estadística de la carrera de Ingeniería en Computación en la Universidad del Istmo.
+<img width="1888" height="917" alt="image" src="https://github.com/user-attachments/assets/ff718b50-478f-49a9-9ce6-6d2a3ceeb9df" />
+
+
+> Proyecto para la materia de Probabilidad y Estadística de la carrera de Ingeniería en Computación en la Universidad del Istmo.
 
 Curvex es una aplicación web diseñada para realizar cálculos estadísticos y visualizar distribuciones de probabilidad de una manera intuitiva y eficiente. El proyecto integra un backend robusto con un frontend moderno y reactivo para ofrecer una experiencia de usuario fluida.
 
