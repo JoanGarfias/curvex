@@ -167,6 +167,10 @@ const histogramOptions = ref({
             <Input id="promedio" type="text" :value="promedio" :defaultValue="promedio" readonly />
           </div>
           <div class="grid grid-cols-2 items-center gap-4">
+            <Label for="valmin">Suma</Label>
+            <Input id="valmin" type="text" :value="suma" :defaultValue="suma" readonly />
+          </div>
+          <div class="grid grid-cols-2 items-center gap-4">
             <Label for="valmin">Valor Mínimo</Label>
             <Input id="valmin" type="text" :value="minimo" :defaultValue="minimo" readonly />
           </div>

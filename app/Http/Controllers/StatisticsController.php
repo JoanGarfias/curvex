@@ -57,6 +57,9 @@ class StatisticsController extends Controller
             // int n = obtenerCantNumeros(...)
             $n = count($listaNumeros);
 
+            //Suma
+             $suma = $service->suma($numbers, $n);
+
             // double promedio = promedio(mat, n)
             $promedio = $service->promedio($listaNumeros, $n);
 
