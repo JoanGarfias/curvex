@@ -69,18 +69,20 @@ const hasInput = computed(() => {
 // (file changes are handled by the drag/drop input handler)
 
 function analyze() {
-    if (!hasInput.value) return;
+  if (!hasInput.value) return;
 
-    loading.value = true;
-    errorMessage.value = '';
-    
-    const formData = new FormData();
-    
-    if (mode.value === 'file' && csvFile.value) {
-        formData.append('file', csvFile.value);
-    } else {
-        formData.append('values', text.value);
+  // Validación local si el modo es texto
+  if (mode.value === 'text') {
+    const input = text.value.trim();
+
+    // Solo permitir números separados por espacios (ej: "1 2 3.5 4")
+    const validPattern = /^-?\d+(\.\d+)?(\s+-?\d+(\.\d+)?)*$/;
+
+    if (!validPattern.test(input)) {
+      errorMessage.value = 'Solo se permiten números separados por espacios.';
+      return;
     }
+  }
 
     // Llamada real al endpoint usando axios
     axios.post('/calculate-statistics', formData, {
@@ -119,6 +121,7 @@ function analyze() {
         }
     });
 }
+
 
 function openCsvPicker() {
     csvInputRef.value?.click();
@@ -248,7 +251,30 @@ function handleCsvFileChange(e: Event) {
                             </Tooltip>
                         </TooltipProvider>
                     </label>
-                    <Textarea v-model="text" rows="8" class="w-full rounded-md border px-3 py-2 bg-transparent placeholder:text-gray-500 dark:placeholder:text-gray-400 text-gray-800 dark:text-gray-100"></textarea>
+                      <Textarea
+                        v-model="text"
+                        rows="8"
+                        placeholder="Ejemplo: 10 15.5 20 30"
+                        class="w-full rounded-md border px-3 py-2 bg-transparent 
+                            placeholder:text-gray-500 dark:placeholder:text-gray-400
+                            text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-[#9a9563]"
+                    ></Textarea>
+                     <!-- Mensaje de error animado -->
+                        <transition name="fade">
+                            <div v-if="errorMessage"
+                                class="mt-3 flex items-center justify-center gap-2 p-3 bg-red-50 dark:bg-red-900/20
+                                        border border-red-200 dark:border-red-800 rounded text-red-700 
+                                        dark:text-red-300 text-sm shadow-sm text-center"
+                                >
+                                <svg xmlns="http://www.w3.org/2000/svg" 
+                                    class="h-5 w-5 text-red-500 flex-shrink-0" 
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01M5.1 19h13.8a1 1 0 00.9-1.45L13.45 4.55a1 1 0 00-1.8 0L4.2 17.55A1 1 0 005.1 19z" />
+                                </svg>
+                                <span>{{ errorMessage }}</span>
+                                </div>
+                        </transition>
                 </div>
 
                 <div v-if="mode !== 'file'" class="flex items-center justify-between mt-4">
@@ -256,11 +282,6 @@ function handleCsvFileChange(e: Event) {
                     <Button @click="analyze" :disabled="loading || !text.trim()" v-show="!loading" class="mt-4 w-full" :variant="isDark ? 'default' : 'default'">
                         Analizar
                     </Button>
-
-                    <!-- Mensaje de error -->
-                    <div v-if="errorMessage" class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-300 text-sm">
-                        {{ errorMessage }}
-                    </div>
 
                     <!-- Barra de progreso -->
                     <div v-if="loading" class="mt-3 w-full">
@@ -279,3 +300,5 @@ function handleCsvFileChange(e: Event) {
         <FooterComp />
     </div>
 </template>
+
+
