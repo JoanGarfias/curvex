@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Exception; // Para el try-catch general
 
+use App\Services\StatisticService;
+
 class StatisticsController extends Controller
 {
     /**
@@ -21,6 +23,7 @@ class StatisticsController extends Controller
     {
         // 1. VALIDACIÓN (Equivalente a jTextArea1.getText().isBlank() y NumberFormatException)
         $data = $request->validated();
+        $service = new StatisticService();
 
         // 2. OBTENER NÚMEROS (Equivalente a tu bloque 'try' inicial)
 
@@ -53,29 +56,29 @@ class StatisticsController extends Controller
             $n = count($listaNumeros);
 
             // double promedio = promedio(mat, n)
-            $promedio = $this->promedio($listaNumeros, $n);
+            $promedio = $service->promedio($listaNumeros, $n);
 
             // double valmin = valormin(mat, n)
-            $valmin = $this->valormin($listaNumeros, $n); // O simplemente: min($listaNumeros)
+            $valmin = $service->valormin($listaNumeros, $n); // O simplemente: min($listaNumeros)
 
             // double valmax = valormax(mat, n)
-            $valmax = $this->valormax($listaNumeros, $n); // O simplemente: max($listaNumeros)
+            $valmax = $service->valormax($listaNumeros, $n); // O simplemente: max($listaNumeros)
 
             // double rango = valmax - valmin
             $rango = $valmax - $valmin;
 
             // double varianza = obtenerVarianza(mat,n,promedio)
-            $varianza = $this->obtenerVarianza($listaNumeros, $n, $promedio);
+            $varianza = $service->obtenerVarianza($listaNumeros, $n, $promedio);
 
             // double desviacionEstandar (Cálculo implícito en tu Java)
             $desviacionEstandar = sqrt($varianza);
             
             // double curtosis = obtenerCurtosis(mat,n,promedio,Math.sqrt(varianza))
-            $curtosis = $this->obtenerCurtosis($listaNumeros, $n, $promedio, $desviacionEstandar);
+            $curtosis = $service->obtenerCurtosis($listaNumeros, $n, $promedio, $desviacionEstandar);
 
-            $cuartiles = $this->obtenerPercentiles($listaNumeros, 4);
-            $deciles = $this->obtenerPercentiles($listaNumeros, 10);
-            $percentiles = $this->obtenerPercentiles($listaNumeros, 100);
+            $cuartiles = $service->obtenerPercentiles($listaNumeros, 4);
+            $deciles = $service->obtenerPercentiles($listaNumeros, 10);
+            $percentiles = $service->obtenerPercentiles($listaNumeros, 100);
 
 
             // 4. CREAR EL JSON DE RESPUESTA
@@ -104,108 +107,6 @@ class StatisticsController extends Controller
             // (Equivalente a tu 'catch(Exception e)')
             return response()->json(['message' => 'Ocurrió un error inesperado.', 'error' => $e->getMessage()], 500);
         }
-    }
-
-    // --- MÉTODOS PRIVADOS (Tus funciones de Java adaptadas a PHP) ---
-
-    /**
-     * Calcula el promedio (media).
-     * Equivalente a tu función promedio().
-     */
-    private function promedio(array $lista, int $n): float
-    {
-        // En PHP, esto es más simple con array_sum(), pero replicamos la lógica:
-        $res = 0.0;
-        foreach ($lista as $valor) {
-            $res += $valor;
-        }
-        return $res / $n;
-        // Forma PHP simple: return array_sum($lista) / $n;
-    }
-
-    /**
-     * Encuentra el valor mínimo.
-     * Equivalente a tu función valormin().
-     */
-    private function valormin(array $lista, int $n): float
-    {
-        // La función min() de PHP hace esto.
-        return min($lista);
-    }
-
-    /**
-     * Encuentra el valor máximo.
-     * Equivalente a tu función valormax().
-     */
-    private function valormax(array $lista, int $n): float
-    {
-        // La función max() de PHP hace esto.
-        return max($lista);
-    }
-
-    /**
-     * Calcula la Varianza Poblacional (divide entre 'n').
-     * Equivalente a tu función obtenerVarianza().
-     */
-    private function obtenerVarianza(array $lista, int $n, float $promedio): float
-    {
-        $res = 0.0;
-        foreach ($lista as $valor) {
-            $res += pow($valor - $promedio, 2);
-        }
-        
-        if ($n === 0) return 0.0; // Evitar división por cero
-        
-        return $res / $n; // Varianza Poblacional
-    }
-
-    /**
-     * Calcula la Curtosis Excesiva.
-     * Equivalente a tu función obtenerCurtosis().
-     */
-    private function obtenerCurtosis(array $lista, int $n, float $promedio, float $desviacion): float
-    {
-        if ($desviacion == 0) {
-            // Si la desviación es 0, todos los valores son iguales.
-            // La curtosis no está definida (división por cero).
-            // Devolvemos 0 o null según la lógica de negocio.
-            return 0.0;
-        }
-        
-        $res = 0.0;
-        foreach ($lista as $valor) {
-            $res += pow($valor - $promedio, 4);
-        }
-        
-        $denominador = ($n * pow($desviacion, 4));
-
-        if ($denominador == 0) return 0.0; // Doble chequeo
-        
-        // (res / denominador) - 3 es la "Curtosis Excesiva"
-        return ($res / $denominador) - 3;
-    }
-
-    private function obtenerPercentiles($lista,$cant): array
-    {
-        
-        $n = count($lista);
-        sort($lista);
-        $percentiles = array();
-
-        $i = 1;
-        while($i < $cant){
-            $dummy = ($i/$cant) * $n;
-            if($dummy % 2 == 0){
-                //Log::debug($cant." impar ".$i."  ".$dummy);
-                array_push($percentiles, ["".$i => ($lista[$dummy]+$lista[$dummy+1])/2]);
-            }else{
-                //Log::debug($cant." par ".$i."  ".$dummy);
-                array_push($percentiles, ["".$i => $lista[$dummy]]);
-            }
-            $i+=1;
-        }
-        
-        return $percentiles;
     }
 }
 
