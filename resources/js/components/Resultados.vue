@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 
-import { ref, toRef } from 'vue';
+import { ref, toRef, computed } from 'vue';
 import type { Resultado } from '@/types/Resultado';
 
 interface Props{
@@ -25,7 +25,17 @@ const emit = defineEmits<{
   close: []
 }>();
 
-const open = ref(true);
+const open = ref<boolean>(true);
+const decimales = ref<number>(8);
+
+// Computed properties para formatear los valores reactivamente
+const promedio = computed(() => resultado.value.mean.toFixed(Number(decimales.value)));
+const minimo = computed(() => resultado.value.min.toFixed(Number(decimales.value)));
+const maximo = computed(() => resultado.value.max.toFixed(Number(decimales.value)));
+const rango = computed(() => resultado.value.range.toFixed(Number(decimales.value)));
+const varianza = computed(() => resultado.value.variance.toFixed(Number(decimales.value)));
+const desviacionEstandar = computed(() => resultado.value.standardDeviation.toFixed(Number(decimales.value)));
+const curtosis = computed(() => resultado.value.kurtosis.toFixed(Number(decimales.value)));
 
 function handleClose() {
   open.value = false;
@@ -43,34 +53,40 @@ function handleClose() {
           Aquí están los resultados de su análisis.
         </DialogDescription>
       </DialogHeader>
+
+      <div class="flex flex-row align-center justify-between">
+        <Label for="decimales">Número de decimales</Label>
+        <Input v-model.number="decimales" class="w-16" id="decimales" type="number" label="Número de decimales" min="1" max="10" />
+      </div>
+
       <div class="grid gap-4 py-4">
         <div class="grid grid-cols-2 items-center gap-4">
           <Label for="promedio">Promedio</Label>
-          <Input id="promedio" type="text" :defaultValue="resultado.mean" readonly />
+          <Input id="promedio" type="text" :value="promedio" :defaultValue="promedio" readonly />
         </div>
         <div class="grid grid-cols-2 items-center gap-4">
           <Label for="valmin">Valor Mínimo</Label>
-          <Input id="valmin" type="text" :defaultValue="resultado.min" readonly />
+          <Input id="valmin" type="text" :value="minimo" :defaultValue="minimo" readonly />
         </div>
         <div class="grid grid-cols-2 items-center gap-4">
           <Label for="valmax">Valor Máximo</Label>
-          <Input id="valmax" type="text" :defaultValue="resultado.max" readonly />
+          <Input id="valmax" type="text" :value="maximo" :defaultValue="maximo" readonly />
         </div>
         <div class="grid grid-cols-2 items-center gap-4">
           <Label for="rango">Rango</Label>
-          <Input id="rango" type="text" :defaultValue="resultado.range" readonly />
+          <Input id="rango" type="text" :value="rango" :defaultValue="rango" readonly />
         </div>
         <div class="grid grid-cols-2 items-center gap-4">
           <Label for="varianza">Varianza</Label>
-          <Input id="varianza" type="text" :defaultValue="resultado.variance" readonly />
+          <Input id="varianza" type="text" :value="varianza" :defaultValue="varianza" readonly />
         </div>
         <div class="grid grid-cols-2 items-center gap-4">
           <Label for="desviacionEstandar">Desviación Estándar</Label>
-          <Input id="desviacionEstandar" type="text" :defaultValue="resultado.standardDeviation" readonly />
+          <Input id="desviacionEstandar" type="text" :value="desviacionEstandar" :defaultValue="desviacionEstandar" readonly />
         </div>
         <div class="grid grid-cols-2 items-center gap-4">
           <Label for="curtosis">Curtosis</Label>
-          <Input id="curtosis" type="text" :defaultValue="resultado.kurtosis" readonly />
+          <Input id="curtosis" type="text" :value="curtosis" :defaultValue="curtosis" readonly />
         </div>
       </div>
       <DialogFooter>
