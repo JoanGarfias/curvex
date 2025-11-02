@@ -63,7 +63,7 @@ function handleClose() {
 
       <div class="flex flex-row align-center justify-between">
         <Label for="decimales">Número de decimales</Label>
-        <Input v-model.number="decimales" class="w-16" id="decimales" type="number" label="Número de decimales" min="1" max="10" />
+        <Input v-model.number="decimales" class="w-16" id="decimales" type="number" label="Número de decimales" min="1" max="8" />
       </div>
 
       <div class="grid gap-4 py-4">
