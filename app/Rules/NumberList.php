@@ -5,10 +5,11 @@ namespace App\Rules;
 use Illuminate\Contracts\Validation\Rule;
 
 /**
- * Validate a string that contains numbers (int or float) separated by commas or newlines.
+ * Validate a string that contains numbers (int or float) separated by spaces.
  * Examples valid:
- *  - "1,2,3"
- *  - "1.5, -3, 4\n5,6.0"
+ *  - "1 2 3"
+ *  - "1.5 -3 4 5 6.0"
+ *  - "1.5  -3   4" (multiple spaces allowed)
  */
 class NumberList implements Rule
 {
@@ -25,16 +26,20 @@ class NumberList implements Rule
             return false;
         }
 
-        // Normalize Windows CRLF to LF
-        $normalized = str_replace(["\r\n", "\r"], "\n", $value);
+        // Trim whitespace
+        $trimmed = trim($value);
+
+        if (empty($trimmed)) {
+            return false;
+        }
 
         // Regex:
-        // ^\s*[+-]?\d+(?:\.\d+)?(?:\s*(?:,|\n)\s*[+-]?\d+(?:\.\d+)?)*\s*$
+        // ^\s*[+-]?\d+(?:\.\d+)?(?:\s+[+-]?\d+(?:\.\d+)?)*\s*$
         // - allows integers or floats with optional sign
-        // - values separated by comma or newline, optional spaces
-        $pattern = '/^\s*[+-]?\d+(?:\.\d+)?(?:\s*(?:,|\n)\s*[+-]?\d+(?:\.\d+)?)*\s*$/';
+        // - values separated by one or more spaces
+        $pattern = '/^\s*[+-]?\d+(?:\.\d+)?(?:\s+[+-]?\d+(?:\.\d+)?)*\s*$/';
 
-        return preg_match($pattern, $normalized) === 1;
+        return preg_match($pattern, $trimmed) === 1;
     }
 
     /**
@@ -42,6 +47,6 @@ class NumberList implements Rule
      */
     public function message(): string
     {
-        return 'Los valores deben ser números (enteros o flotantes) separados por comas o saltos de línea.';
+        return 'Los valores deben ser números (enteros o flotantes) separados por espacios.';
     }
 }

@@ -1,15 +1,46 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import axios from '@/lib/axios';
+
+//Componentes
 import { Head } from '@inertiajs/vue3';
-import { router } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import { useAppearance } from '@/composables/useAppearance';
+import CurvexIcon from '@/icons/CurvexIcon.vue';
+import UploadFile from '@/icons/UploadFile.vue';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Info } from "lucide-vue-next";
+import FooterComp from '@/components/FooterComp.vue';
+import Textarea from '@/components/ui/textarea/Textarea.vue';
+
+
+//Tipos
+import type { Resultado } from '@/types/Resultado';
+import Resultados from '@/components/Resultados.vue';
+
+const resultados = ref<Resultado | null>(null);
+const showResults = ref(false);
 
 const mode = ref<'file' | 'text'>('file');
 const csvFile = ref<File | null>(null);
 const text = ref('');
 const loading = ref(false);
+const errorMessage = ref('');
 
 // Appearance (light/dark/system) from composable
 const { appearance } = useAppearance();
@@ -38,19 +69,70 @@ const hasInput = computed(() => {
 // (file changes are handled by the drag/drop input handler)
 
 function analyze() {
-    if (!hasInput.value) return;
+  if (!hasInput.value) return;
+
+  // Validación local si el modo es texto
+  if (mode.value === 'text') {
+    const input = text.value.trim();
+
+    // Solo permitir números separados por espacios (ej: "1 2 3.5 4")
+    const validPattern = /^-?\d+(\.\d+)?(\s+-?\d+(\.\d+)?)*$/;
+
+    if (!validPattern.test(input)) {
+      errorMessage.value = 'Solo se permiten números separados por espacios.';
+      return;
+    }
+  }
 
     loading.value = true;
-    uploadProgress.value = 0;
+    errorMessage.value = '';
+    
+    const formData = new FormData();
+    
+    if (mode.value === 'file' && csvFile.value) {
+        formData.append('file', csvFile.value);
+    } else {
+        formData.append('values', text.value);
+    }
 
-    const interval = setInterval(() => {
-        uploadProgress.value = Math.min(100, uploadProgress.value + Math.floor(Math.random() * 15) + 5);
-        if (uploadProgress.value >= 100) {
-            clearInterval(interval);
-            setTimeout(() => router.visit('/resultados'), 300);
+    // Llamada real al endpoint usando axios
+    axios.post('/calculate-statistics', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
         }
-    }, 250);
+    })
+    .then((response) => {
+        const data = response.data;
+        resultados.value = {
+            count: data.count,
+            mean: data.mean,
+            min: data.min,
+            max: data.max,
+            range: data.range,
+            variance: data.variance,
+            standardDeviation: data.standard_deviation,
+            kurtosis: data.kurtosis,
+            quartiles: data.quartiles || [],
+            deciles: data.deciles || [],
+            percentiles: data.percentiles || [],
+            data: data.data || []
+        };
+        showResults.value = true;
+        loading.value = false;
+    })
+    .catch((error) => {
+        loading.value = false;
+        console.error('Error:', error);
+        
+        if (error.response && error.response.data) {
+            const errors = error.response.data.errors;
+            errorMessage.value = errors?.values?.[0] || errors?.file?.[0] || error.response.data.message || 'Error al procesar los datos';
+        } else {
+            errorMessage.value = 'Error al conectar con el servidor';
+        }
+    });
 }
+
 
 function openCsvPicker() {
     csvInputRef.value?.click();
@@ -59,7 +141,6 @@ function openCsvPicker() {
 // Drag & drop state and refs (CSV-specific)
 const csvInputRef = ref<HTMLInputElement | null>(null);
 const isDragging = ref(false);
-const uploadProgress = ref(0);
 
 const csvFileName = computed(() => (csvFile.value ? csvFile.value.name : ''));
 
@@ -95,11 +176,7 @@ function handleCsvFileChange(e: Event) {
         <!-- Navbar -->
         <nav class="w-full max-w-5xl flex items-center justify-between mb-8 px-4">
             <div class="flex items-center gap-3">
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M11.2756 6.74162C7.23776 6.79162 6.88122 6.79996 6.50684 6.94996C5.53525 7.34162 4.78651 8.04162 4.48344 8.84996C4.33191 9.26662 4.323 9.74996 4.323 17.625V25.9583L4.52801 26.4333C4.81325 27.1 5.41046 27.6833 6.13247 28.0166L6.72968 28.2916H16.1782H25.6266L26.1614 28.0916C26.8924 27.8166 27.7035 27.0583 27.9977 26.375L28.2116 25.875L28.2383 17.8833C28.2561 12.6416 28.2294 9.73329 28.167 9.42496C27.9263 8.21662 26.8745 7.14162 25.6266 6.84996C25.1631 6.74162 16.9893 6.68329 11.2756 6.74162ZM25.796 7.99996C26.2684 8.22496 26.5536 8.50829 26.8567 9.03329L27.0528 9.37496L27.0795 16.5583C27.0974 22.7666 27.0795 23.75 26.9726 23.75C26.7497 23.75 26.0456 23.4333 25.5107 23.0916C24.4768 22.425 23.3893 21.2 22.4177 19.5916C22.0255 18.9416 20.0556 15.075 20.0556 14.95C20.0556 14.9333 20.3141 14.9166 20.635 14.9166H21.2144V13V11.0833H20.4567H19.699V12.7166V14.3583L19.2623 13.725C18.674 12.8916 17.8717 12.15 17.1854 11.8166C16.6684 11.5666 16.5525 11.5416 15.8216 11.5416C15.0907 11.5416 14.957 11.5666 14.4311 11.8083C13.1208 12.4166 12.3096 13.475 10.8745 16.5C8.98484 20.4916 7.81715 22.1416 6.16812 23.175L5.48177 23.6L5.45503 16.625L5.4372 9.64163L5.66896 9.17496C5.93637 8.61662 6.1503 8.39162 6.68512 8.09996L7.08623 7.87496L12.8355 7.83329C15.9999 7.80829 20.1091 7.78329 21.972 7.79162H25.3592L25.796 7.99996ZM16.5971 12.7833C17.5598 13.2083 18.3174 14.2 19.6188 16.7166C21.9185 21.175 22.079 21.4333 23.1665 22.6416C24.0489 23.6166 25.3414 24.4333 26.5982 24.8L27.0974 24.95V25.325C27.0885 26.0166 26.5893 26.7166 25.8584 27.0583C25.5642 27.2 25.1542 27.2083 20.8846 27.2333L16.2227 27.2583L16.2049 20.575C16.1782 14.3166 16.1692 13.8833 16.0266 13.8C15.9107 13.7333 15.8216 13.7333 15.7146 13.8C15.5631 13.8833 15.5542 14.3166 15.5275 20.575L15.5096 27.25H11.2756C7.9152 27.25 6.97927 27.225 6.74751 27.1416C5.97202 26.8333 5.4372 26.0666 5.4372 25.25V24.7916L6.11464 24.4583C7.05057 24 8.12913 23.1666 8.77982 22.4C9.64445 21.375 10.3486 20.1916 11.5787 17.6833C12.8623 15.0583 13.3882 14.1833 14.0656 13.4916C14.9124 12.6333 15.7325 12.4 16.5971 12.7833Z" fill="#1EAAA7"/>
-                <path d="M22.0611 9.26666C22.0343 9.32499 22.0254 10.6167 22.0343 12.125L22.0611 14.875L22.7474 14.9C23.4071 14.925 23.4427 14.9167 23.4873 14.7333C23.514 14.625 23.5229 13.3417 23.514 11.875L23.4873 9.20832L22.792 9.18332C22.2928 9.16666 22.0878 9.19166 22.0611 9.26666Z" fill="#1EAAA7"/>
-                <path d="M24.2003 12.3333C24.1647 12.4333 24.1647 13.0333 24.2003 13.675L24.2716 14.8417L24.9936 14.8167L25.7156 14.7917V13.5V12.2083L24.9847 12.1833C24.3162 12.1583 24.2538 12.175 24.2003 12.3333Z" fill="#1EAAA7"/>
-                </svg>
+                <CurvexIcon />
                 <span class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">Curvex</span>
             </div>
             <ThemeToggle />
@@ -118,14 +195,22 @@ function handleCsvFileChange(e: Event) {
 
             <div class="grid gap-4">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tipo de entrada</label>
-                <select v-model="mode" class="w-full sm:w-64 rounded-md border px-3 py-2 bg-transparent text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-700">
-                    <option value="file">Archivo CSV</option>
-                    <option value="text">Texto</option>
-                </select>
+                <Select v-model="mode" class="w-full sm:w-64">
+                  <SelectTrigger class="w-full">
+                    <SelectValue placeholder="Selecciona el modo de entrada" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Modos</SelectLabel>
+                      <SelectItem value="file">Archivo CSV</SelectItem>
+                      <SelectItem value="text">Texto</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
 
-                                <div v-if="mode === 'file'" class="mt-2 w-full">
-                                        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Seleccionar archivo CSV</h3>
-                                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">Arrastra tu archivo <strong class="font-medium">.csv</strong> aquí o haz clic para seleccionarlo.</p>
+                <div v-if="mode === 'file'" class="mt-2 w-full">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Seleccionar archivo CSV</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">Arrastra tu archivo <strong class="font-medium">.csv</strong> aquí o haz clic para seleccionarlo.</p>
 
                                         <!-- Zona Drag & Drop -->
                                         <div
@@ -136,11 +221,7 @@ function handleCsvFileChange(e: Event) {
                                             @drop.prevent="handleCsvDrop"
                                             @click="openCsvPicker"
                                         >
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-500 dark:text-gray-300 mb-3" fill="none" viewBox="0 0 24 24"
-                                                stroke="currentColor" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                    d="M3 15a4 4 0 014-4h10a4 4 0 010 8H7a4 4 0 01-4-4zM12 12V3m0 0l3.293 3.293M12 3L8.707 6.293" />
-                                            </svg>
+                                            <UploadFile />
 
                                             <span v-if="!csvFileName" class="text-gray-600 dark:text-gray-300">Suelta tu archivo aquí</span>
                                             <span v-else class="text-green-600 dark:text-green-400 font-medium">{{ csvFileName }}</span>
@@ -154,40 +235,81 @@ function handleCsvFileChange(e: Event) {
                                             {{ loading ? 'Procesando...' : 'Subir y Analizar' }}
                                         </Button>
 
+                                        <!-- Mensaje de error -->
+                                        <div v-if="errorMessage" class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-300 text-sm">
+                                            {{ errorMessage }}
+                                        </div>
+
                                         <!-- Barra de progreso -->
                                         <div v-if="loading" class="mt-3 w-full">
                                             <div class="w-full bg-gray-200 dark:bg-gray-700 rounded h-3 overflow-hidden">
-                                                <div class="h-full bg-primary transition-all" :style="{ width: uploadProgress + '%' }"></div>
+                                                <div class="h-full bg-primary transition-all animate-pulse"></div>
                                             </div>
-                                            <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-1">Procesando archivo... {{ uploadProgress }}%</p>
+                                            <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-1">Procesando archivo...</p>
                                         </div>
                                 </div>
 
                 <div v-else class="mt-2">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pega o escribe tus datos</label>
-                    <textarea v-model="text" rows="8" class="w-full rounded-md border px-3 py-2 bg-transparent placeholder:text-gray-500 dark:placeholder:text-gray-400 text-gray-800 dark:text-gray-100"></textarea>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pega o escribe tus datos
+                        <TooltipProvider>
+                            <Tooltip>
+                            <TooltipTrigger as-child>
+                                <Info class="inline-block ml-1 h-4 w-4 text-gray-400 cursor-pointer" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Escribe tus números separados por espacios</p>
+                            </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </label>
+                      <Textarea
+                        v-model="text"
+                        rows="8"
+                        placeholder="Ejemplo: 10 15.5 20 30"
+                        class="w-full rounded-md border px-3 py-2 bg-transparent 
+                            placeholder:text-gray-500 dark:placeholder:text-gray-400
+                            text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-[#9a9563]"
+                    ></Textarea>
+                     <!-- Mensaje de error animado -->
+                        <transition name="fade">
+                            <div v-if="errorMessage"
+                                class="mt-3 flex items-center justify-center gap-2 p-3 bg-red-50 dark:bg-red-900/20
+                                        border border-red-200 dark:border-red-800 rounded text-red-700 
+                                        dark:text-red-300 text-sm shadow-sm text-center"
+                                >
+                                <svg xmlns="http://www.w3.org/2000/svg" 
+                                    class="h-5 w-5 text-red-500 flex-shrink-0" 
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01M5.1 19h13.8a1 1 0 00.9-1.45L13.45 4.55a1 1 0 00-1.8 0L4.2 17.55A1 1 0 005.1 19z" />
+                                </svg>
+                                <span>{{ errorMessage }}</span>
+                                </div>
+                        </transition>
                 </div>
 
                 <div v-if="mode !== 'file'" class="flex items-center justify-between mt-4">
-                    <Button :disabled="loading || !hasInput" :variant="isDark ? 'outline' : 'default'" @click="analyze">
-                        <svg v-if="!loading" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A2 2 0 009 10.07v3.86a2 2 0 002.555 1.884l3.197-1.066A2 2 0 0016 12.414V12a2 2 0 00-1.248-1.832z"/></svg>
-                        <span v-if="!loading">Analizar</span>
-                        <span v-else class="inline-flex items-center gap-2">Procesando <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg></span>
+                    <!-- Botón Analizar -->
+                    <Button @click="analyze" :disabled="loading || !text.trim()" v-show="!loading" class="mt-4 w-full" :variant="isDark ? 'default' : 'default'">
+                        Analizar
                     </Button>
 
-                    <!-- Progress / spinner when loading -->
-                    <div class="w-2/3">
-                        <div v-if="loading" class="w-full bg-gray-200 dark:bg-gray-700 rounded h-3 overflow-hidden">
-                            <div class="h-full w-full bg-primary/60 animate-pulse"></div>
+                    <!-- Barra de progreso -->
+                    <div v-if="loading" class="mt-3 w-full">
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded h-3 overflow-hidden">
+                            <div class="h-full bg-primary transition-all animate-pulse"></div>
                         </div>
+                        <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-1">Procesando datos...</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Footer -->
-        <footer class="mt-10 mb-6 text-sm text-gray-500 dark:text-gray-400 text-center">
-            Desarrollado con ❤️ por Jere, Juan, Joan, Gera y Karlis · Laravel + Vue 3 + TailwindCSS · 2025
-        </footer>
+
+        <Resultados v-if="resultados && showResults" :resultado="resultados" @close="showResults = false" />
+
+        <FooterComp />
     </div>
 </template>
+
+
