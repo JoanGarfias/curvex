@@ -84,6 +84,17 @@ function analyze() {
     }
   }
 
+    loading.value = true;
+    errorMessage.value = '';
+    
+    const formData = new FormData();
+    
+    if (mode.value === 'file' && csvFile.value) {
+        formData.append('file', csvFile.value);
+    } else {
+        formData.append('values', text.value);
+    }
+
     // Llamada real al endpoint usando axios
     axios.post('/calculate-statistics', formData, {
         headers: {
