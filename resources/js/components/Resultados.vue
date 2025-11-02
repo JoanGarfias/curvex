@@ -46,31 +46,31 @@ function handleClose() {
       <div class="grid gap-4 py-4">
         <div class="grid grid-cols-2 items-center gap-4">
           <Label for="promedio">Promedio</Label>
-          <Input id="promedio" type="text" :value="resultado.mean" readonly />
+          <Input id="promedio" type="text" :defaultValue="resultado.mean" readonly />
         </div>
         <div class="grid grid-cols-2 items-center gap-4">
           <Label for="valmin">Valor Mínimo</Label>
-          <Input id="valmin" type="text" :value="resultado.min" readonly />
+          <Input id="valmin" type="text" :defaultValue="resultado.min" readonly />
         </div>
         <div class="grid grid-cols-2 items-center gap-4">
           <Label for="valmax">Valor Máximo</Label>
-          <Input id="valmax" type="text" :value="resultado.max" readonly />
+          <Input id="valmax" type="text" :defaultValue="resultado.max" readonly />
         </div>
         <div class="grid grid-cols-2 items-center gap-4">
           <Label for="rango">Rango</Label>
-          <Input id="rango" type="text" :value="resultado.range" readonly />
+          <Input id="rango" type="text" :defaultValue="resultado.range" readonly />
         </div>
         <div class="grid grid-cols-2 items-center gap-4">
           <Label for="varianza">Varianza</Label>
-          <Input id="varianza" type="text" :value="resultado.variance" readonly />
+          <Input id="varianza" type="text" :defaultValue="resultado.variance" readonly />
         </div>
         <div class="grid grid-cols-2 items-center gap-4">
           <Label for="desviacionEstandar">Desviación Estándar</Label>
-          <Input id="desviacionEstandar" type="text" :value="resultado.standardDeviation" readonly />
+          <Input id="desviacionEstandar" type="text" :defaultValue="resultado.standardDeviation" readonly />
         </div>
         <div class="grid grid-cols-2 items-center gap-4">
           <Label for="curtosis">Curtosis</Label>
-          <Input id="curtosis" type="text" :value="resultado.kurtosis" readonly />
+          <Input id="curtosis" type="text" :defaultValue="resultado.kurtosis" readonly />
         </div>
       </div>
       <DialogFooter>
