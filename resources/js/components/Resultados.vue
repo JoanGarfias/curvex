@@ -28,14 +28,21 @@ const emit = defineEmits<{
 const open = ref<boolean>(true);
 const decimales = ref<number>(8);
 
-// Computed properties para formatear los valores reactivamente
-const promedio = computed(() => resultado.value.mean.toFixed(Number(decimales.value)));
-const minimo = computed(() => resultado.value.min.toFixed(Number(decimales.value)));
-const maximo = computed(() => resultado.value.max.toFixed(Number(decimales.value)));
-const rango = computed(() => resultado.value.range.toFixed(Number(decimales.value)));
-const varianza = computed(() => resultado.value.variance.toFixed(Number(decimales.value)));
-const desviacionEstandar = computed(() => resultado.value.standardDeviation.toFixed(Number(decimales.value)));
-const curtosis = computed(() => resultado.value.kurtosis.toFixed(Number(decimales.value)));
+// Función para truncar (cortar) sin redondear
+const truncate = (num: number, decimals: number): string => {
+  const multiplier = Math.pow(10, decimals);
+  const truncated = Math.trunc(num * multiplier) / multiplier;
+  return truncated.toFixed(decimals);
+};
+
+// Computed properties para formatear los valores reactivamente (truncados, no redondeados)
+const promedio = computed(() => truncate(resultado.value.mean, Number(decimales.value)));
+const minimo = computed(() => truncate(resultado.value.min, Number(decimales.value)));
+const maximo = computed(() => truncate(resultado.value.max, Number(decimales.value)));
+const rango = computed(() => truncate(resultado.value.range, Number(decimales.value)));
+const varianza = computed(() => truncate(resultado.value.variance, Number(decimales.value)));
+const desviacionEstandar = computed(() => truncate(resultado.value.standardDeviation, Number(decimales.value)));
+const curtosis = computed(() => truncate(resultado.value.kurtosis, Number(decimales.value)));
 
 function handleClose() {
   open.value = false;
