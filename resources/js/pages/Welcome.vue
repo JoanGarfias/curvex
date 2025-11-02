@@ -10,8 +10,6 @@ const mode = ref<'file' | 'text'>('file');
 const csvFile = ref<File | null>(null);
 const text = ref('');
 const loading = ref(false);
-const errorMessage = ref('');
-
 
 // Appearance (light/dark/system) from composable
 const { appearance } = useAppearance();
@@ -40,27 +38,8 @@ const hasInput = computed(() => {
 // (file changes are handled by the drag/drop input handler)
 
 function analyze() {
-    errorMessage.value = ''; // Limpia cualquier error previo
-
     if (!hasInput.value) return;
 
-    // ✅ VALIDACIÓN SOLO PARA ENTRADA DE TEXTO
-    if (mode.value === 'text') {
-        const lines = text.value.trim().split('\n');
-        const regex = /^(\d+(\.\d+)?)(\s+\d+(\.\d+)?)*$/;
-
-        for (const [i, line] of lines.entries()) {
-            const clean = line.trim();
-            if (clean.length === 0) continue; // Permitir líneas vacías
-
-            if (!regex.test(clean)) {
-                errorMessage.value = `Error en la línea ${i + 1}: Solo se permiten números separados por espacios.\n→ Línea inválida: "${line}"`;
-                return; // Detiene el análisis si hay error
-            }
-        }
-    }
-
-    // Si pasa la validación, continúa
     loading.value = true;
     uploadProgress.value = 0;
 
@@ -72,8 +51,6 @@ function analyze() {
         }
     }, 250);
 }
-
-
 
 function openCsvPicker() {
     csvInputRef.value?.click();
@@ -190,10 +167,6 @@ function handleCsvFileChange(e: Event) {
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pega o escribe tus datos</label>
                     <textarea v-model="text" rows="8" class="w-full rounded-md border px-3 py-2 bg-transparent placeholder:text-gray-500 dark:placeholder:text-gray-400 text-gray-800 dark:text-gray-100"></textarea>
                 </div>
-                <p v-if="errorMessage" class="mt-2 text-sm text-red-500 bg-red-100/30 dark:bg-red-900/30 p-2 rounded">
-                    {{ errorMessage }}
-                    </p>
-
 
                 <div v-if="mode !== 'file'" class="flex items-center justify-between mt-4">
                     <Button :disabled="loading || !hasInput" :variant="isDark ? 'outline' : 'default'" @click="analyze">
