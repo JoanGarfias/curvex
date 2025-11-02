@@ -101,7 +101,8 @@ function analyze() {
             kurtosis: data.kurtosis,
             quartiles: data.quartiles || [],
             deciles: data.deciles || [],
-            percentiles: data.percentiles || []
+            percentiles: data.percentiles || [],
+            data: data.data || []
         };
         showResults.value = true;
         loading.value = false;

@@ -50,6 +50,7 @@ class StatisticsController extends Controller
 
         try {
             $listaNumeros = $numbers;
+            Log::info('Números recibidos: ' . implode(', ', $listaNumeros));
 
             // 3. GUARDAR VARIABLES (Equivalente al bloque principal de tu 'try')
             
@@ -97,6 +98,7 @@ class StatisticsController extends Controller
                 'cuartiles' => $cuartiles,
                 'deciles' => $deciles,
                 'percentiles' => $percentiles,
+                'data' => $listaNumeros,
             ];
 
             // 5. DEVOLVER RESPUESTA

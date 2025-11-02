@@ -10,4 +10,5 @@ export interface Resultado{
     quartiles: number[];
     deciles: number[];
     percentiles: number[];
+    data: number[];
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StatisticRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -10,68 +11,39 @@ use Exception;
 class FrecuencyTableController extends Controller
 {
     /**
-     * MÉTODO ANTERIOR (Cálculos básicos)
-     * Recibe una lista de números y calcula sus estadísticas.
-     */
-    public function calculate(Request $request): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'numbers' => 'required|array|min:1',
-            'numbers.*' => 'numeric',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        try {
-            $listaNumeros = $request->input('numbers');
-            $n = count($listaNumeros);
-            $promedio = $this->promedio($listaNumeros, $n);
-            $valmin = $this->valormin($listaNumeros, $n);
-            $valmax = $this->valormax($listaNumeros, $n);
-            $rango = $valmax - $valmin;
-            $varianza = $this->obtenerVarianza($listaNumeros, $n, $promedio);
-            $desviacionEstandar = sqrt($varianza);
-            $curtosis = $this->obtenerCurtosis($listaNumeros, $n, $promedio, $desviacionEstandar);
-
-            $resultados = [
-                'count' => $n,
-                'mean' => $promedio,
-                'min' => $valmin,
-                'max' => $valmax,
-                'range' => $rango,
-                'variance' => $varianza,
-                'standard_deviation' => $desviacionEstandar,
-                'kurtosis' => $curtosis,
-            ];
-
-            return response()->json($resultados, 200);
-
-        } catch (Exception $e) {
-            return response()->json(['message' => 'Ocurrió un error inesperado.', 'error' => $e->getMessage()], 500);
-        }
-    }
-
-
-    /**
      * NUEVO MÉTODO (Tabla de Frecuencias)
      * Adaptado de tu constructor TablaFrecuencias()
      */
-    public function calculateFrequencyTable(Request $request): JsonResponse
+    public function calculateFrequencyTable(StatisticRequest $request): JsonResponse
     {
-        // 1. Validar la entrada
-        $validator = Validator::make($request->all(), [
-            'numbers' => 'required|array|min:2', // Se necesitan al menos 2 números para un rango
-            'numbers.*' => 'numeric',
-        ]);
+        // 1. VALIDACIÓN (Equivalente a jTextArea1.getText().isBlank() y NumberFormatException)
+        $data = $request->validated();
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+        // 2. OBTENER NÚMEROS (Equivalente a tu bloque 'try' inicial)
+
+        if (isset($data['file'])) {
+            $numbers = [];
+            $path = $data['file']->getRealPath();
+            $file = fopen($path, 'r');
+            if ($file !== false) {
+                while (($line = fgetcsv($file)) !== false) {
+                    foreach ($line as $value) {
+                        $trimmed = trim($value);
+                        if (is_numeric($trimmed)) {
+                            $numbers[] = floatval($trimmed);
+                        }
+                    }
+                }
+                fclose($file);
+            }
+        } else {
+            // Parse space-separated numbers
+            $numbers = preg_split('/\s+/', trim($data['values']));
+            $numbers = array_filter(array_map('floatval', $numbers));
         }
 
         try {
-            $lista = $request->input('numbers');
+            $lista = $numbers;
             
             // 2. Calcular estadísticas básicas necesarias (en lugar de recibirlas)
             $n = count($lista);
@@ -147,12 +119,6 @@ class FrecuencyTableController extends Controller
             
             // 5. Devolver un JSON estructurado
             $response = [
-                'estadisticas_base' => [
-                    'count' => $n,
-                    'min' => $minimo,
-                    'max' => $maximo,
-                    'range' => $rango,
-                ],
                 'info_intervalos' => [
                     'numero_intervalos' => $numIntervalos,
                     'ancho_intervalo' => round($ancho, $prec_limites),
