@@ -91,24 +91,34 @@ class StatisticService
         return ($res / $denominador) - 3;
     }
 
-    public function obtenerPercentiles($lista,$cant): array
+    public function obtenerPercentiles($lista, $cant): array
     {
-        
         $n = count($lista);
+        
+        if ($n === 0) {
+            return [];
+        }
+        
         sort($lista);
         $percentiles = array();
 
-        $i = 1;
-        while($i < $cant){
-            $dummy = ($i/$cant) * $n;
-            if($dummy % 2 == 0){
-                //Log::debug($cant." impar ".$i."  ".$dummy);
-                array_push($percentiles, ["".$i => ($lista[$dummy]+$lista[$dummy+1])/2]);
-            }else{
-                //Log::debug($cant." par ".$i."  ".$dummy);
-                array_push($percentiles, ["".$i => $lista[$dummy]]);
+        for ($i = 1; $i < $cant; $i++) {
+            $position = ($i / $cant) * ($n - 1); // Usar n-1 para índices basados en 0
+            $lower = floor($position);
+            $upper = ceil($position);
+            
+            // Verificar que los índices estén dentro de los límites
+            if ($lower >= 0 && $upper < $n) {
+                if ($lower == $upper) {
+                    // Posición exacta
+                    $percentiles[] = [$i => $lista[$lower]];
+                } else {
+                    // Interpolación lineal entre dos valores
+                    $fraction = $position - $lower;
+                    $value = $lista[$lower] + ($lista[$upper] - $lista[$lower]) * $fraction;
+                    $percentiles[] = [$i => $value];
+                }
             }
-            $i+=1;
         }
         
         return $percentiles;

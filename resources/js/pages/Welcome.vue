@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import axios from '@/lib/axios';
+
+//Componentes
 import { Head } from '@inertiajs/vue3';
-import { router } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import { useAppearance } from '@/composables/useAppearance';
@@ -26,10 +28,19 @@ import { Info } from "lucide-vue-next";
 import FooterComp from '@/components/FooterComp.vue';
 import Textarea from '@/components/ui/textarea/Textarea.vue';
 
+
+//Tipos
+import type { Resultado } from '@/types/Resultado';
+import Resultados from '@/components/Resultados.vue';
+
+const resultados = ref<Resultado | null>(null);
+const showResults = ref(false);
+
 const mode = ref<'file' | 'text'>('file');
 const csvFile = ref<File | null>(null);
 const text = ref('');
 const loading = ref(false);
+const errorMessage = ref('');
 
 // Appearance (light/dark/system) from composable
 const { appearance } = useAppearance();
@@ -61,15 +72,51 @@ function analyze() {
     if (!hasInput.value) return;
 
     loading.value = true;
-    uploadProgress.value = 0;
+    errorMessage.value = '';
+    
+    const formData = new FormData();
+    
+    if (mode.value === 'file' && csvFile.value) {
+        formData.append('file', csvFile.value);
+    } else {
+        formData.append('values', text.value);
+    }
 
-    const interval = setInterval(() => {
-        uploadProgress.value = Math.min(100, uploadProgress.value + Math.floor(Math.random() * 15) + 5);
-        if (uploadProgress.value >= 100) {
-            clearInterval(interval);
-            setTimeout(() => router.visit('/resultados'), 300);
+    // Llamada real al endpoint usando axios
+    axios.post('/calculate-statistics', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
         }
-    }, 250);
+    })
+    .then((response) => {
+        const data = response.data;
+        resultados.value = {
+            count: data.count,
+            mean: data.mean,
+            min: data.min,
+            max: data.max,
+            range: data.range,
+            variance: data.variance,
+            standardDeviation: data.standard_deviation,
+            kurtosis: data.kurtosis,
+            quartiles: data.quartiles || [],
+            deciles: data.deciles || [],
+            percentiles: data.percentiles || []
+        };
+        showResults.value = true;
+        loading.value = false;
+    })
+    .catch((error) => {
+        loading.value = false;
+        console.error('Error:', error);
+        
+        if (error.response && error.response.data) {
+            const errors = error.response.data.errors;
+            errorMessage.value = errors?.values?.[0] || errors?.file?.[0] || error.response.data.message || 'Error al procesar los datos';
+        } else {
+            errorMessage.value = 'Error al conectar con el servidor';
+        }
+    });
 }
 
 function openCsvPicker() {
@@ -79,7 +126,6 @@ function openCsvPicker() {
 // Drag & drop state and refs (CSV-specific)
 const csvInputRef = ref<HTMLInputElement | null>(null);
 const isDragging = ref(false);
-const uploadProgress = ref(0);
 
 const csvFileName = computed(() => (csvFile.value ? csvFile.value.name : ''));
 
@@ -174,12 +220,17 @@ function handleCsvFileChange(e: Event) {
                                             {{ loading ? 'Procesando...' : 'Subir y Analizar' }}
                                         </Button>
 
+                                        <!-- Mensaje de error -->
+                                        <div v-if="errorMessage" class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-300 text-sm">
+                                            {{ errorMessage }}
+                                        </div>
+
                                         <!-- Barra de progreso -->
                                         <div v-if="loading" class="mt-3 w-full">
                                             <div class="w-full bg-gray-200 dark:bg-gray-700 rounded h-3 overflow-hidden">
-                                                <div class="h-full bg-primary transition-all" :style="{ width: uploadProgress + '%' }"></div>
+                                                <div class="h-full bg-primary transition-all animate-pulse"></div>
                                             </div>
-                                            <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-1">Procesando archivo... {{ uploadProgress }}%</p>
+                                            <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-1">Procesando archivo...</p>
                                         </div>
                                 </div>
 
@@ -201,20 +252,28 @@ function handleCsvFileChange(e: Event) {
 
                 <div v-if="mode !== 'file'" class="flex items-center justify-between mt-4">
                     <!-- Botón Analizar -->
-                    <Button @click="analyze" v-show="!loading" class="mt-4 w-full" :variant="isDark ? 'default' : 'default'">
-                        {{ loading ? 'Procesando...' : 'Subir y Analizar' }}
+                    <Button @click="analyze" :disabled="loading || !text.trim()" v-show="!loading" class="mt-4 w-full" :variant="isDark ? 'default' : 'default'">
+                        Analizar
                     </Button>
+
+                    <!-- Mensaje de error -->
+                    <div v-if="errorMessage" class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-300 text-sm">
+                        {{ errorMessage }}
+                    </div>
 
                     <!-- Barra de progreso -->
                     <div v-if="loading" class="mt-3 w-full">
                         <div class="w-full bg-gray-200 dark:bg-gray-700 rounded h-3 overflow-hidden">
-                            <div class="h-full bg-primary transition-all" :style="{ width: uploadProgress + '%' }"></div>
+                            <div class="h-full bg-primary transition-all animate-pulse"></div>
                         </div>
-                        <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-1">Procesando datos... {{ uploadProgress }}%</p>
+                        <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-1">Procesando datos...</p>
                     </div>
                 </div>
             </div>
         </div>
+
+
+        <Resultados v-if="resultados && showResults" :resultado="resultados" @close="showResults = false" />
 
         <FooterComp />
     </div>

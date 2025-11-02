@@ -43,8 +43,9 @@ class StatisticsController extends Controller
                 fclose($file);
             }
         } else {
-            $numbers = preg_split('/[\s,]+/', str_replace(["\r\n", "\r"], "\n", $data['values']));
-            $numbers = array_map('floatval', $numbers);
+            // Parse space-separated numbers
+            $numbers = preg_split('/\s+/', trim($data['values']));
+            $numbers = array_filter(array_map('floatval', $numbers));
         }
 
         try {
