@@ -2,7 +2,7 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { GitGraph, Table2, Download, Loader2 } from "lucide-vue-next"
+import { GitGraph, Table2, Download, Loader2, FileSpreadsheet } from "lucide-vue-next"
 import CurvexIcon from '@/icons/CurvexIcon.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import FooterComp from '@/components/FooterComp.vue';
@@ -37,6 +37,7 @@ const emit = defineEmits<{
 const decimales = ref<number>(8);
 const chartColor = ref<string>('#4bc0c0'); // Color por defecto (turquesa)
 const isDownloading = ref<boolean>(false);
+const isExporting = ref<boolean>(false);
 
 // Función para truncar (cortar) sin redondear
 const truncate = (num: number, decimals: number): string => {
@@ -171,6 +172,75 @@ async function downloadHistogram() {
   }
 }
 
+async function exportToExcel() {
+  isExporting.value = true;
+  
+  try {
+    // Pequeño delay para mostrar la animación de carga
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    let csvContent = '';
+    
+    // Fila 1: Título de los datos
+    csvContent += 'DATOS ORIGINALES\n';
+    
+    // Dividir los datos en filas de 10 columnas
+    const columnsPerRow = 10;
+    for (let i = 0; i < datos.length; i += columnsPerRow) {
+      const chunk = datos.slice(i, i + columnsPerRow);
+      csvContent += chunk.join(',') + '\n';
+    }
+    
+    // Espacios en blanco
+    csvContent += '\n\n';
+    
+    // Estadísticas básicas
+    csvContent += 'ESTADÍSTICAS BÁSICAS\n';
+    csvContent += 'Estadística,Valor\n';
+    csvContent += `Suma,${suma.value}\n`;
+    csvContent += `Promedio,${promedio.value}\n`;
+    csvContent += `Valor Mínimo,${minimo.value}\n`;
+    csvContent += `Valor Máximo,${maximo.value}\n`;
+    csvContent += `Rango,${rango.value}\n`;
+    csvContent += `Varianza,${varianza.value}\n`;
+    csvContent += `Desviación Estándar,${desviacionEstandar.value}\n`;
+    csvContent += `Curtosis,${curtosis.value}\n`;
+    csvContent += `Cantidad de datos,${resultado.value.count}\n\n`;
+    
+    // Tabla de frecuencias (si existe)
+    if (resultado.value.frequency_table) {
+      csvContent += 'TABLA DE FRECUENCIAS\n';
+      csvContent += `Número de intervalos: ${resultado.value.frequency_table.info_intervalos.numero_intervalos}\n`;
+      csvContent += `Ancho del intervalo: ${resultado.value.frequency_table.info_intervalos.ancho_intervalo}\n\n`;
+      
+      // Encabezados de la tabla
+      csvContent += 'Clase,Lím. Inf.,Lím. Sup.,Marca,Frec. Abs.,Frec. Acum.,Frec. Rel. %,Frec. Rel. Acum. %\n';
+      
+      // Filas de la tabla
+      resultado.value.frequency_table.tabla_frecuencias.forEach(row => {
+        csvContent += `${row.clase},${row.limite_inferior},${row.limite_superior},${row.marca_de_clase},${row.frecuencia_absoluta},${row.frecuencia_abs_acumulada},${row.frecuencia_relativa_pct},${row.frecuencia_rel_acumulada_pct}\n`;
+      });
+    }
+    
+    // Crear un blob con el contenido CSV
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    // Crear un enlace temporal para descargar
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `analisis-estadistico-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    
+    // Limpiar el objeto URL
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error al exportar los datos:', error);
+  } finally {
+    isExporting.value = false;
+  }
+}
+
 </script>
 
 
@@ -203,6 +273,20 @@ async function downloadHistogram() {
         <p class="mt-2 text-lg text-gray-600 dark:text-gray-400">
           Aquí están los valores calculados según tus datos.
         </p>
+        
+        <!-- Botón de exportar -->
+        <div class="mt-4">
+          <Button
+            variant="default"
+            @click="exportToExcel"
+            :disabled="isExporting"
+            class="flex items-center gap-2 mx-auto"
+          >
+            <Loader2 v-if="isExporting" class="h-5 w-5 animate-spin" />
+            <FileSpreadsheet v-else class="h-5 w-5" />
+            {{ isExporting ? 'Exportando...' : 'Exportar datos a Excel' }}
+          </Button>
+        </div>
       </div>
 
       <!-- Card Principal -->
