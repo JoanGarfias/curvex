@@ -6,7 +6,6 @@ import axios from '@/lib/axios';
 import { Head } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import ThemeToggle from '@/components/ThemeToggle.vue';
-import { useAppearance } from '@/composables/useAppearance';
 import CurvexIcon from '@/icons/CurvexIcon.vue';
 import UploadFile from '@/icons/UploadFile.vue';
 import {
@@ -40,20 +39,6 @@ const csvFile = ref<File | null>(null);
 const text = ref('');
 const loading = ref(false);
 const errorMessage = ref('');
-
-// Appearance (tema oscuro o claro)
-const { appearance } = useAppearance();
-const isDark = computed(() => {
-  if (appearance.value === 'dark') return true;
-  if (appearance.value === 'light') return false;
-  if (typeof document !== 'undefined') {
-    if (document.documentElement.classList.contains('dark')) return true;
-  }
-  if (typeof window !== 'undefined') {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }
-  return false;
-});
 
 const hasInput = computed(() => {
   return mode.value === 'file' ? !!csvFile.value : text.value.trim().length > 0;
@@ -103,7 +88,8 @@ function analyze() {
       quartiles: data.cuartiles || [],
       deciles: data.deciles || [],
       percentiles: data.percentiles || [],
-      data: data.data || []
+      data: data.data || [],
+      frequency_table: data.frequency_table || undefined
     };
 
     showResults.value = true;
@@ -158,12 +144,29 @@ function handleCsvFileChange(e: Event) {
   const f = target.files && target.files[0];
   csvFile.value = f ?? null;
 }
+
+function handleGoBack() {
+  showResults.value = false;
+  resultados.value = null;
+  errorMessage.value = '';
+  // Limpiar inputs
+  csvFile.value = null;
+  text.value = '';
+}
 </script>
 
 <template>
   <Head title="Curvex" />
 
-  <div class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#f8fafc] to-[#eef2f3] dark:from-[#0f0f0f] dark:to-[#1a1a1a] text-gray-800 dark:text-gray-100 transition-all p-6">
+  <!-- Vista de Resultados -->
+  <Resultados 
+    v-if="showResults && resultados" 
+    :resultado="resultados" 
+    @go-back="handleGoBack" 
+  />
+
+  <!-- Vista Principal -->
+  <div v-else class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#f8fafc] to-[#eef2f3] dark:from-[#0f0f0f] dark:to-[#1a1a1a] text-gray-800 dark:text-gray-100 transition-all p-6">
     <!-- Navbar -->
     <nav class="w-full max-w-5xl flex items-center justify-between mb-8 px-4">
       <div class="flex items-center gap-3">
@@ -264,9 +267,6 @@ function handleCsvFileChange(e: Event) {
         </div>
       </div>
     </div>
-
-    <!-- Resultados -->
-    <Resultados v-if="resultados && showResults" :resultado="resultados" @close="showResults = false" />
 
     <FooterComp />
   </div>

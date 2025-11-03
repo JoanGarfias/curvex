@@ -1,17 +1,11 @@
 <script setup lang="ts">
-//import axios from '@/lib/axios';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { GitGraph } from "lucide-vue-next"
+import { GitGraph, Table2 } from "lucide-vue-next"
+import CurvexIcon from '@/icons/CurvexIcon.vue';
+import ThemeToggle from '@/components/ThemeToggle.vue';
+import FooterComp from '@/components/FooterComp.vue';
 
 import { BarChart } from "vue-chart-3"
 import { Chart, registerables } from 'chart.js';
@@ -37,14 +31,10 @@ const props = defineProps<Props>();
 const resultado = toRef(props, 'resultado');
 
 const emit = defineEmits<{
-  close: []
+  goBack: []
 }>();
 
-const open = ref<boolean>(true);
 const decimales = ref<number>(8);
-const errorMessage = ref('');
-const loading = ref(false);
-const showHistogram = ref(false);
 
 // Función para truncar (cortar) sin redondear
 const truncate = (num: number, decimals: number): string => {
@@ -63,11 +53,6 @@ const desviacionEstandar = computed(() => truncate(resultado.value.standardDevia
 const curtosis = computed(() => truncate(resultado.value.kurtosis, Number(decimales.value)));
 const datos = resultado.value.data;
 console.log('Datos recibidos:', datos);
-
-function handleClose() {
-  open.value = false;
-  emit('close');
-}
 
 // --- Generar histograma a partir de los datos ---
 const histogramData = computed(() => {
@@ -150,99 +135,143 @@ const histogramOptions = ref({
   }
 });
 
+function handleGoBack() {
+  emit('goBack');
+}
+
 </script>
 
 
 <template>
-   <Dialog v-model:open="open" @update:open="(val) => !val && handleClose()">
-  <DialogContent
-  class="sm:max-w-[500px] bg-white dark:bg-neutral-900 shadow-xl border border-gray-200 dark:border-gray-700 rounded-2xl p-0 overflow-hidden transition-all duration-300"
->
-  <div class="p-6 flex flex-col max-h-[90vh]">
-    <!-- Encabezado -->
-    <DialogHeader class="text-center space-y-1 mb-4">
-      <DialogTitle class="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center justify-center gap-2">
-        <GitGraph class="h-6 w-6 text-primary" /> Resultados del Análisis
-      </DialogTitle>
-      <DialogDescription class="text-gray-600 dark:text-gray-400">
-        Aquí están los valores calculados según tus datos.
-      </DialogDescription>
-    </DialogHeader>
-
-    <!-- Contenido scrollable -->
-    <div class="flex-1 overflow-y-auto pr-2">
-      <div class="flex items-center justify-between mb-4">
-        <Label for="decimales" class="text-sm text-gray-700 dark:text-gray-300">Número de decimales</Label>
-        <Input
-          v-model.number="decimales"
-          id="decimales"
-          type="number"
-          min="1"
-          max="8"
-          class="w-20 text-center"
-        />
-      </div>
-
-      <!-- Grid de resultados -->
-      <div class="grid grid-cols-2 gap-3 mt-2">
-        <!-- Tarjetas estadísticas -->
-        <div v-for="(valor, nombre) in {
-          suma: suma,
-          Promedio: promedio,
-          'Valor Mínimo': minimo,
-          'Valor Máximo': maximo,
-          Rango: rango,
-          Varianza: varianza,
-          'Desviación Estándar': desviacionEstandar,
-          Curtosis: curtosis
-        }" :key="nombre"
-          class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3 text-center shadow-sm col-span-1"
-          :class="'col-span-1'">
-          <p class="text-xs uppercase text-gray-500 dark:text-gray-400">{{ nombre }}</p>
-          <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ valor }}</p>
+  <div class="min-h-screen bg-gradient-to-br from-[#f8fafc] to-[#eef2f3] dark:from-[#0f0f0f] dark:to-[#1a1a1a] text-gray-800 dark:text-gray-100 transition-all">
+    <!-- Navbar -->
+    <nav class="w-full bg-white/80 dark:bg-[#0b0b0b]/80 backdrop-blur border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <Button
+            variant="ghost"
+            @click="handleGoBack"
+            class="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-neutral-800"
+          >
+            <CurvexIcon class="h-6 w-6" />
+            <span class="text-lg font-bold">Curvex</span>
+          </Button>
+          <ThemeToggle />
         </div>
       </div>
+    </nav>
 
-      <!-- Histograma -->
-      <transition name="fade">
-        <div v-if="showHistogram" class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-lg font-semibold text-primary flex items-center gap-2">
-              <GitGraph class="h-5 w-5" /> Histograma de Frecuencias
-            </h3>
-            <Button variant="ghost" size="sm" @click="showHistogram = false">✖</Button>
+    <!-- Contenido Principal -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Encabezado -->
+      <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100 flex items-center justify-center gap-3">
+          <GitGraph class="h-8 w-8 text-primary" /> Resultados del Análisis
+        </h1>
+        <p class="mt-2 text-lg text-gray-600 dark:text-gray-400">
+          Aquí están los valores calculados según tus datos.
+        </p>
+      </div>
+
+      <!-- Card Principal -->
+      <div class="bg-white/80 dark:bg-[#0b0b0b]/80 backdrop-blur rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 md:p-8">
+        <!-- Control de decimales -->
+        <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <Label for="decimales" class="text-base font-medium text-gray-700 dark:text-gray-300">
+            Número de decimales
+          </Label>
+          <Input
+            v-model.number="decimales"
+            id="decimales"
+            type="number"
+            min="1"
+            max="8"
+            class="w-24 text-center"
+          />
+        </div>
+
+        <!-- Grid de resultados -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <!-- Tarjetas estadísticas -->
+          <div v-for="(valor, nombre) in {
+            Suma: suma,
+            Promedio: promedio,
+            'Valor Mínimo': minimo,
+            'Valor Máximo': maximo,
+            Rango: rango,
+            Varianza: varianza,
+            'Desviación Estándar': desviacionEstandar,
+            Curtosis: curtosis
+          }" :key="nombre"
+            class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-neutral-800 dark:to-neutral-900 rounded-xl p-4 text-center shadow-sm hover:shadow-md transition-shadow">
+            <p class="text-xs uppercase font-semibold text-gray-500 dark:text-gray-400 mb-1">{{ nombre }}</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ valor }}</p>
           </div>
-          <div class="bg-gray-50 dark:bg-neutral-800 rounded-xl p-4 max-h-86">
+        </div>
+
+        <!-- Histograma -->
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+          <div class="mb-4">
+            <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <GitGraph class="h-6 w-6 text-primary" /> Histograma de Frecuencias
+            </h3>
+          </div>
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-neutral-800 dark:to-neutral-900 rounded-xl p-6 h-96">
             <BarChart :chartData="histogramData" :options="histogramOptions" class="w-full h-full" />
           </div>
         </div>
-      </transition>
+
+        <!-- Tabla de Frecuencias -->
+        <div v-if="resultado.frequency_table" class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+          <div class="mb-4">
+            <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <Table2 class="h-6 w-6 text-primary" /> Tabla de Frecuencias
+            </h3>
+          </div>
+            
+            <!-- Info de intervalos -->
+            <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4">
+              <p class="text-base"><strong>Número de intervalos:</strong> {{ resultado.frequency_table.info_intervalos.numero_intervalos }}</p>
+              <p class="text-base"><strong>Ancho del intervalo:</strong> {{ resultado.frequency_table.info_intervalos.ancho_intervalo }}</p>
+            </div>
+
+            <!-- Tabla -->
+            <div class="overflow-x-auto bg-gradient-to-br from-gray-50 to-gray-100 dark:from-neutral-800 dark:to-neutral-900 rounded-xl shadow-md">
+              <table class="w-full">
+                <thead class="bg-gray-200 dark:bg-neutral-700">
+                  <tr>
+                    <th class="px-4 py-3 text-left font-semibold">Clase</th>
+                    <th class="px-4 py-3 text-right font-semibold">Lím. Inf.</th>
+                    <th class="px-4 py-3 text-right font-semibold">Lím. Sup.</th>
+                    <th class="px-4 py-3 text-right font-semibold">Marca</th>
+                    <th class="px-4 py-3 text-right font-semibold">Frec. Abs.</th>
+                    <th class="px-4 py-3 text-right font-semibold">Frec. Acum.</th>
+                    <th class="px-4 py-3 text-right font-semibold">Frec. Rel. %</th>
+                    <th class="px-4 py-3 text-right font-semibold">Frec. Rel. Acum. %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr 
+                    v-for="(row, index) in resultado.frequency_table.tabla_frecuencias" 
+                    :key="index"
+                    class="border-b border-gray-200 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-700/50 transition-colors"
+                  >
+                    <td class="px-4 py-3 font-medium">{{ row.clase }}</td>
+                    <td class="px-4 py-3 text-right">{{ row.limite_inferior }}</td>
+                    <td class="px-4 py-3 text-right">{{ row.limite_superior }}</td>
+                    <td class="px-4 py-3 text-right">{{ row.marca_de_clase }}</td>
+                    <td class="px-4 py-3 text-right">{{ row.frecuencia_absoluta }}</td>
+                    <td class="px-4 py-3 text-right">{{ row.frecuencia_abs_acumulada }}</td>
+                    <td class="px-4 py-3 text-right">{{ row.frecuencia_relativa_pct }}%</td>
+                    <td class="px-4 py-3 text-right">{{ row.frecuencia_rel_acumulada_pct }}%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+      </div>
     </div>
 
-    <!-- Footer fijo -->
-    <DialogFooter class="mt-4">
-      <div class="w-full space-y-3">
-        <Button
-          type="button"
-          variant="default"
-          class="w-full flex items-center justify-center gap-2 font-semibold"
-          @click="showHistogram = !showHistogram"
-          :disabled="!datos || datos.length === 0"
-        >
-          <GitGraph class="mr-2 h-4 w-4" />
-          {{ showHistogram ? 'Ocultar histograma' : 'Ver histograma' }}
-        </Button>
-
-        <div
-          v-if="errorMessage"
-          class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-300 text-sm"
-        >
-          {{ errorMessage }}
-        </div>
-      </div>
-    </DialogFooter>
+    <FooterComp />
   </div>
-</DialogContent>
-</Dialog>
-
 </template>

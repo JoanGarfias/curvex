@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Exception; // Para el try-catch general
 
 use App\Services\StatisticService;
+use App\Services\FrequencyService;
 
 class StatisticsController extends Controller
 {
@@ -24,6 +25,7 @@ class StatisticsController extends Controller
         // 1. VALIDACIÓN (Equivalente a jTextArea1.getText().isBlank() y NumberFormatException)
         $data = $request->validated();
         $service = new StatisticService();
+        $frequencyService = new FrequencyService();
 
         // 2. OBTENER NÚMEROS (Equivalente a tu bloque 'try' inicial)
 
@@ -58,7 +60,7 @@ class StatisticsController extends Controller
             $n = count($listaNumeros);
 
             //Suma
-             $suma = $service->suma($numbers, $n);
+            $suma = $service->suma($listaNumeros, $n);
 
             // double promedio = promedio(mat, n)
             $promedio = $service->promedio($listaNumeros, $n);
@@ -85,12 +87,16 @@ class StatisticsController extends Controller
             $deciles = $service->obtenerPercentiles($listaNumeros, 10);
             $percentiles = $service->obtenerPercentiles($listaNumeros, 100);
 
+            // Generar tabla de frecuencias
+            $frequencyTable = $frequencyService->generateFrequencyTable($listaNumeros);
+
 
             // 4. CREAR EL JSON DE RESPUESTA
             // (Equivalente a jTextArea2.setText(...))
             // Todas las variables se guardan en un array asociativo:
             $resultados = [
                 'count' => $n,
+                'sum' => $suma,
                 'mean' => $promedio,
                 'min' => $valmin,
                 'max' => $valmax,
@@ -102,6 +108,7 @@ class StatisticsController extends Controller
                 'deciles' => $deciles,
                 'percentiles' => $percentiles,
                 'data' => $listaNumeros,
+                'frequency_table' => $frequencyTable, // Nueva: tabla de frecuencias
             ];
 
             // 5. DEVOLVER RESPUESTA
