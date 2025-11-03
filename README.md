@@ -25,13 +25,13 @@ El proyecto está construido utilizando el siguiente stack de tecnologías:
 
 # Imágenes
 
-<img width="1888" height="917" alt="image" src="https://github.com/user-attachments/assets/ff718b50-478f-49a9-9ce6-6d2a3ceeb9df" />
+<img width="1602" height="915" alt="image" src="https://github.com/user-attachments/assets/44de5a5e-9b03-4227-853a-4901a3e4d72d" />
 
-<img width="1914" height="926" alt="image" src="https://github.com/user-attachments/assets/ed1631a7-6e14-45a9-a434-cb869feece48" />
+<img width="1602" height="915" alt="image" src="https://github.com/user-attachments/assets/af989eef-1859-49ad-9150-66f6b4f4b64e" />
 
-<img width="1914" height="926" alt="image" src="https://github.com/user-attachments/assets/4545d3c9-242a-480a-9c79-f1a2d34a8ce8" />
+<img width="1602" height="915" alt="image" src="https://github.com/user-attachments/assets/5a6b14b0-3ba2-4391-896b-a329a4e847dd" />
 
-<img width="1914" height="926" alt="image" src="https://github.com/user-attachments/assets/9f17c4e1-14e2-4e63-880e-1cd54edd4a9e" />
+<img width="1602" height="915" alt="image" src="https://github.com/user-attachments/assets/53d13cae-5863-4c56-8637-979d154ef1f5" />
 
 ## Instalación y Puesta en Marcha
 
