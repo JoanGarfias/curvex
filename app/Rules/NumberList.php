@@ -33,13 +33,26 @@ class NumberList implements Rule
             return false;
         }
 
-        // Regex:
-        // ^\s*[+-]?\d+(?:\.\d+)?(?:\s+[+-]?\d+(?:\.\d+)?)*\s*$
-        // - allows integers or floats with optional sign
-        // - values separated by one or more spaces
+        // Si contiene comas, rechazar inmediatamente
+        if (strpos($trimmed, ',') !== false) {
+            return false;
+        }
+
+        // Regex mejorada:
+        // ^\s*                     - inicio de línea, espacios opcionales
+        // [+-]?\d+(?:\.\d+)?      - número con signo opcional y parte decimal opcional
+        // (?:\s+[+-]?\d+(?:\.\d+)?)*  - más números separados por espacios
+        // \s*$                     - espacios opcionales, fin de línea
         $pattern = '/^\s*[+-]?\d+(?:\.\d+)?(?:\s+[+-]?\d+(?:\.\d+)?)*\s*$/';
 
-        return preg_match($pattern, $trimmed) === 1;
+        // Verificar el patrón general
+        if (preg_match($pattern, $trimmed) !== 1) {
+            return false;
+        }
+
+        // Verificar que haya al menos dos números
+        $numbers = preg_split('/\s+/', $trimmed);
+        return count($numbers) >= 2;
     }
 
     /**
@@ -47,6 +60,6 @@ class NumberList implements Rule
      */
     public function message(): string
     {
-        return 'Los valores deben ser números (enteros o flotantes) separados por espacios.';
+        return 'Los valores deben ser números (enteros o flotantes) separados por espacios. Formato correcto: "1.2 30.4 50". Formato incorrecto: "1,2,30.4,50" o "1.2, 30.4, 50".';
     }
 }

@@ -5,6 +5,21 @@ namespace App\Services;
 class StatisticService
 {
     /**
+     * Devuelve la suma de los números.
+     *
+     * @param array $numbers
+     * @param int|null $count  (opcional) no usado pero mantenido por compatibilidad
+     * @return float
+     */
+    public function suma(array $numbers, int $count = null): float
+    {
+        if (empty($numbers)) {
+            return 0.0;
+        }
+        return array_sum($numbers);
+    }
+    
+    /**
      * Calculate the average of a list of numbers.
      *
      * @param array $numbers
@@ -64,6 +79,64 @@ class StatisticService
         
         return $res / $n; // Varianza Poblacional
     }
+
+        /**
+     * Calcula la desviación estándar muestral (como =DESVEST.M en Excel)
+     */
+    public function obtenerDesviacionEstandar(array $lista, int $n, float $promedio): float
+    {
+        if ($n <= 1) return 0.0;
+        $suma = 0.0;
+        foreach ($lista as $valor) {
+            $suma += pow($valor - $promedio, 2);
+        }
+        // Excel usa "n - 1" para la desviación muestral
+        return sqrt($suma / ($n - 1));
+    }
+
+    /**
+     * Calcula el rango (MAX - MIN)
+     */
+    public function obtenerRango(float $maximo, float $minimo): float
+    {
+        return $maximo - $minimo;
+    }
+
+    /**
+     * Calcula los límites superior e inferior
+     * Superior = (Promedio + Rango) / 2
+     * Inferior = (Promedio - Rango) / 2
+     */
+    public function obtenerLimites(float $promedio, float $rango): array
+    {
+        $limiteSuperior = ($promedio + $rango) / 2;
+        $limiteInferior = ($promedio - $rango) / 2;
+        return [
+            'superior' => $limiteSuperior,
+            'inferior' => $limiteInferior
+        ];
+    }
+
+    /**
+     * Calcula el número de intervalos
+     * Fórmula Excel: =REDONDEAR(1 + 3.3 * LOG10(n), 0)
+     */
+    public function obtenerNumeroIntervalos(int $n): int
+    {
+        if ($n <= 0) return 0;
+        return (int) round(1 + 3.3 * log10($n));
+    }
+
+    /**
+     * Calcula el ancho de clase
+     * Fórmula Excel: =REDONDEAR(Rango / Número de Intervalos, 3)
+     */
+    public function obtenerAnchoClase(float $rango, int $numIntervalos): float
+    {
+        if ($numIntervalos === 0) return 0.0;
+        return round($rango / $numIntervalos, 3);
+    }
+
 
     /**
      * Calcula la Curtosis Excesiva.
