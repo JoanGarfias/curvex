@@ -2,7 +2,7 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { GitGraph, Table2 } from "lucide-vue-next"
+import { GitGraph, Table2, Download, Loader2 } from "lucide-vue-next"
 import CurvexIcon from '@/icons/CurvexIcon.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import FooterComp from '@/components/FooterComp.vue';
@@ -36,6 +36,7 @@ const emit = defineEmits<{
 
 const decimales = ref<number>(8);
 const chartColor = ref<string>('#4bc0c0'); // Color por defecto (turquesa)
+const isDownloading = ref<boolean>(false);
 
 // Función para truncar (cortar) sin redondear
 const truncate = (num: number, decimals: number): string => {
@@ -140,6 +141,36 @@ function handleGoBack() {
   emit('goBack');
 }
 
+async function downloadHistogram() {
+  isDownloading.value = true;
+  
+  try {
+    // Pequeño delay para mostrar la animación de carga
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Obtener el canvas del gráfico
+    const chartElement = document.querySelector('.histogram-chart canvas') as HTMLCanvasElement;
+    
+    if (!chartElement) {
+      console.error('No se encontró el canvas del histograma');
+      return;
+    }
+
+    // Convertir el canvas a imagen
+    const url = chartElement.toDataURL('image/png');
+    
+    // Crear un enlace temporal para descargar
+    const link = document.createElement('a');
+    link.download = `histograma-${new Date().toISOString().split('T')[0]}.png`;
+    link.href = url;
+    link.click();
+  } catch (error) {
+    console.error('Error al descargar el histograma:', error);
+  } finally {
+    isDownloading.value = false;
+  }
+}
+
 </script>
 
 
@@ -231,12 +262,23 @@ function handleGoBack() {
 
         <!-- Histograma -->
         <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
-          <div class="mb-4">
+          <div class="flex items-center justify-between mb-4">
             <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <GitGraph class="h-6 w-6 text-primary" /> Histograma de Frecuencias
             </h3>
+            <Button
+              variant="outline"
+              size="sm"
+              @click="downloadHistogram"
+              :disabled="isDownloading"
+              class="flex items-center gap-2"
+            >
+              <Loader2 v-if="isDownloading" class="h-4 w-4 animate-spin" />
+              <Download v-else class="h-4 w-4" />
+              {{ isDownloading ? 'Descargando...' : 'Descargar' }}
+            </Button>
           </div>
-          <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-neutral-800 dark:to-neutral-900 rounded-xl p-6 h-96">
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-neutral-800 dark:to-neutral-900 rounded-xl p-6 h-96 histogram-chart">
             <BarChart :chartData="histogramData" :options="histogramOptions" class="w-full h-full" />
           </div>
         </div>
