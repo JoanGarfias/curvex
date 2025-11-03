@@ -1,7 +1,5 @@
 # Curvex
 
-<img width="1888" height="917" alt="image" src="https://github.com/user-attachments/assets/ff718b50-478f-49a9-9ce6-6d2a3ceeb9df" />
-
 
 > Proyecto para la materia de Probabilidad y Estadística de la carrera de Ingeniería en Computación en la Universidad del Istmo.
 
@@ -24,6 +22,16 @@ El proyecto está construido utilizando el siguiente stack de tecnologías:
     -   [TypeScript](https://www.typescriptlang.org/) - Superset de JavaScript con tipado estático.
     -   [Inertia.js](https://inertiajs.com/) - Para crear aplicaciones de una sola página (SPA) sin construir una API.
     -   [Tailwind CSS](https://tailwindcss.com/) - Framework de CSS para diseño de interfaces.
+
+# Imágenes
+
+<img width="1888" height="917" alt="image" src="https://github.com/user-attachments/assets/ff718b50-478f-49a9-9ce6-6d2a3ceeb9df" />
+
+<img width="1914" height="926" alt="image" src="https://github.com/user-attachments/assets/ed1631a7-6e14-45a9-a434-cb869feece48" />
+
+<img width="1914" height="926" alt="image" src="https://github.com/user-attachments/assets/4545d3c9-242a-480a-9c79-f1a2d34a8ce8" />
+
+<img width="1914" height="926" alt="image" src="https://github.com/user-attachments/assets/9f17c4e1-14e2-4e63-880e-1cd54edd4a9e" />
 
 ## Instalación y Puesta en Marcha
 

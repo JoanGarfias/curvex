@@ -32,17 +32,27 @@ class StatisticsController extends Controller
         if (isset($data['file'])) {
             $numbers = [];
             $path = $data['file']->getRealPath();
-            $file = fopen($path, 'r');
-            if ($file !== false) {
-                while (($line = fgetcsv($file)) !== false) {
-                    foreach ($line as $value) {
-                        $trimmed = trim($value);
-                        if (is_numeric($trimmed)) {
-                            $numbers[] = floatval($trimmed);
-                        }
+            $content = file_get_contents($path);
+            
+            // Eliminar BOM (Byte Order Mark) si existe
+            $content = preg_replace('/^\xEF\xBB\xBF/', '', $content);
+            
+            // Dividir por saltos de línea y procesar cada línea
+            $lines = preg_split('/\r\n|\r|\n/', $content);
+            
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if (empty($line)) continue;
+                
+                // Intentar separar por comas, espacios o tabulaciones
+                $values = preg_split('/[,\s\t]+/', $line);
+                
+                foreach ($values as $value) {
+                    $trimmed = trim($value);
+                    if ($trimmed !== '' && is_numeric($trimmed)) {
+                        $numbers[] = floatval($trimmed);
                     }
                 }
-                fclose($file);
             }
         } else {
             // Parse space-separated numbers
@@ -50,9 +60,12 @@ class StatisticsController extends Controller
             $numbers = array_filter(array_map('floatval', $numbers));
         }
 
+        $modo = 0;
+        if(isset($data['varianza']))
+            $modo = $data['varianza'] ? 1 : 0;
+
         try {
             $listaNumeros = $numbers;
-            Log::info('Números recibidos: ' . implode(', ', $listaNumeros));
 
             // 3. GUARDAR VARIABLES (Equivalente al bloque principal de tu 'try')
             
@@ -75,7 +88,7 @@ class StatisticsController extends Controller
             $rango = $valmax - $valmin;
 
             // double varianza = obtenerVarianza(mat,n,promedio)
-            $varianza = $service->obtenerVarianza($listaNumeros, $n, $promedio);
+            $varianza = $service->obtenerVarianza($listaNumeros, $n, $promedio, $modo);
 
             // double desviacionEstandar (Cálculo implícito en tu Java)
             $desviacionEstandar = sqrt($varianza);
