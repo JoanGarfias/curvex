@@ -37,36 +37,23 @@ class StatisticsController extends Controller
             // Eliminar BOM (Byte Order Mark) si existe
             $content = preg_replace('/^\xEF\xBB\xBF/', '', $content);
             
-            Log::info('Contenido del archivo CSV (después de limpiar BOM):', ['content' => $content]);
-            
             // Dividir por saltos de línea y procesar cada línea
             $lines = preg_split('/\r\n|\r|\n/', $content);
             
-            Log::info('Líneas encontradas:', ['lines' => $lines]);
-            
-            foreach ($lines as $index => $line) {
+            foreach ($lines as $line) {
                 $line = trim($line);
                 if (empty($line)) continue;
                 
-                Log::info("Procesando línea {$index}:", ['line' => $line]);
-                
                 // Intentar separar por comas, espacios o tabulaciones
                 $values = preg_split('/[,\s\t]+/', $line);
-                
-                Log::info("Valores separados en línea {$index}:", ['values' => $values]);
                 
                 foreach ($values as $value) {
                     $trimmed = trim($value);
                     if ($trimmed !== '' && is_numeric($trimmed)) {
                         $numbers[] = floatval($trimmed);
-                        Log::info("Valor agregado:", ['value' => floatval($trimmed)]);
-                    } else {
-                        Log::info("Valor ignorado (no numérico o vacío):", ['value' => $trimmed]);
                     }
                 }
             }
-            
-            Log::info('Números finales extraídos del CSV:', ['numbers' => $numbers]);
         } else {
             // Parse space-separated numbers
             $numbers = preg_split('/\s+/', trim($data['values']));
@@ -75,7 +62,6 @@ class StatisticsController extends Controller
 
         try {
             $listaNumeros = $numbers;
-            Log::info('Números recibidos: ' . implode(', ', $listaNumeros));
 
             // 3. GUARDAR VARIABLES (Equivalente al bloque principal de tu 'try')
             
