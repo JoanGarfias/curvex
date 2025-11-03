@@ -6,11 +6,11 @@ export interface Resultado{
     max: number;
     range: number;
     variance: number;
-    standardDeviation: number;
+    standard_deviation: number;
     kurtosis: number;
-    quartiles: number[];
-    deciles: number[];
-    percentiles: number[];
+    cuartiles: Array<Record<number, number>>;
+    deciles: Array<Record<number, number>>;
+    percentiles: Array<Record<number, number>>;
     data: number[];
     frequency_table?: FrequencyTable;
 }

@@ -2,7 +2,7 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { GitGraph, Table2, Download, Loader2, FileSpreadsheet } from "lucide-vue-next"
+import { GitGraph, Table2, Download, Loader2, FileSpreadsheet, ChevronDown, ChevronUp } from "lucide-vue-next"
 import CurvexIcon from '@/icons/CurvexIcon.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import FooterComp from '@/components/FooterComp.vue';
@@ -38,6 +38,22 @@ const decimales = ref<number>(8);
 const chartColor = ref<string>('#4bc0c0'); // Color por defecto (turquesa)
 const isDownloading = ref<boolean>(false);
 const isExporting = ref<boolean>(false);
+const showAllPercentiles = ref<boolean>(false);
+
+// Percentiles importantes para mostrar por defecto (cada 5)
+const keyPercentiles = computed(() => {
+  return resultado.value.percentiles.filter((percentil) => {
+    const key = Number(Object.keys(percentil)[0]);
+    return key % 5 === 0; // Mostrar P5, P10, P15, ... P95
+  });
+});
+
+// Función helper para obtener el valor de un percentil específico
+function getPercentileValue(percentileNumber: number): number | null {
+  if (percentileNumber < 1 || percentileNumber > 99) return null;
+  const percentil = resultado.value.percentiles.find(p => Number(Object.keys(p)[0]) === percentileNumber);
+  return percentil ? Object.values(percentil)[0] : null;
+}
 
 // Función para truncar (cortar) sin redondear
 const truncate = (num: number, decimals: number): string => {
@@ -52,7 +68,7 @@ const minimo = computed(() => truncate(resultado.value.min, Number(decimales.val
 const maximo = computed(() => truncate(resultado.value.max, Number(decimales.value)));
 const rango = computed(() => truncate(resultado.value.range, Number(decimales.value)));
 const varianza = computed(() => truncate(resultado.value.variance, Number(decimales.value)));
-const desviacionEstandar = computed(() => truncate(resultado.value.standardDeviation, Number(decimales.value)));
+const desviacionEstandar = computed(() => truncate(resultado.value.standard_deviation, Number(decimales.value)));
 const curtosis = computed(() => truncate(resultado.value.kurtosis, Number(decimales.value)));
 const datos = resultado.value.data;
 console.log('Datos recibidos:', datos);
@@ -220,7 +236,40 @@ async function exportToExcel() {
       resultado.value.frequency_table.tabla_frecuencias.forEach(row => {
         csvContent += `${row.clase},${row.limite_inferior},${row.limite_superior},${row.marca_de_clase},${row.frecuencia_absoluta},${row.frecuencia_abs_acumulada},${row.frecuencia_relativa_pct},${row.frecuencia_rel_acumulada_pct}\n`;
       });
+      csvContent += '\n';
     }
+    
+    // Medidas de Posición
+    csvContent += 'MEDIDAS DE POSICIÓN\n\n';
+    
+    // Cuartiles
+    csvContent += 'CUARTILES\n';
+    csvContent += 'Cuartil,Valor\n';
+    resultado.value.cuartiles.forEach(cuartil => {
+      const key = Number(Object.keys(cuartil)[0]);
+      const value = Object.values(cuartil)[0];
+      csvContent += `Q${key} (${(key / 4 * 100).toFixed(0)}%),${truncate(value, Number(decimales.value))}\n`;
+    });
+    csvContent += '\n';
+    
+    // Deciles
+    csvContent += 'DECILES\n';
+    csvContent += 'Decil,Valor\n';
+    resultado.value.deciles.forEach(decil => {
+      const key = Number(Object.keys(decil)[0]);
+      const value = Object.values(decil)[0];
+      csvContent += `D${key} (${(key / 10 * 100).toFixed(0)}%),${truncate(value, Number(decimales.value))}\n`;
+    });
+    csvContent += '\n';
+    
+    // Percentiles
+    csvContent += 'PERCENTILES\n';
+    csvContent += 'Percentil,Valor\n';
+    resultado.value.percentiles.forEach(percentil => {
+      const key = Number(Object.keys(percentil)[0]);
+      const value = Object.values(percentil)[0];
+      csvContent += `P${key},${truncate(value, Number(decimales.value))}\n`;
+    });
     
     // Crear un blob con el contenido CSV
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -415,6 +464,127 @@ async function exportToExcel() {
               </table>
             </div>
           </div>
+
+        <!-- Cuartiles, Deciles y Percentiles -->
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+          <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
+            Medidas de Posición
+          </h3>
+
+          <!-- Cuartiles -->
+          <div class="mb-6">
+            <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+              <span class="text-blue-500">📊</span> Cuartiles
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div 
+                v-for="(cuartil, index) in resultado.cuartiles" 
+                :key="index"
+                class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4 text-center shadow-sm hover:shadow-md transition-shadow"
+              >
+                <p class="text-xs uppercase font-semibold text-blue-700 dark:text-blue-400 mb-1">
+                  Q{{ Object.keys(cuartil)[0] }} ({{ (Number(Object.keys(cuartil)[0]) / 4 * 100).toFixed(0) }}%)
+                </p>
+                <p class="text-xl font-bold text-gray-900 dark:text-gray-100">
+                  {{ truncate(Object.values(cuartil)[0], Number(decimales)) }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Deciles -->
+          <div class="mb-6">
+            <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+              <span class="text-green-500">📈</span> Deciles
+            </h4>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-3">
+              <div 
+                v-for="(decil, index) in resultado.deciles" 
+                :key="index"
+                class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg p-3 text-center shadow-sm hover:shadow-md transition-shadow"
+              >
+                <p class="text-xs uppercase font-semibold text-green-700 dark:text-green-400 mb-1">
+                  D{{ Object.keys(decil)[0] }}
+                </p>
+                <p class="text-sm font-bold text-gray-900 dark:text-gray-100">
+                  {{ truncate(Object.values(decil)[0], Number(decimales)) }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Percentiles -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                <span class="text-purple-500">📉</span> Percentiles
+              </h4>
+              <Button
+                variant="ghost"
+                size="sm"
+                @click="showAllPercentiles = !showAllPercentiles"
+                class="text-xs"
+              >
+                {{ showAllPercentiles ? 'Mostrar menos' : 'Ver todos (99)' }}
+                <ChevronDown v-if="!showAllPercentiles" class="ml-1 h-3 w-3" />
+                <ChevronUp v-else class="ml-1 h-3 w-3" />
+              </Button>
+            </div>
+            
+            <!-- Percentiles clave (cada 5) -->
+            <div v-if="!showAllPercentiles" class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-4 shadow-md">
+              <div class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-10 gap-3">
+                <div 
+                  v-for="(percentil, index) in keyPercentiles" 
+                  :key="index"
+                  class="bg-white/60 dark:bg-gray-900/40 rounded-lg p-3 text-center hover:bg-white/90 dark:hover:bg-gray-900/60 transition-colors shadow-sm"
+                >
+                  <p class="text-xs uppercase font-semibold text-purple-700 dark:text-purple-400 mb-1">
+                    P{{ Object.keys(percentil)[0] }}
+                  </p>
+                  <p class="text-sm font-bold text-gray-900 dark:text-gray-100">
+                    {{ truncate(Object.values(percentil)[0], Number(decimales)) }}
+                  </p>
+                </div>
+              </div>
+              <p class="text-xs text-center text-gray-500 dark:text-gray-400 mt-3">
+                Mostrando percentiles cada 5 unidades (P5, P10, P15, ..., P95)
+              </p>
+            </div>
+
+            <!-- Todos los percentiles (tabla compacta) -->
+            <div v-else class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-4 shadow-md">
+              <div class="overflow-x-auto">
+                <table class="w-full text-xs">
+                  <thead class="bg-purple-200/50 dark:bg-purple-800/30">
+                    <tr>
+                      <th class="px-2 py-2 text-left font-semibold text-purple-900 dark:text-purple-200">P</th>
+                      <th v-for="n in 10" :key="n" class="px-2 py-2 text-right font-semibold text-purple-900 dark:text-purple-200">
+                        {{ n - 1 }}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in 10" :key="row" class="border-t border-purple-200/50 dark:border-purple-800/30">
+                      <td class="px-2 py-2 font-semibold text-purple-700 dark:text-purple-400">
+                        {{ (row - 1) * 10 }}
+                      </td>
+                      <td v-for="col in 10" :key="col" class="px-2 py-2 text-right text-gray-900 dark:text-gray-100">
+                        <template v-if="getPercentileValue((row - 1) * 10 + col - 1) !== null">
+                          {{ truncate(getPercentileValue((row - 1) * 10 + col - 1)!, Number(decimales)) }}
+                        </template>
+                        <span v-else class="text-gray-400">-</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="text-xs text-center text-gray-500 dark:text-gray-400 mt-3">
+                Tabla completa: filas representan decenas (0, 10, 20...), columnas representan unidades (0-9)
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

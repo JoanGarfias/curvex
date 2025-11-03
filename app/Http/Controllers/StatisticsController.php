@@ -59,7 +59,10 @@ class StatisticsController extends Controller
             $numbers = preg_split('/\s+/', trim($data['values']));
             $numbers = array_filter(array_map('floatval', $numbers));
         }
-        $modo = $data['varianza'] ? 1 : 0;
+
+        $modo = 0;
+        if(isset($data['varianza']))
+            $modo = $data['varianza'] ? 1 : 0;
 
         try {
             $listaNumeros = $numbers;
