@@ -2,15 +2,6 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-
 import { GitGraph, Table2 } from "lucide-vue-next"
 import CurvexIcon from '@/icons/CurvexIcon.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
@@ -44,6 +35,7 @@ const emit = defineEmits<{
 }>();
 
 const decimales = ref<number>(8);
+const chartColor = ref<string>('#4bc0c0'); // Color por defecto (turquesa)
 
 // Función para truncar (cortar) sin redondear
 const truncate = (num: number, decimals: number): string => {
@@ -71,8 +63,8 @@ const histogramData = computed(() => {
       datasets: [{
         label: 'Frecuencia',
         data: [0],
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-        borderColor: 'rgba(75, 192, 192, 1)',
+        backgroundColor: `${chartColor.value}99`, // Añade transparencia (60%)
+        borderColor: chartColor.value,
         borderWidth: 1,
       }]
     };
@@ -108,8 +100,8 @@ const histogramData = computed(() => {
     datasets: [{
       label: 'Frecuencia',
       data: bins,
-      backgroundColor: 'rgba(75, 192, 192, 0.6)',
-      borderColor: 'rgba(75, 192, 192, 1)',
+      backgroundColor: `${chartColor.value}99`, // Añade transparencia (60%)
+      borderColor: chartColor.value,
       borderWidth: 1,
     }]
   };
@@ -184,19 +176,38 @@ function handleGoBack() {
 
       <!-- Card Principal -->
       <div class="bg-white/80 dark:bg-[#0b0b0b]/80 backdrop-blur rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 md:p-8">
-        <!-- Control de decimales -->
-        <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-          <Label for="decimales" class="text-base font-medium text-gray-700 dark:text-gray-300">
-            Número de decimales
-          </Label>
-          <Input
-            v-model.number="decimales"
-            id="decimales"
-            type="number"
-            min="1"
-            max="8"
-            class="w-24 text-center"
-          />
+        <!-- Controles -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <!-- Control de decimales -->
+          <div class="flex items-center justify-between">
+            <Label for="decimales" class="text-base font-medium text-gray-700 dark:text-gray-300">
+              Número de decimales
+            </Label>
+            <Input
+              v-model.number="decimales"
+              id="decimales"
+              type="number"
+              min="1"
+              max="8"
+              class="w-24 text-center"
+            />
+          </div>
+
+          <!-- Control de color del gráfico -->
+          <div class="flex items-center justify-between">
+            <Label for="chartColor" class="text-base font-medium text-gray-700 dark:text-gray-300">
+              Color del gráfico
+            </Label>
+            <div class="flex items-center gap-2">
+              <Input
+                v-model="chartColor"
+                id="chartColor"
+                type="color"
+                class="w-20 h-10 cursor-pointer"
+              />
+              <span class="text-sm text-gray-500 dark:text-gray-400 font-mono">{{ chartColor }}</span>
+            </div>
+          </div>
         </div>
 
         <!-- Grid de resultados -->
