@@ -34,7 +34,7 @@ import Resultados from '@/components/Resultados.vue';
 const resultados = ref<Resultado | null>(null);
 const showResults = ref(false);
 
-const mode = ref<'file' | 'text'>('file');
+const mode = ref<'file' | 'text'>('text');
 const csvFile = ref<File | null>(null);
 const text = ref('');
 const loading = ref(false);
@@ -198,8 +198,8 @@ function handleGoBack() {
           <SelectContent>
             <SelectGroup>
               <SelectLabel>Modos</SelectLabel>
-              <SelectItem value="file">Archivo CSV</SelectItem>
               <SelectItem value="text">Texto</SelectItem>
+              <SelectItem value="file">Archivo CSV</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>

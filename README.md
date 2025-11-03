@@ -19,7 +19,6 @@ El proyecto está construido utilizando el siguiente stack de tecnologías:
 
 -   **Backend:**
     -   [Laravel](https://laravel.com/) - Framework de PHP para aplicaciones web.
-    -   [Fortify](https://laravel.com/docs/fortify) - Para la autenticación de usuarios.
 -   **Frontend:**
     -   [Vue.js](https://vuejs.org/) - Framework progresivo de JavaScript.
     -   [TypeScript](https://www.typescriptlang.org/) - Superset de JavaScript con tipado estático.
@@ -78,9 +77,6 @@ La aplicación estará disponible en `http://localhost:8000`.
 
 ## Características Principales
 
--   **Autenticación de Usuarios:** Registro, inicio de sesión y recuperación de contraseña.
--   **Autenticación de Dos Factores (2FA):** Para una capa extra de seguridad.
--   **Gestión de Perfil:** Los usuarios pueden actualizar su información personal y contraseña.
 -   **Cálculos Estadísticos:** Módulo para realizar operaciones estadísticas (detallar aquí las operaciones específicas).
 -   **Visualización de Datos:** Gráficas interactivas para representar los resultados.
 -   **Diseño Adaptable:** Interfaz de usuario que se adapta a diferentes tamaños de pantalla.
