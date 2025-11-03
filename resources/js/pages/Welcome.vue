@@ -35,6 +35,7 @@ const resultados = ref<Resultado | null>(null);
 const showResults = ref(false);
 
 const mode = ref<'file' | 'text'>('text');
+const modo_varianza = ref<'0' | '1'>('0');
 const csvFile = ref<File | null>(null);
 const text = ref('');
 const loading = ref(false);
@@ -66,6 +67,12 @@ function analyze() {
     formData.append('file', csvFile.value);
   } else {
     formData.append('values', text.value);
+  }
+
+  if(modo_varianza.value === '1'){
+    formData.append('varianza', "1");
+  } else {
+    formData.append('varianza', "0");
   }
 
   axios.post('/calculate-statistics', formData, {
@@ -203,6 +210,19 @@ function handleGoBack() {
             </SelectGroup>
           </SelectContent>
         </Select>
+
+        <label class="block text-sm font-medium">Tipo de varianza</label>
+        <Select v-model="modo_varianza" class="w-full sm:w-64">
+          <SelectTrigger><SelectValue placeholder="Selecciona el modo de cálculo de varianza" /></SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>Varianzas</SelectLabel>
+              <SelectItem value='0'>Varianza poblacional: Apta para la población total en un conjunto de datos.</SelectItem>
+              <SelectItem value='1'>Varianza muestral: Apta para una muestra de la población total en un conjunto de datos.</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
 
         <!-- Entrada por archivo -->
         <div v-if="mode === 'file'" class="mt-2 w-full">
