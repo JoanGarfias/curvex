@@ -199,17 +199,6 @@ function handleGoBack() {
       <h2 class="text-2xl mb-4">Importar datos</h2>
 
       <div class="grid gap-4">
-      <label class="block text-sm font-medium">Tipo de varianza</label>
-        <Select v-model="modo_varianza" class="w-full sm:w-64">
-          <SelectTrigger><SelectValue placeholder="Selecciona el modo de cálculo de varianza" /></SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Varianzas</SelectLabel>
-              <SelectItem value='0'>Varianza poblacional: Apta para la población total en un conjunto de datos.</SelectItem>
-              <SelectItem value='1'>Varianza muestral: Apta para una muestra de la población total en un conjunto de datos.</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
       
         <label class="block text-sm font-medium">Tipo de entrada</label>
         <Select v-model="mode" class="w-full sm:w-64">
