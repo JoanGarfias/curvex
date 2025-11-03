@@ -21,6 +21,14 @@ Chart.register(...registerables);
 import { ref, toRef, computed } from 'vue';
 import type { Resultado } from '@/types/Resultado';
 
+//Nueva propiedad: Suma total
+const suma = computed(() => {
+  if (!datos || datos.length === 0) return '0';
+  const total = datos.reduce((acc, val) => acc + val, 0);
+  return truncate(total, Number(decimales.value));
+});
+
+
 interface Props{
   resultado: Resultado;
 }
@@ -144,97 +152,97 @@ const histogramOptions = ref({
 
 </script>
 
+
 <template>
-  <Dialog v-model:open="open" @update:open="(val) => !val && handleClose()">
-    <DialogContent :class="showHistogram ? 'sm:max-w-[600px]' : 'sm:max-w-[425px]'" class="max-h-[90vh] flex flex-col">
-      <DialogHeader>
-        <DialogTitle>Resultados</DialogTitle>
-        <DialogDescription>
-          Aquí están los resultados de su análisis.
-        </DialogDescription>
-      </DialogHeader>
+   <Dialog v-model:open="open" @update:open="(val) => !val && handleClose()">
+  <DialogContent
+  class="sm:max-w-[500px] bg-white dark:bg-neutral-900 shadow-xl border border-gray-200 dark:border-gray-700 rounded-2xl p-0 overflow-hidden transition-all duration-300"
+>
+  <div class="p-6 flex flex-col max-h-[90vh]">
+    <!-- Encabezado -->
+    <DialogHeader class="text-center space-y-1 mb-4">
+      <DialogTitle class="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center justify-center gap-2">
+        <GitGraph class="h-6 w-6 text-primary" /> Resultados del Análisis
+      </DialogTitle>
+      <DialogDescription class="text-gray-600 dark:text-gray-400">
+        Aquí están los valores calculados según tus datos.
+      </DialogDescription>
+    </DialogHeader>
 
-      <!-- Contenido con scroll -->
-      <div class="overflow-y-auto flex-1 pr-2">
-        <div class="flex flex-row align-center justify-between">
-          <Label for="decimales">Número de decimales</Label>
-          <Input v-model.number="decimales" class="w-16" id="decimales" type="number" label="Número de decimales" min="1" max="8" />
-        </div>
+    <!-- Contenido scrollable -->
+    <div class="flex-1 overflow-y-auto pr-2">
+      <div class="flex items-center justify-between mb-4">
+        <Label for="decimales" class="text-sm text-gray-700 dark:text-gray-300">Número de decimales</Label>
+        <Input
+          v-model.number="decimales"
+          id="decimales"
+          type="number"
+          min="1"
+          max="8"
+          class="w-20 text-center"
+        />
+      </div>
 
-        <div class="grid gap-4 py-4">
-          <div class="grid grid-cols-2 items-center gap-4">
-            <Label for="promedio">Promedio</Label>
-            <Input id="promedio" type="text" :value="promedio" :defaultValue="promedio" readonly />
-          </div>
-          <div class="grid grid-cols-2 items-center gap-4">
-            <Label for="valmin">Suma</Label>
-            <Input id="valmin" type="text" :value="suma" :defaultValue="suma" readonly />
-          </div>
-          <div class="grid grid-cols-2 items-center gap-4">
-            <Label for="valmin">Valor Mínimo</Label>
-            <Input id="valmin" type="text" :value="minimo" :defaultValue="minimo" readonly />
-          </div>
-          <div class="grid grid-cols-2 items-center gap-4">
-            <Label for="valmax">Valor Máximo</Label>
-            <Input id="valmax" type="text" :value="maximo" :defaultValue="maximo" readonly />
-          </div>
-          <div class="grid grid-cols-2 items-center gap-4">
-            <Label for="rango">Rango</Label>
-            <Input id="rango" type="text" :value="rango" :defaultValue="rango" readonly />
-          </div>
-          <div class="grid grid-cols-2 items-center gap-4">
-            <Label for="varianza">Varianza</Label>
-            <Input id="varianza" type="text" :value="varianza" :defaultValue="varianza" readonly />
-          </div>
-          <div class="grid grid-cols-2 items-center gap-4">
-            <Label for="desviacionEstandar">Desviación Estándar</Label>
-            <Input id="desviacionEstandar" type="text" :value="desviacionEstandar" :defaultValue="desviacionEstandar" readonly />
-          </div>
-          <div class="grid grid-cols-2 items-center gap-4">
-            <Label for="curtosis">Curtosis</Label>
-            <Input id="curtosis" type="text" :value="curtosis" :defaultValue="curtosis" readonly />
-          </div>
-        </div>
-        
-        <!-- Sección del histograma -->
-        <div v-if="showHistogram" class="mt-4">
-          <div class="border-t pt-4">
-            <h3 class="text-lg font-semibold mb-3">Histograma de Frecuencias</h3>
-            <div class="w-full h-64">
-              <BarChart 
-                :chartData="histogramData" 
-                :options="histogramOptions" 
-              />
-            </div>
-          </div>
+      <!-- Grid de resultados -->
+      <div class="grid grid-cols-2 gap-3 mt-2">
+        <!-- Tarjetas estadísticas -->
+        <div v-for="(valor, nombre) in {
+          suma: suma,
+          Promedio: promedio,
+          'Valor Mínimo': minimo,
+          'Valor Máximo': maximo,
+          Rango: rango,
+          Varianza: varianza,
+          'Desviación Estándar': desviacionEstandar,
+          Curtosis: curtosis
+        }" :key="nombre"
+          class="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3 text-center shadow-sm col-span-1"
+          :class="'col-span-1'">
+          <p class="text-xs uppercase text-gray-500 dark:text-gray-400">{{ nombre }}</p>
+          <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ valor }}</p>
         </div>
       </div>
 
-      <DialogFooter>
-        <Button 
-          type="button" 
-          variant="outline" 
-          class="w-full" 
+      <!-- Histograma -->
+      <transition name="fade">
+        <div v-if="showHistogram" class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-lg font-semibold text-primary flex items-center gap-2">
+              <GitGraph class="h-5 w-5" /> Histograma de Frecuencias
+            </h3>
+            <Button variant="ghost" size="sm" @click="showHistogram = false">✖</Button>
+          </div>
+          <div class="bg-gray-50 dark:bg-neutral-800 rounded-xl p-4 max-h-86">
+            <BarChart :chartData="histogramData" :options="histogramOptions" class="w-full h-full" />
+          </div>
+        </div>
+      </transition>
+    </div>
+
+    <!-- Footer fijo -->
+    <DialogFooter class="mt-4">
+      <div class="w-full space-y-3">
+        <Button
+          type="button"
+          variant="default"
+          class="w-full flex items-center justify-center gap-2 font-semibold"
           @click="showHistogram = !showHistogram"
           :disabled="!datos || datos.length === 0"
         >
-          <GitGraph class="mr-2 h-4 w-4" /> 
+          <GitGraph class="mr-2 h-4 w-4" />
           {{ showHistogram ? 'Ocultar histograma' : 'Ver histograma' }}
         </Button>
-        
-        <div v-if="errorMessage" class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-300 text-sm">
+
+        <div
+          v-if="errorMessage"
+          class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-300 text-sm"
+        >
           {{ errorMessage }}
         </div>
-
-        <!-- Barra de progreso -->
-        <div v-if="loading" class="mt-3 w-full">
-          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded h-3 overflow-hidden">
-            <div class="h-full bg-primary transition-all animate-pulse"></div>
-          </div>
-          <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-1">Procesando gráfica...</p>
-        </div>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
+      </div>
+    </DialogFooter>
+  </div>
+</DialogContent>
+</Dialog>
 
 </template>
