@@ -59,6 +59,7 @@ class StatisticsController extends Controller
             $numbers = preg_split('/\s+/', trim($data['values']));
             $numbers = array_filter(array_map('floatval', $numbers));
         }
+        $modo = $data['varianza'] ? 1 : 0;
 
         try {
             $listaNumeros = $numbers;
@@ -84,7 +85,7 @@ class StatisticsController extends Controller
             $rango = $valmax - $valmin;
 
             // double varianza = obtenerVarianza(mat,n,promedio)
-            $varianza = $service->obtenerVarianza($listaNumeros, $n, $promedio);
+            $varianza = $service->obtenerVarianza($listaNumeros, $n, $promedio, $modo);
 
             // double desviacionEstandar (Cálculo implícito en tu Java)
             $desviacionEstandar = sqrt($varianza);

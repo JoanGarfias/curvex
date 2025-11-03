@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services;
+use Illuminate\Support\Facades\Log;
 
 class StatisticService
 {
@@ -68,7 +69,7 @@ class StatisticService
      * Calcula la Varianza Poblacional (divide entre 'n').
      * Equivalente a tu función obtenerVarianza().
      */
-    public function obtenerVarianza(array $lista, int $n, float $promedio): float
+    public function obtenerVarianza(array $lista, int $n, float $promedio, int $modo): float
     {
         $res = 0.0;
         foreach ($lista as $valor) {
@@ -77,7 +78,13 @@ class StatisticService
         
         if ($n === 0) return 0.0; // Evitar división por cero
         
-        return $res / $n; // Varianza Poblacional
+        if($modo == 1){
+            Log::info('Varianza muestral');
+            return $res / ($n - 1); // Varianza muestral
+        }else{
+            Log::info('Varianza Poblacional');
+            return $res / $n; // Varianza Poblacional
+        }
     }
 
         /**
