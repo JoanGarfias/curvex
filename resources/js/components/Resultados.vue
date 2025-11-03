@@ -2,7 +2,8 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { GitGraph, Table2, Download, Loader2, FileSpreadsheet, ChevronDown, ChevronUp } from "lucide-vue-next"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { GitGraph, Table2, Download, Loader2, FileSpreadsheet, ChevronDown, ChevronUp, Info } from "lucide-vue-next"
 import CurvexIcon from '@/icons/CurvexIcon.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import FooterComp from '@/components/FooterComp.vue';
@@ -377,28 +378,51 @@ async function exportToExcel() {
         <!-- Grid de resultados -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <!-- Tarjetas estadísticas -->
-          <div v-for="(valor, nombre) in {
-            Suma: suma,
-            Promedio: promedio,
-            'Valor Mínimo': minimo,
-            'Valor Máximo': maximo,
-            Rango: rango,
-            Varianza: varianza,
-            'Desviación Estándar': desviacionEstandar,
-            Curtosis: curtosis
-          }" :key="nombre"
-            class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-neutral-800 dark:to-neutral-900 rounded-xl p-4 text-center shadow-sm hover:shadow-md transition-shadow">
-            <p class="text-xs uppercase font-semibold text-gray-500 dark:text-gray-400 mb-1">{{ nombre }}</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ valor }}</p>
-          </div>
+          <TooltipProvider>
+            <Tooltip v-for="(item, nombre) in [
+              { label: 'Suma', value: suma, tooltip: 'Suma total de todos los valores en el conjunto de datos.' },
+              { label: 'Promedio', value: promedio, tooltip: 'Valor medio aritmético. Se calcula sumando todos los valores y dividiendo entre la cantidad total.' },
+              { label: 'Valor Mínimo', value: minimo, tooltip: 'El valor más pequeño encontrado en el conjunto de datos.' },
+              { label: 'Valor Máximo', value: maximo, tooltip: 'El valor más grande encontrado en el conjunto de datos.' },
+              { label: 'Rango', value: rango, tooltip: 'Diferencia entre el valor máximo y el mínimo. Indica la dispersión de los datos.' },
+              { label: 'Varianza', value: varianza, tooltip: 'Medida de dispersión que indica qué tan alejados están los datos del promedio. Varianza poblacional.' },
+              { label: 'Desviación Estándar', value: desviacionEstandar, tooltip: 'Raíz cuadrada de la varianza. Indica la dispersión promedio de los datos respecto a la media.' },
+              { label: 'Curtosis', value: curtosis, tooltip: 'Mide el grado de concentración de los datos alrededor de la media. Curtosis > 0 indica distribución leptocúrtica (pico alto), < 0 platicúrtica (pico bajo).' }
+            ]" :key="nombre">
+              <TooltipTrigger as-child>
+                <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-neutral-800 dark:to-neutral-900 rounded-xl p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-help">
+                  <div class="flex items-center justify-center gap-1 mb-1">
+                    <p class="text-xs uppercase font-semibold text-gray-500 dark:text-gray-400">{{ item.label }}</p>
+                    <Info class="h-3 w-3 text-gray-400 dark:text-gray-500" />
+                  </div>
+                  <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ item.value }}</p>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent class="max-w-xs">
+                <p class="text-sm">{{ item.tooltip }}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         <!-- Histograma -->
         <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-              <GitGraph class="h-6 w-6 text-primary" /> Histograma de Frecuencias
-            </h3>
+            <div class="flex items-center gap-2">
+              <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <GitGraph class="h-6 w-6 text-primary" /> Histograma de Frecuencias
+              </h3>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger as-child>
+                    <Info class="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent class="max-w-sm">
+                    <p class="text-sm">El histograma muestra la distribución de frecuencias de los datos agrupados en intervalos. La altura de cada barra representa cuántos valores caen en ese rango. Útil para identificar patrones y la forma de la distribución.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -418,10 +442,20 @@ async function exportToExcel() {
 
         <!-- Tabla de Frecuencias -->
         <div v-if="resultado.frequency_table" class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
-          <div class="mb-4">
+          <div class="mb-4 flex items-center gap-2">
             <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <Table2 class="h-6 w-6 text-primary" /> Tabla de Frecuencias
             </h3>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <Info class="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent class="max-w-sm">
+                  <p class="text-sm">La tabla de frecuencias organiza los datos en intervalos (clases) y muestra cuántos valores caen en cada uno. Incluye frecuencias absolutas, acumuladas, relativas y relativas acumuladas en porcentaje.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
             
             <!-- Info de intervalos -->
@@ -435,14 +469,110 @@ async function exportToExcel() {
               <table class="w-full">
                 <thead class="bg-gray-200 dark:bg-neutral-700">
                   <tr>
-                    <th class="px-4 py-3 text-left font-semibold">Clase</th>
-                    <th class="px-4 py-3 text-right font-semibold">Lím. Inf.</th>
-                    <th class="px-4 py-3 text-right font-semibold">Lím. Sup.</th>
-                    <th class="px-4 py-3 text-right font-semibold">Marca</th>
-                    <th class="px-4 py-3 text-right font-semibold">Frec. Abs.</th>
-                    <th class="px-4 py-3 text-right font-semibold">Frec. Acum.</th>
-                    <th class="px-4 py-3 text-right font-semibold">Frec. Rel. %</th>
-                    <th class="px-4 py-3 text-right font-semibold">Frec. Rel. Acum. %</th>
+                    <th class="px-4 py-3 text-left font-semibold">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger as-child>
+                            <span class="cursor-help flex items-center gap-1">
+                              Clase
+                              <Info class="h-3 w-3 text-gray-500" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent><p class="text-xs">Identificador del intervalo</p></TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </th>
+                    <th class="px-4 py-3 text-right font-semibold">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger as-child>
+                            <span class="cursor-help flex items-center justify-end gap-1">
+                              Lím. Inf.
+                              <Info class="h-3 w-3 text-gray-500" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent><p class="text-xs">Límite inferior del intervalo</p></TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </th>
+                    <th class="px-4 py-3 text-right font-semibold">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger as-child>
+                            <span class="cursor-help flex items-center justify-end gap-1">
+                              Lím. Sup.
+                              <Info class="h-3 w-3 text-gray-500" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent><p class="text-xs">Límite superior del intervalo</p></TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </th>
+                    <th class="px-4 py-3 text-right font-semibold">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger as-child>
+                            <span class="cursor-help flex items-center justify-end gap-1">
+                              Marca
+                              <Info class="h-3 w-3 text-gray-500" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent><p class="text-xs">Punto medio del intervalo (promedio entre límites)</p></TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </th>
+                    <th class="px-4 py-3 text-right font-semibold">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger as-child>
+                            <span class="cursor-help flex items-center justify-end gap-1">
+                              Frec. Abs.
+                              <Info class="h-3 w-3 text-gray-500" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent><p class="text-xs">Cantidad de datos en este intervalo</p></TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </th>
+                    <th class="px-4 py-3 text-right font-semibold">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger as-child>
+                            <span class="cursor-help flex items-center justify-end gap-1">
+                              Frec. Acum.
+                              <Info class="h-3 w-3 text-gray-500" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent><p class="text-xs">Suma acumulada de frecuencias hasta este intervalo</p></TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </th>
+                    <th class="px-4 py-3 text-right font-semibold">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger as-child>
+                            <span class="cursor-help flex items-center justify-end gap-1">
+                              Frec. Rel. %
+                              <Info class="h-3 w-3 text-gray-500" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent><p class="text-xs">Porcentaje que representa este intervalo del total</p></TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </th>
+                    <th class="px-4 py-3 text-right font-semibold">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger as-child>
+                            <span class="cursor-help flex items-center justify-end gap-1">
+                              Frec. Rel. Acum. %
+                              <Info class="h-3 w-3 text-gray-500" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent><p class="text-xs">Porcentaje acumulado hasta este intervalo</p></TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -467,15 +597,39 @@ async function exportToExcel() {
 
         <!-- Cuartiles, Deciles y Percentiles -->
         <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
-          <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
-            Medidas de Posición
-          </h3>
+          <div class="flex items-center gap-2 mb-6">
+            <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+              Medidas de Posición
+            </h3>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <Info class="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent class="max-w-sm">
+                  <p class="text-sm">Las medidas de posición dividen el conjunto de datos en partes iguales. Ayudan a entender cómo se distribuyen los valores y a identificar percentiles específicos.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
 
           <!-- Cuartiles -->
           <div class="mb-6">
-            <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
-              <span class="text-blue-500">📊</span> Cuartiles
-            </h4>
+            <div class="flex items-center gap-2 mb-3">
+              <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                <span class="text-blue-500">📊</span> Cuartiles
+              </h4>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger as-child>
+                    <Info class="h-4 w-4 text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent class="max-w-xs">
+                    <p class="text-sm">Los cuartiles dividen los datos en 4 partes iguales. Q1 (25%) es el valor por debajo del cual está el 25% de los datos, Q2 (50%) es la mediana, y Q3 (75%) deja el 75% de los datos por debajo.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div 
                 v-for="(cuartil, index) in resultado.cuartiles" 
@@ -494,9 +648,21 @@ async function exportToExcel() {
 
           <!-- Deciles -->
           <div class="mb-6">
-            <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
-              <span class="text-green-500">📈</span> Deciles
-            </h4>
+            <div class="flex items-center gap-2 mb-3">
+              <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                <span class="text-green-500">📈</span> Deciles
+              </h4>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger as-child>
+                    <Info class="h-4 w-4 text-green-400 hover:text-green-600 dark:hover:text-green-300 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent class="max-w-xs">
+                    <p class="text-sm">Los deciles dividen los datos en 10 partes iguales. D1 (10%) es el valor por debajo del cual está el 10% de los datos, D5 (50%) es la mediana, y así sucesivamente hasta D9 (90%).</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-3">
               <div 
                 v-for="(decil, index) in resultado.deciles" 
@@ -516,9 +682,21 @@ async function exportToExcel() {
           <!-- Percentiles -->
           <div>
             <div class="flex items-center justify-between mb-3">
-              <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-                <span class="text-purple-500">📉</span> Percentiles
-              </h4>
+              <div class="flex items-center gap-2">
+                <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                  <span class="text-purple-500">📉</span> Percentiles
+                </h4>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger as-child>
+                      <Info class="h-4 w-4 text-purple-400 hover:text-purple-600 dark:hover:text-purple-300 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent class="max-w-xs">
+                      <p class="text-sm">Los percentiles dividen los datos en 100 partes iguales. P25 indica que el 25% de los datos está por debajo de ese valor. Los percentiles son útiles para identificar posiciones específicas en la distribución.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
