@@ -14,7 +14,8 @@
         "laravel/fortify": "^1.30",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
-        "laravel/wayfinder": "^0.1.9"
+        "laravel/wayfinder": "^0.1.9",
+        "markrogoyski/math-php": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -40,6 +41,7 @@
     },
     "scripts": {
         "setup": [
+            "composer require markrogoyski/math-php",
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate",
