@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use MathPHP\Probability\Distribution\Continuous\StudentT;
+use MathPHP\Probability\Distribution\Continuous\StandardNormal;
 use Exception; // Para el try-catch general
 
 use App\Services\StatisticService;
@@ -71,6 +72,9 @@ class CorreccionStatisticsController extends Controller
             if(isset($data['infinito']))
                 $modo = $data['infinito'] ? 1 : 0;
 
+            if(isset($data['modovarianza']))
+                $modovarianza = $data['modovarianza'] ? 1 : 0;
+
             $cantdatos = 0;
             if(isset($data['cantdatos']))
                 $cantdatos = $data['cantdatos'] ? $data['cantdatos'] : 0;
@@ -102,6 +106,8 @@ class CorreccionStatisticsController extends Controller
 
             if($modo == 0){ 
             //sin infinito (paso 2 ejercicio)
+            if($modovarianza == 1){
+                //No se usan datos de una muestra
                 if($cantdatoscorregido < 0){
                     return response()->json(['message' => 'Ocurrió un error.', 'error' => "La cantidad de la muestra corregida de datos debe ser mayor a cero. Ingresa otro total de datos en la muestra corregida."], 500);
                 }
@@ -111,13 +117,27 @@ class CorreccionStatisticsController extends Controller
                 }
 
                 $alpha = 1 - ($confiabilidad/100);
-                $distribution = new StudentT($cantdatoscorregido-1);
-                $valorCritico = $distribution->inverse2Tails(($alpha));
+                
 
                 $varianza2 = ((($cantdatos - $cantdatoscorregido)/$cantdatos)*(($varianzanueva)/$cantdatoscorregido));
                 $desviacion2 = sqrt($varianza2);
+                $valorCritico = 0;
 
-                $limite = $desviacion2 * $valorCritico;
+                if($cantdatoscorregido <= 30){
+                    //Se saca la t
+                    $distribution = new StudentT($cantdatoscorregido-1);
+                    $valorCritico = $distribution->inverse2Tails(($alpha));
+                    $limite = $desviacion2 * $valorCritico;
+                }else{
+                    //Se saca la z
+                    $distribution = new StandardNormal();
+                    $alpha_half = (1 - ($confiabilidad / 100)) / 2;
+                    $p_acumulada_positiva = 1 - $alpha_half; // Ej: 1 - 0.025 = 0.975
+                    $valorCritico = $distribution->inverse($p_acumulada_positiva); 
+                    $limite = $desviacion2 * $valorCritico;
+                    $alpha = $alpha_half;
+                }
+                
 
                 $resultados = [
                     'variance' => $varianzanueva, // Varianza poblacional
@@ -126,8 +146,61 @@ class CorreccionStatisticsController extends Controller
                     'variance2' => $varianza2, // Varianza poblacional
                     'desviacion2' => $desviacion2,
                     'limite' => $limite,
-                    'promedio' => $promedionuevo,   
+                    'promedio' => $promedionuevo,
+                    'cosa' => ($cantdatoscorregido>=30? 'Distribución Normal Estándar' : 'Distribución T'),   
                 ];
+            }else{
+                //Se usan datos de una muestra
+                $listaNumeros = $numbers;
+
+                // int n = obtenerCantNumeros(...)
+                $n = count($listaNumeros);
+
+                if($n >= $cantdatos){
+                    return response()->json(['message' => 'Ocurrió un error.', 'error' => "La cantidad de la muestra de datos es mayor al total ingresado de datos. Ingresa otro total o coloca menos datos en la muestra."], 500);
+                }
+
+                // double promedio = promedio(mat, n)
+                $promedio = $service->promedio($listaNumeros, $n);
+
+                // double varianza = obtenerVarianza(mat,n,promedio)
+                $varianza = $service->obtenerVarianza($listaNumeros, $n, $promedio, 1);
+
+                $alpha = 1 - ($confiabilidad/100);
+                
+                $cantdatoscorregido = $n;
+                $varianza2 = ((($cantdatos - $cantdatoscorregido)/$cantdatos)*(($varianzanueva)/$cantdatoscorregido));
+                $desviacion2 = sqrt($varianza2);
+                $valorCritico = 0;
+
+                if($cantdatoscorregido <= 30){
+                    //Se saca la t
+                    $distribution = new StudentT($cantdatoscorregido-1);
+                    $valorCritico = $distribution->inverse2Tails(($alpha));
+                    $limite = $desviacion2 * $valorCritico;
+                }else{
+                    //Se saca la z
+                    $distribution = new StandardNormal();
+                    $alpha_half = (1 - ($confiabilidad / 100)) / 2;
+                    $p_acumulada_positiva = 1 - $alpha_half; // Ej: 1 - 0.025 = 0.975
+                    $valorCritico = $distribution->inverse($p_acumulada_positiva); 
+                    $limite = $desviacion2 * $valorCritico;
+                    $alpha = $alpha_half;
+                }
+                
+
+                $resultados = [
+                    'variance' => $varianzanueva, // Varianza poblacional
+                    'alpha' => $alpha, // Nueva: tabla de frecuencias
+                    'valor_critico' => $valorCritico, // Nueva: tabla de frecuencias
+                    'variance2' => $varianza2, // Varianza poblacional
+                    'desviacion2' => $desviacion2,
+                    'limite' => $limite,
+                    'promedio' => $promedionuevo,
+                    'cosa' => ($cantdatoscorregido>=30? 'Distribución Normal Estándar' : 'Distribución T'),   
+                ];
+            }
+                
             }else if($modo == 1){ 
             //con infinito (paso 1 ejercicio)
                 

@@ -30,14 +30,16 @@ class StatisticsCorreccionRequest extends FormRequest
             'values' => [/*'required_without:file',*/ 'nullable', 'string', new NumberList()],
             'infinito' => 'boolean',
             //modo 0 (infinito)
-            'error' => ['required_without:varianza', 'numeric'],
+            'error' => ['required_without:modovarianza', 'numeric'],
             //modo 1 (no infinito)
-            'cantdatoscorregido' => ['required_without:values', 'integer'],
-            'varianza' => ['required_without:values', 'numeric'],
-            'promedio' => ['required_without:values', 'numeric'],
+            'cantdatoscorregido' => ['nullable', 'integer'],
+            'varianza' => ['nullable', 'numeric'],
+            'promedio' => ['nullable', 'numeric'],
+            'modovarianza' => ['required_without:error', 'boolean'],
             //usado en ambos
             'cantdatos' => 'integer',
             'confiabilidad' => 'integer',
+            
         ];
     }
 

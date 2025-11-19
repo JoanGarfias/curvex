@@ -50,20 +50,29 @@ const cantdatos = ref('');
 const confiabilidad = ref('');
 const loading = ref(false);
 const errorMessage = ref('');
+const modovarianza = ref<'0' | '1'>('0');
 
 // Validación para el bloque de Muestra Finita (Bloque 1)
 const isForm1Valid = computed(() => {
-  return varianza.value.trim() !== '' && 
-         promedio.value.trim() !== '' && 
-         cantdatos.value.trim() !== '' &&
-         cantdatoscorregido.value.trim() !== '';
+  if(modovarianza.value === '1'){
+    return varianza.value.trim() !== '' && 
+          promedio.value.trim() !== '' && 
+          cantdatos.value.trim() !== '' &&
+          confiabilidad.value.trim() !== '' &&
+          cantdatoscorregido.value.trim() !== '';
+  }else{
+    return cantdatos.value.trim() !== '' &&
+         confiabilidad.value.trim() !== '' &&
+         text.value.trim();
+  }
 });
 
 // Validación para el bloque de Muestra Infinita (Bloque 2)
 const isForm2Valid = computed(() => {
   return text.value.trim() !== '' && 
          error.value.trim() !== '' && 
-         confiabilidad.value.trim() !== '';
+         confiabilidad.value.trim() !== '' && 
+         cantdatos.value.trim() !== '';
 });
 
 function analyze() {
@@ -91,13 +100,20 @@ function analyze() {
     formData.append('error', error.value);
   } else {
     formData.append('infinito', '0');
-    formData.append('confiabilidad', confiabilidad.value);
-    formData.append('cantdatos', cantdatos.value);
-    formData.append('cantdatoscorregido', cantdatoscorregido.value);
-    formData.append('varianza', varianza.value);
-    formData.append('promedio', promedio.value);
+    formData.append('modovarianza', modovarianza.value);
+    if(modovarianza.value === '1'){
+      formData.append('confiabilidad', confiabilidad.value);
+      formData.append('cantdatos', cantdatos.value);
+      formData.append('cantdatoscorregido', cantdatoscorregido.value);
+      formData.append('varianza', varianza.value);
+      formData.append('promedio', promedio.value);
+    }else{
+      formData.append('confiabilidad', confiabilidad.value);
+      formData.append('cantdatos', cantdatos.value);
+      formData.append('values', text.value);
+    }
+    
   }
-  console.log(infinito.value);
   axios.post('/correct-frequency', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
@@ -139,6 +155,7 @@ function analyze() {
             valor_critico: data.valor_critico,
             limite: data.limite,
             promedio: data.promedio,
+            cosa: data.cosa,
         };
 
         showResults.value = true;
@@ -244,8 +261,9 @@ function handleGoBack() {
         </Select>
       </div>
 
-        <div v-if="infinito === '1'" class="mt-2 w-full">
+        <div v-if="infinito === '1'" class="mt-2 w-full grid gap-4 w-full min-w-0 space-y-2">
         <!-- Modo finito. Lo se me equivoque y esta al reves pero ya seria un rollo cambiarlo. Por que estas leyendo esto jajaja-->
+          <div class="w-full min-w-0 space-y-2">
             <label class="block text-sm font-medium mb-2">
                 Escribe tu cantidad de datos totales
                 <TooltipProvider>
@@ -268,8 +286,36 @@ function handleGoBack() {
                     text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-[#9a9563]
                     resize-none"
             ></Textarea>
+          </div>
 
-            <label class="block text-sm font-medium mb-2">
+            <div class="grid gap-4 w-full min-w-0 space-y-2">
+              <div class="w-full min-w-0 space-y-2">
+                <label class="block text-sm font-medium">Ingreso de datos de la muestra corregida</label>
+                <Select v-model="modovarianza">
+                  <SelectTrigger class="w-full min-w-0"><SelectValue placeholder="Selecciona el modo para ingresar los datos de la muestra corregida" /></SelectTrigger>
+                  <SelectContent class="w-full max-w-[calc(100vw-2rem)]">
+                    <SelectGroup>
+                      <SelectLabel>Modo</SelectLabel>
+                      <SelectItem value='0'>
+                        <div class="flex flex-col py-1">
+                          <span class="font-medium text-sm">Ingreso de datos manualmente</span>
+                          <span class="text-xs text-gray-500 dark:text-gray-400"> : Escribe tus números separados por espacios, no pueden haber más números que la cantidad de datos totales, ingresada en el recuadro de arriba.</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value='1'>
+                        <div class="flex flex-col py-1">
+                          <span class="font-medium text-sm">Datos fijos de promedio, cantidad y varianza</span>
+                          <span class="text-xs text-gray-500 dark:text-gray-400"> : Útil si no cuentas con todos los datos de la muestra. Ingresa por separado la cantidad de datos, el promedio y la varianza.</span>
+                        </div>
+                      </SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+            
+
+            <div v-if="modovarianza === '1'" class="w-full min-w-0 space-y-2">
+              <label class="block text-sm font-medium mb-2">
                 Escribe tu cantidad de datos de la muestra corregida
                 <TooltipProvider>
                 <Tooltip>
@@ -280,7 +326,6 @@ function handleGoBack() {
                 </Tooltip>
                 </TooltipProvider>
             </label>
-
             <Textarea
                 v-model="cantdatoscorregido"
                 rows="1"
@@ -303,7 +348,6 @@ function handleGoBack() {
                 </Tooltip>
                 </TooltipProvider>
             </label>
-
             <Textarea
                 v-model="varianza"
                 rows="1"
@@ -326,7 +370,6 @@ function handleGoBack() {
                 </Tooltip>
                 </TooltipProvider>
             </label>
-
             <Textarea
                 v-model="promedio"
                 rows="1"
@@ -337,29 +380,57 @@ function handleGoBack() {
                     text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-[#9a9563]
                     resize-none"
             ></Textarea>
+            </div>
 
-            <label class="block text-sm font-medium mb-2">
-                Escribe tu confiabilidad en una escala de 0 a 100
+            <div v-else class="w-full min-w-0 space-y-2 ">
+
+              <label class="block text-sm font-medium mb-2">
+                Pega o escribe los datos de tu muestra
                 <TooltipProvider>
-                <Tooltip>
+                  <Tooltip>
                     <TooltipTrigger as-child>
-                    <Info class="inline-block ml-1 h-4 w-4 text-gray-400 cursor-pointer" />
+                      <Info class="inline-block ml-1 h-4 w-4 text-gray-400 cursor-pointer" />
                     </TooltipTrigger>
-                    <TooltipContent><p>La confiabilidad del proceso, de una escala de 0 a 100.</p></TooltipContent>
-                </Tooltip>
+                    <TooltipContent><p>Escribe tus números separados por espacios, no pueden haber más números que la cantidad de datos totales, ingresada en el recuadro de abajo.</p></TooltipContent>
+                  </Tooltip>
                 </TooltipProvider>
-            </label>
-
-            <Textarea
-                v-model="confiabilidad"
-                rows="1"
-                placeholder="Ejemplo: 95, para representar 95%"
+                  </label>
+              <Textarea
+                v-model="text"
+                rows="4"
+                placeholder="Ejemplo: 6 7 9 8 5 4 7 8 7 6"
                 class="w-full rounded-md border px-3 py-2 bg-transparent 
-                    placeholder:text-gray-500 dark:placeholder:text-gray-400
-                    text-sm sm:text-base
-                    text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-[#9a9563]
-                    resize-none"
-            ></Textarea>
+                      placeholder:text-gray-500 dark:placeholder:text-gray-400
+                      text-sm sm:text-base
+                      text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-[#9a9563]
+                      resize-none"
+              ></Textarea>
+            </div>
+
+            
+            <div class="w-full min-w-0 space-y-2">
+              <label class="block text-sm font-medium mb-2">
+                  Escribe tu confiabilidad en una escala de 0 a 100
+                  <TooltipProvider>
+                  <Tooltip>
+                      <TooltipTrigger as-child>
+                      <Info class="inline-block ml-1 h-4 w-4 text-gray-400 cursor-pointer" />
+                      </TooltipTrigger>
+                      <TooltipContent><p>La confiabilidad del proceso, de una escala de 0 a 100.</p></TooltipContent>
+                  </Tooltip>
+                  </TooltipProvider>
+              </label>
+              <Textarea
+                  v-model="confiabilidad"
+                  rows="1"
+                  placeholder="Ejemplo: 95, para representar 95%"
+                  class="w-full rounded-md border px-3 py-2 bg-transparent 
+                      placeholder:text-gray-500 dark:placeholder:text-gray-400
+                      text-sm sm:text-base
+                      text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-[#9a9563]
+                      resize-none"
+              ></Textarea>
+            </div>
 
           <div v-if="errorMessage" class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-400 text-xs sm:text-sm">
             {{ errorMessage }}
@@ -368,11 +439,13 @@ function handleGoBack() {
           <Button @click="analyze" :disabled="loading || !isForm1Valid" class="mt-4 w-full text-sm sm:text-base py-5 sm:py-6 h-auto">
             {{ loading ? 'Procesando...' : 'Analizar' }}
           </Button>
+          </div>
         </div>
 
         
-        <div v-else class="mt-2 w-full">
+        <div v-else class="mt-2 w-full grid gap-4 w-full min-w-0 space-y-2">
         <!-- Modo infinito -->
+         <div class="w-full min-w-0 space-y-2">
           <label class="block text-sm font-medium mb-2">
             Pega o escribe los datos de tu muestra
             <TooltipProvider>
@@ -384,7 +457,6 @@ function handleGoBack() {
               </Tooltip>
             </TooltipProvider>
           </label>
-
           <Textarea
             v-model="text"
             rows="4"
@@ -395,7 +467,9 @@ function handleGoBack() {
                    text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-[#9a9563]
                    resize-none"
           ></Textarea>
+          </div>
 
+          <div class="w-full min-w-0 space-y-2">
           <label class="block text-sm font-medium mb-2">
             Escribe tu cantidad de datos totales
             <TooltipProvider>
@@ -407,7 +481,6 @@ function handleGoBack() {
               </Tooltip>
             </TooltipProvider>
           </label>
-
           <Textarea
             v-model="cantdatos"
             rows="1"
@@ -418,7 +491,9 @@ function handleGoBack() {
                    text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-[#9a9563]
                    resize-none"
           ></Textarea>
+          </div>
 
+          <div class="w-full min-w-0 space-y-2">
           <label class="block text-sm font-medium mb-2">
             Escribe tu confiabilidad en una escala de 0 a 100
             <TooltipProvider>
@@ -430,7 +505,6 @@ function handleGoBack() {
               </Tooltip>
             </TooltipProvider>
           </label>
-
           <Textarea
             v-model="confiabilidad"
             rows="1"
@@ -441,7 +515,9 @@ function handleGoBack() {
                    text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-[#9a9563]
                    resize-none"
           ></Textarea>
+          </div>
 
+          <div class="w-full min-w-0 space-y-2">
           <label class="block text-sm font-medium mb-2">
             Escribe tu error
             <TooltipProvider>
@@ -453,7 +529,6 @@ function handleGoBack() {
               </Tooltip>
             </TooltipProvider>
           </label>
-
           <Textarea
             v-model="error"
             rows="1"
@@ -464,6 +539,7 @@ function handleGoBack() {
                    text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-[#9a9563]
                    resize-none"
           ></Textarea>
+          </div>
 
           <div v-if="errorMessage" class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-400 text-xs sm:text-sm">
             {{ errorMessage }}

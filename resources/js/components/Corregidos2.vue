@@ -46,6 +46,7 @@ const valor_critico = computed(() => truncate(resultado.value.valor_critico, Num
 const varianzacorregida = computed(() => truncate(resultado.value.variance2, Number(decimales.value)));
 const desviacion = computed(() => truncate(resultado.value.desviacion2, Number(decimales.value)));
 const promedio = computed(() => truncate(resultado.value.promedio, Number(decimales.value)));
+const cosa = resultado.value.cosa;
 console.log('Datos recibidos:', resultado);
 
 
@@ -135,7 +136,7 @@ function handleGoBack() {
     tooltip: 'Nivel de significancia estadística utilizado para calcular los intervalos de confianza.' 
   },
   { 
-    label: 'Valor crítico', 
+    label: cosa, 
     value: valor_critico, 
     tooltip: 'Punto de corte en la distribución estadística (T) necesario para construir el intervalo de confianza.' 
   },
