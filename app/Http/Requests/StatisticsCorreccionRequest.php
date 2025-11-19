@@ -26,8 +26,8 @@ class StatisticsCorreccionRequest extends FormRequest
     {
         return [
             // Either an uploaded file (Excel/CSV) or a string with numbers is required
-            'file' => ['required_without:values', 'nullable', 'file', 'mimes:xlsx,xls,csv', 'max:5120'], // max 5MB
-            'values' => ['required_without:file', 'nullable', 'string', new NumberList()],
+            'file' => [/*'required_without:values',*/ 'nullable', 'file', 'mimes:xlsx,xls,csv', 'max:5120'], // max 5MB
+            'values' => [/*'required_without:file',*/ 'nullable', 'string', new NumberList()],
             'infinito' => 'boolean',
             //modo 0 (infinito)
             'error' => 'numeric',

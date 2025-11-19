@@ -55,10 +55,14 @@ class CorreccionStatisticsController extends Controller
                     }
                 }
             }
-        } else {
+        } else if(isset($data['values'])){
             // Parse space-separated numbers
             $numbers = preg_split('/\s+/', trim($data['values']));
             $numbers = array_filter(array_map('floatval', $numbers));
+        } else{
+            if(!isset($data['infinito']) || $data['infinito'] == true){
+                return response()->json(['message' => 'Ocurrió un error.', 'error' => "Proporcione valores de la muestra, o cambie el metodo de correccion de varianza para elegir el que usa valores finitos."], 422);
+            }
         }
         
         try {
@@ -84,7 +88,7 @@ class CorreccionStatisticsController extends Controller
             }
 
             $cantdatoscorregido = 0;
-            if(isset($data['$cantdatoscorregido']))
+            if(isset($data['cantdatoscorregido']))
                 $cantdatoscorregido = $data['cantdatoscorregido'] ? $data['cantdatoscorregido'] : 0;
 
             $varianzanueva = 0;
@@ -98,19 +102,19 @@ class CorreccionStatisticsController extends Controller
 
             if($modo == 0){ 
             //sin infinito (paso 2 ejercicio)
-                $distribution = new StudentT($cantdatoscorregido-1);
-                $alpha = 1 - ($confiabilidad/100);
-                $valorCritico = $distribution->inverse2Tails(1 - ($alpha / 2));
 
-                $varianza2 = (($cantdatos - $cantdatoscorregido)/$cantdatos)*(($varianzanueva**2)/$cantdatoscorregido);
+                $alpha = 1 - ($confiabilidad/100);
+                $distribution = new StudentT($cantdatoscorregido-1);
+                $valorCritico = $distribution->inverse2Tails(($alpha));
+
+                $varianza2 = ((($cantdatos - $cantdatoscorregido)/$cantdatos)*(($varianzanueva)/$cantdatoscorregido));
                 $desviacion2 = sqrt($varianza2);
 
-                $limite = 0;
+                $limite = $desviacion2 * $valorCritico;
 
                 $resultados = [
                     'variance' => $varianzanueva, // Varianza poblacional
-                    'distribucion' => $distribution, // Nueva: tabla de frecuencias
-                    'alpha_inverso' => $alpha, // Nueva: tabla de frecuencias
+                    'alpha' => $alpha, // Nueva: tabla de frecuencias
                     'valor_critico' => $valorCritico, // Nueva: tabla de frecuencias
                     'variance2' => $varianza2, // Varianza poblacional
                     'desviacion2' => $desviacion2,
@@ -131,21 +135,12 @@ class CorreccionStatisticsController extends Controller
                 // double promedio = promedio(mat, n)
                 $promedio = $service->promedio($listaNumeros, $n);
 
-                // double valmin = valormin(mat, n)
-                $valmin = $service->valormin($listaNumeros, $n); // O simplemente: min($listaNumeros)
-
-                // double valmax = valormax(mat, n)
-                $valmax = $service->valormax($listaNumeros, $n); // O simplemente: max($listaNumeros)
-
-                // double rango = valmax - valmin
-                $rango = $valmax - $valmin;
-
                 // double varianza = obtenerVarianza(mat,n,promedio)
                 $varianza = $service->obtenerVarianza($listaNumeros, $n, $promedio, 1);
 
                 $alpha = 1 - ($confiabilidad/100);
                 $distribution = new StudentT($n-1);
-                $valorCritico = $distribution->inverse2Tails(1 - ($alpha / 2));
+                $valorCritico = $distribution->inverse2Tails(($alpha));
 
                 $h = (($cantdatos*($valorCritico**2))*$varianza) / ((1000*($error**2))+(($valorCritico**2)*$varianza));
 
@@ -155,11 +150,10 @@ class CorreccionStatisticsController extends Controller
                     'count' => $n,
                     'mean' => $promedio,
                     'variance' => $varianza, // Varianza poblacional
-                    'data' => $listaNumeros,
-                    'distribucion' => $distribution, // Nueva: tabla de frecuencias
-                    'alpha_inverso' => $alpha, // Nueva: tabla de frecuencias
+                    'alpha' => $alpha, // Nueva: tabla de frecuencias
                     'valor_critico' => $valorCritico, // Nueva: tabla de frecuencias
                     'h' => $h, // Nueva: tabla de frecuencias
+                    'hreal' => ceil($h),
                 ];
             }
             
