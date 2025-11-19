@@ -4,6 +4,7 @@ import axios from '@/lib/axios';
 
 // Componentes
 import { Head } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import CurvexIcon from '@/icons/CurvexIcon.vue';
@@ -190,6 +191,11 @@ function handleGoBack() {
       <p class="mt-2 sm:mt-3 text-base sm:text-lg text-gray-500 dark:text-gray-400 px-2">
         Arrastra y suelta tus archivos CSV o escribe tu matriz de datos directamente para comenzar.
       </p>
+      <Link href="/correccionvarianza">
+        <Button class="mt-4 w-full text-sm sm:text-base py-5 sm:py-6 h-auto">
+              Si quieres corregir tus datos de varianza a partir de una muestra, da click aqui.
+        </Button>
+      </Link>
     </section>
 
     <!-- Card de controles -->

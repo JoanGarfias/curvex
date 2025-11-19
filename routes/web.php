@@ -16,4 +16,8 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
+Route::get('/correccionvarianza', function () {
+    return Inertia::render('Correccion');
+})->name('correcion de varianza');
+
 // Dashboard and auth-related routes removed intentionally.

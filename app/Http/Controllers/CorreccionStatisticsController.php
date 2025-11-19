@@ -61,7 +61,7 @@ class CorreccionStatisticsController extends Controller
             $numbers = array_filter(array_map('floatval', $numbers));
         } else{
             if(!isset($data['infinito']) || $data['infinito'] == true){
-                return response()->json(['message' => 'Ocurrió un error.', 'error' => "Proporcione valores de la muestra, o cambie el metodo de correccion de varianza para elegir el que usa valores finitos."], 422);
+                return response()->json(['message' => 'Ocurrió un error.', 'error' => "Proporcione valores de la muestra, o cambie el metodo de correccion de varianza."], 422);
             }
         }
         
@@ -102,6 +102,13 @@ class CorreccionStatisticsController extends Controller
 
             if($modo == 0){ 
             //sin infinito (paso 2 ejercicio)
+                if($cantdatoscorregido < 0){
+                    return response()->json(['message' => 'Ocurrió un error.', 'error' => "La cantidad de la muestra corregida de datos debe ser mayor a cero. Ingresa otro total de datos en la muestra corregida."], 500);
+                }
+
+                if($cantdatoscorregido >= $cantdatos){
+                    return response()->json(['message' => 'Ocurrió un error.', 'error' => "La cantidad de la muestra corregida de datos es mayor al total ingresado de datos. Ingresa otro total o coloca un total menor de datos en la muestra corregida."], 500);
+                }
 
                 $alpha = 1 - ($confiabilidad/100);
                 $distribution = new StudentT($cantdatoscorregido-1);
@@ -119,6 +126,7 @@ class CorreccionStatisticsController extends Controller
                     'variance2' => $varianza2, // Varianza poblacional
                     'desviacion2' => $desviacion2,
                     'limite' => $limite,
+                    'promedio' => $promedionuevo,   
                 ];
             }else if($modo == 1){ 
             //con infinito (paso 1 ejercicio)
@@ -129,7 +137,7 @@ class CorreccionStatisticsController extends Controller
                 $n = count($listaNumeros);
 
                 if($n >= $cantdatos){
-                    return response()->json(['message' => 'Ocurrió un error.', 'error' => "La cantidad de la muestra de datos es mayor el total ingresado de datos. Ingresa otro total o coloca menos datos en la muestra."], 500);
+                    return response()->json(['message' => 'Ocurrió un error.', 'error' => "La cantidad de la muestra de datos es mayor al total ingresado de datos. Ingresa otro total o coloca menos datos en la muestra."], 500);
                 }
 
                 // double promedio = promedio(mat, n)
