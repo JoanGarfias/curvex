@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StatisticRequest;
+use App\Http\Requests\StatisticsCorreccionRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -21,7 +21,7 @@ class CorreccionStatisticsController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function corregir(StatisticRequest $request): JsonResponse
+    public function corregir(StatisticsCorreccionRequest $request): JsonResponse
     {
         // 1. VALIDACIÓN (Equivalente a jTextArea1.getText().isBlank() y NumberFormatException)
         $data = $request->validated();
@@ -60,108 +60,109 @@ class CorreccionStatisticsController extends Controller
             $numbers = preg_split('/\s+/', trim($data['values']));
             $numbers = array_filter(array_map('floatval', $numbers));
         }
-
-        $modo = 0;
-        if(isset($data['infinito']))
-            $modo = $data['infinito'] ? 1 : 0;
-
-        $cantdatos = 0;
-        if(isset($data['cantdatos']))
-            $cantdatos = $data['cantdatos'] ? $data['cantdatos'] : 0;
-
-        $error = 0;
-        if(isset($data['error']))
-            $error = $data['error'] ? $data['error'] : 0;
-
-        $confiabilidad = 0;
-        if(isset($data['confiabilidad']))
-            $confiabilidad = $data['confiabilidad'] ? $data['confiabilidad'] : 0;
         
-        if($confiabilidad < 0 || $confiabilidad > 100){
-            return response()->json(['message' => 'Ocurrió un error.', 'error' => "La confiabilidad no puede ser menor a 0 o mayor a 100. Ingresa otro valor para tu confiabilidad."], 500);
-        }
-
-
         try {
-            $listaNumeros = $numbers;
+            Log::info('Varianza muestral');
+            $modo = 0;
+            if(isset($data['infinito']))
+                $modo = $data['infinito'] ? 1 : 0;
 
-            // 3. GUARDAR VARIABLES (Equivalente al bloque principal de tu 'try')
+            $cantdatos = 0;
+            if(isset($data['cantdatos']))
+                $cantdatos = $data['cantdatos'] ? $data['cantdatos'] : 0;
+
+            $error = 0;
+            if(isset($data['error']))
+                $error = $data['error'] ? $data['error'] : 0;
+
+            $confiabilidad = 0;
+            if(isset($data['confiabilidad']))
+                $confiabilidad = $data['confiabilidad'] ? $data['confiabilidad'] : 0;
             
-            // int n = obtenerCantNumeros(...)
-            $n = count($listaNumeros);
-
-            if($n >= $cantdatos){
-                return response()->json(['message' => 'Ocurrió un error.', 'error' => "La cantidad de la muestra de datos es mayor el total ingresado de datos. Ingresa otro total o coloca menos datos en la muestra."], 500);
+            if($confiabilidad < 0 || $confiabilidad > 100){
+                return response()->json(['message' => 'Ocurrió un error.', 'error' => "La confiabilidad no puede ser menor a 0 o mayor a 100. Ingresa otro valor para tu confiabilidad."], 500);
             }
 
-            // double promedio = promedio(mat, n)
-            $promedio = $service->promedio($listaNumeros, $n);
+            $cantdatoscorregido = 0;
+            if(isset($data['$cantdatoscorregido']))
+                $cantdatoscorregido = $data['cantdatoscorregido'] ? $data['cantdatoscorregido'] : 0;
 
-            // double valmin = valormin(mat, n)
-            $valmin = $service->valormin($listaNumeros, $n); // O simplemente: min($listaNumeros)
+            $varianzanueva = 0;
+            if(isset($data['varianza']))
+                $varianzanueva = $data['varianza'] ? $data['varianza'] : 0;
 
-            // double valmax = valormax(mat, n)
-            $valmax = $service->valormax($listaNumeros, $n); // O simplemente: max($listaNumeros)
+            $promedionuevo = 0;
+            if(isset($data['promedio']))
+                $promedionuevo = $data['promedio'] ? $data['promedio'] : 0;
 
-            // double rango = valmax - valmin
-            $rango = $valmax - $valmin;
 
-            // double varianza = obtenerVarianza(mat,n,promedio)
-            $varianza = $service->obtenerVarianza($listaNumeros, $n, $promedio, 1);
-            /*
-            // double desviacionEstandar (Cálculo implícito en tu Java)
-            $desviacionEstandar = sqrt($varianza);
+            if($modo == 0){ 
+            //sin infinito (paso 2 ejercicio)
+                $distribution = new StudentT($cantdatoscorregido-1);
+                $alpha = 1 - ($confiabilidad/100);
+                $valorCritico = $distribution->inverse2Tails(1 - ($alpha / 2));
+
+                $varianza2 = (($cantdatos - $cantdatoscorregido)/$cantdatos)*(($varianzanueva**2)/$cantdatoscorregido);
+                $desviacion2 = sqrt($varianza2);
+
+                $limite = 0;
+
+                $resultados = [
+                    'variance' => $varianzanueva, // Varianza poblacional
+                    'distribucion' => $distribution, // Nueva: tabla de frecuencias
+                    'alpha_inverso' => $alpha, // Nueva: tabla de frecuencias
+                    'valor_critico' => $valorCritico, // Nueva: tabla de frecuencias
+                    'variance2' => $varianza2, // Varianza poblacional
+                    'desviacion2' => $desviacion2,
+                    'limite' => $limite,
+                ];
+            }else if($modo == 1){ 
+            //con infinito (paso 1 ejercicio)
+                
+                $listaNumeros = $numbers;
+
+                // int n = obtenerCantNumeros(...)
+                $n = count($listaNumeros);
+
+                if($n >= $cantdatos){
+                    return response()->json(['message' => 'Ocurrió un error.', 'error' => "La cantidad de la muestra de datos es mayor el total ingresado de datos. Ingresa otro total o coloca menos datos en la muestra."], 500);
+                }
+
+                // double promedio = promedio(mat, n)
+                $promedio = $service->promedio($listaNumeros, $n);
+
+                // double valmin = valormin(mat, n)
+                $valmin = $service->valormin($listaNumeros, $n); // O simplemente: min($listaNumeros)
+
+                // double valmax = valormax(mat, n)
+                $valmax = $service->valormax($listaNumeros, $n); // O simplemente: max($listaNumeros)
+
+                // double rango = valmax - valmin
+                $rango = $valmax - $valmin;
+
+                // double varianza = obtenerVarianza(mat,n,promedio)
+                $varianza = $service->obtenerVarianza($listaNumeros, $n, $promedio, 1);
+
+                $alpha = 1 - ($confiabilidad/100);
+                $distribution = new StudentT($n-1);
+                $valorCritico = $distribution->inverse2Tails(1 - ($alpha / 2));
+
+                $h = (($cantdatos*($valorCritico**2))*$varianza) / ((1000*($error**2))+(($valorCritico**2)*$varianza));
+
+                $varianza2 = (($cantdatos - $h)/$cantdatos)*(($varianza**2)/$h);
+
+                $resultados = [
+                    'count' => $n,
+                    'mean' => $promedio,
+                    'variance' => $varianza, // Varianza poblacional
+                    'data' => $listaNumeros,
+                    'distribucion' => $distribution, // Nueva: tabla de frecuencias
+                    'alpha_inverso' => $alpha, // Nueva: tabla de frecuencias
+                    'valor_critico' => $valorCritico, // Nueva: tabla de frecuencias
+                    'h' => $h, // Nueva: tabla de frecuencias
+                ];
+            }
             
-            // double curtosis = obtenerCurtosis(mat,n,promedio,Math.sqrt(varianza))
-            $curtosis = $service->obtenerCurtosis($listaNumeros, $n, $promedio, $desviacionEstandar);
-
-            $cuartiles = $service->obtenerPercentiles($listaNumeros, 4);
-            $deciles = $service->obtenerPercentiles($listaNumeros, 10);
-            $percentiles = $service->obtenerPercentiles($listaNumeros, 100);
-
-            // Generar tabla de frecuencias
-            $frequencyTable = $frequencyService->generateFrequencyTable($listaNumeros);
-            
-
-            // 4. CREAR EL JSON DE RESPUESTA
-            // (Equivalente a jTextArea2.setText(...))
-            // Todas las variables se guardan en un array asociativo:
-            $resultados = [
-                'count' => $n,
-                'sum' => $suma,
-                'mean' => $promedio,
-                'min' => $valmin,
-                'max' => $valmax,
-                'range' => $rango,
-                'variance' => $varianza, // Varianza poblacional
-                'standard_deviation' => $desviacionEstandar,
-                'kurtosis' => $curtosis, // Curtosis excesiva
-                'cuartiles' => $cuartiles,
-                'deciles' => $deciles,
-                'percentiles' => $percentiles,
-                'data' => $listaNumeros,
-                'frequency_table' => $frequencyTable, // Nueva: tabla de frecuencias
-            ];
-            */
-            $alpha = 1 - ($confiabilidad/100);
-            $distribution = new StudentT($df);
-            $valorCritico = $distribution->inverse(1 - ($alpha / 2));
-
-            $h = (($cantdatos*($valorCritico**2))*$varianza) / ((1000*($error**2))+(($valorCritico**2)*$varianza));
-
-            $varianza2 = (($cantdatos - $h)/$cantdatos)*(($varianza**2)/$h);
-
-            $resultados = [
-                'count' => $n,
-                'mean' => $promedio,
-                'variance' => $varianza, // Varianza poblacional
-                'data' => $listaNumeros,
-                'distribucion' => $distribution, // Nueva: tabla de frecuencias
-                'alpha_inverso' => $alpha, // Nueva: tabla de frecuencias
-                'valor_critico' => $valorCritico, // Nueva: tabla de frecuencias
-                'h' => $h, // Nueva: tabla de frecuencias
-                'variance2' => $varianza2, // Varianza poblacional
-            ];
 
             // 5. DEVOLVER RESPUESTA
             // (Equivalente a JOptionPane.showMessageDialog(rootPane, "Operación exitosa!"))
