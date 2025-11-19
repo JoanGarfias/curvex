@@ -14,7 +14,7 @@ import { Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
 
 import { ref, toRef, computed } from 'vue';
-import type { Resultado } from '@/types/corregido';
+import type { Resultado } from '@/types/corregido2';
 
 
 

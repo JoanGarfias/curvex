@@ -216,22 +216,22 @@ function handleGoBack() {
 
       <div class="grid gap-4">
       <div class="w-full min-w-0 space-y-2">
-        <label class="block text-sm font-medium">Tipo de correccion de datos</label>
+        <label class="block text-sm font-medium">Tipo de corrección de datos</label>
         <Select v-model="infinito">
-          <SelectTrigger class="w-full min-w-0"><SelectValue placeholder="Selecciona el tipo de correccion de datos" /></SelectTrigger>
+          <SelectTrigger class="w-full min-w-0"><SelectValue placeholder="Selecciona el tipo de corrección de datos" /></SelectTrigger>
           <SelectContent class="w-full max-w-[calc(100vw-2rem)]">
             <SelectGroup>
               <SelectLabel>Modo</SelectLabel>
               <SelectItem value='0'>
                 <div class="flex flex-col py-1">
-                  <span class="font-medium text-sm">Obtencion de tamaño ajustado de datos para una muestra infinita</span>
+                  <span class="font-medium text-sm">Obtención de tamaño ajustado de datos para una muestra infinita</span>
                   <span class="text-xs text-gray-500 dark:text-gray-400"> : Para una muestra muy grande de datos. Retorna la cantidad ajustada de datos de acuerdo a la confiabilidad y al error.</span>
                 </div>
               </SelectItem>
               <SelectItem value='1'>
                 <div class="flex flex-col py-1">
                   <span class="font-medium text-sm">Varianza corregida para una muestra finita</span>
-                  <span class="text-xs text-gray-500 dark:text-gray-400"> : Obtenida a partir de una cantidad de datos y su promedio. Retorna la varianza corregida y la desviacion corregida.</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400"> : Obtenida a partir de una cantidad de datos y su promedio. Retorna la varianza corregida y la desviación corregida.</span>
                 </div>
               </SelectItem>
             </SelectGroup>
