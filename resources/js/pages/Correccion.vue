@@ -167,8 +167,13 @@ function handleGoBack() {
   resultados2.value = null;
   errorMessage.value = '';
   // Limpiar inputs
-  csvFile.value = null;
   text.value = '';
+  error.value = '';
+  cantdatoscorregido.value = '';
+  varianza.value = '';
+  promedio.value = '';
+  cantdatos.value = '';
+  confiabilidad.value = '';
 }
 </script>
 
