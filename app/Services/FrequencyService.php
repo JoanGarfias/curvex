@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services;
+use MathPHP\Probability\Distribution\Continuous;
 
 class FrequencyService
 {
@@ -10,7 +11,7 @@ class FrequencyService
      * @param array $lista Array de números
      * @return array Tabla de frecuencias con info de intervalos
      */
-    public function generateFrequencyTable(array $lista): array
+    public function generateFrequencyTable(array $lista, double $promedio, double $desviacionEstandar): array
     {
         $n = count($lista);
         
@@ -56,7 +57,7 @@ class FrequencyService
         $frecuencias = $this->obtenerFrecuencias($listaConFlags, $limites, $n, $numIntervalos);
 
         // Construir tabla de resultados
-        $tablaResultados = $this->construirTablaResultados($limites, $frecuencias, $numIntervalos, $n);
+        $tablaResultados = $this->construirTablaResultados($limites, $frecuencias, $numIntervalos, $n, $promedio, $desviacionEstandar);
 
         return [
             'info_intervalos' => [
@@ -126,8 +127,10 @@ class FrequencyService
      * @param int $n Total de elementos
      * @return array
      */
-    private function construirTablaResultados(array $limites, array $frecuencias, int $numIntervalos, int $n): array
+    private function construirTablaResultados(array $limites, array $frecuencias, int $numIntervalos, int $n, double $promedio, double $desviacionEstandar): array
     {
+        $normal = new Continuous\Normal($promedio, $desviacionEstandar);
+
         $tablaResultados = [];
         $frecAcumulada = 0;
         
@@ -154,6 +157,11 @@ class FrequencyService
                 'frecuencia_abs_acumulada' => (int) $frecAcumulada,
                 'frecuencia_relativa_pct' => round($frec_rel_pct, $prec_pct),
                 'frecuencia_rel_acumulada_pct' => round($frec_rel_acum_pct, $prec_pct),
+                'prob_li' => ($normal->pdf($lim_inf)),
+                'prob_ls' => ($normal->cdf($lim_sup)),
+                /*'prob_ambos' => ()
+                'esperado'
+                'chisinsuma'*/
             ];
         }
 
