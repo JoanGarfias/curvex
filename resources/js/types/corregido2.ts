@@ -6,4 +6,5 @@ export interface Resultado{
     valor_critico: number;
     limite: number;
     promedio: number;
+    cosa: string;
 }

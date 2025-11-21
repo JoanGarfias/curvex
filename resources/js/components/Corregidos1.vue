@@ -129,7 +129,7 @@ function handleGoBack() {
     tooltip: 'Nivel de significancia. Representa la probabilidad de error aceptada (ej. 0.05 equivale a un 5% de riesgo o 95% de confianza).' 
   },
   { 
-    label: 'Valor crítico (Z)', 
+    label: 'Valor (Z)', 
     value: valor_critico, 
     tooltip: 'Valor límite en la distribución normal estándar que separa la zona de aceptación de la zona de rechazo según el Alpha elegido.' 
   },
