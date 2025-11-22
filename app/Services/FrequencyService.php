@@ -11,7 +11,7 @@ class FrequencyService
      * @param array $lista Array de números
      * @return array Tabla de frecuencias con info de intervalos
      */
-    public function generateFrequencyTable(array $lista, double $promedio, double $desviacionEstandar): array
+    public function generateFrequencyTable(array $lista, float $promedio): array
     {
         $n = count($lista);
         
@@ -57,7 +57,7 @@ class FrequencyService
         $frecuencias = $this->obtenerFrecuencias($listaConFlags, $limites, $n, $numIntervalos);
 
         // Construir tabla de resultados
-        $tablaResultados = $this->construirTablaResultados($limites, $frecuencias, $numIntervalos, $n, $promedio, $desviacionEstandar);
+        $tablaResultados = $this->construirTablaResultados($limites, $frecuencias, $numIntervalos, $n, $promedio);
 
         return [
             'info_intervalos' => [
@@ -104,8 +104,8 @@ class FrequencyService
             $lim_sup = $limites[$i][1];
 
             for ($j = 0; $j < $n; $j++) {
-                if ($listaConFlags[$j]['value'] >= $lim_inf &&
-                    $listaConFlags[$j]['value'] <= $lim_sup &&
+                if (round($listaConFlags[$j]['value'], 8) >= round($lim_inf, 8) &&
+                    round($listaConFlags[$j]['value'], 8) <= round($lim_sup, 8) &&
                     !$listaConFlags[$j]['counted'])
                 {
                     $elems += 1;
@@ -127,9 +127,9 @@ class FrequencyService
      * @param int $n Total de elementos
      * @return array
      */
-    private function construirTablaResultados(array $limites, array $frecuencias, int $numIntervalos, int $n, double $promedio, double $desviacionEstandar): array
+    private function construirTablaResultados(array $limites, array $frecuencias, int $numIntervalos, int $n, float $promedio): array
     {
-        $normal = new Continuous\Normal($promedio, $desviacionEstandar);
+        $normal = new Continuous\Normal(round($promedio), 2);
 
         $tablaResultados = [];
         $frecAcumulada = 0;
@@ -148,6 +148,11 @@ class FrequencyService
             $frec_rel_pct = ($n > 0) ? ($frec / $n) * 100 : 0;
             $frec_rel_acum_pct = ($n > 0) ? ($frecAcumulada / $n) * 100 : 0;
 
+            $prob_li = $normal->cdf($lim_inf);
+            $prob_sup = $normal->cdf($lim_sup);
+            $prob_total = $prob_sup - $prob_li;
+            $esp = $prob_total * $n;
+
             $tablaResultados[] = [
                 'clase' => "Clase " . ($i + 1),
                 'limite_inferior' => round($lim_inf, $prec_limites),
@@ -157,11 +162,11 @@ class FrequencyService
                 'frecuencia_abs_acumulada' => (int) $frecAcumulada,
                 'frecuencia_relativa_pct' => round($frec_rel_pct, $prec_pct),
                 'frecuencia_rel_acumulada_pct' => round($frec_rel_acum_pct, $prec_pct),
-                'prob_li' => ($normal->pdf($lim_inf)),
-                'prob_ls' => ($normal->cdf($lim_sup)),
-                /*'prob_ambos' => ()
-                'esperado'
-                'chisinsuma'*/
+                'prob_li' => $prob_li,
+                'prob_ls' => $prob_sup,
+                'prob_total' => $prob_total,
+                'esperado' => $esp,
+                'chisinsuma' => ((((int) $frec) - $esp)**2) / $esp,
             ];
         }
 

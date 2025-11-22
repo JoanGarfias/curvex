@@ -101,7 +101,7 @@ class StatisticsController extends Controller
             $percentiles = $service->obtenerPercentiles($listaNumeros, 100);
 
             // Generar tabla de frecuencias
-            $frequencyTable = $frequencyService->generateFrequencyTable($listaNumeros, $promedio, $desviacionEstandar);
+            $frequencyTable = $frequencyService->generateFrequencyTable($listaNumeros, $promedio);
 
 
             // 4. CREAR EL JSON DE RESPUESTA
