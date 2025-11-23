@@ -13,6 +13,12 @@ export interface Resultado{
     percentiles: Array<Record<number, number>>;
     data: number[];
     frequency_table?: FrequencyTable;
+    // Resultados opcionales de la prueba Chi-cuadrado generados en el backend
+    chi_results: {
+        chicua: number;
+        chi_inverso?: number;
+        grados_libertad: number;
+    };
 }
 
 export interface FrequencyTable {

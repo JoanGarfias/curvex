@@ -74,6 +74,47 @@ const curtosis = computed(() => truncate(resultado.value.kurtosis, Number(decima
 const datos = resultado.value.data;
 console.log('Datos recibidos:', datos);
 
+// Estadísticos de Chi-cuadrado (si existen en el resultado)
+const chiCua = computed(() => {
+  const cr = resultado.value.chi_results;
+  console.log(cr);
+  return truncate(cr.chicua, Number(decimales.value));
+});
+
+const gradosLibertad = computed(() => {
+  const cr = resultado.value.chi_results;
+  return String(cr.grados_libertad);
+});
+
+// Valores numéricos para la lógica de normalidad
+const chiValue = computed(() => resultado.value?.chi_results ? resultado.value.chi_results.chicua : NaN);
+
+const chiInverso = computed<number | null>(() => {
+  const v = resultado.value?.chi_results?.chi_inverso;
+  if (v === undefined || v === null) return null;
+  return typeof v === 'number' ? v : (isNaN(Number(v)) ? null : Number(v));
+});
+
+// Estado de la verificación de normalidad
+const normalityStatus = computed(() => {
+  if (chiInverso.value === null) {
+    return { type: 'warning', text: 'No se pudo calcular chi inverso' };
+  }
+
+  if (isNaN(chiValue.value)) {
+    return { type: 'warning', text: 'Estadístico chi no disponible' };
+  }
+
+  if (chiValue.value < (chiInverso.value as number)) {
+    return {
+      type: 'normal',
+      text: `Distribución compatible con normal (media ${truncate(resultado.value.mean, Number(decimales.value))} y desviación ${truncate(resultado.value.standard_deviation, Number(decimales.value))}).`
+    };
+  }
+
+  return { type: 'not_normal', text: 'No es una distribución normal' };
+});
+
 // --- Generar histograma a partir de los datos ---
 const histogramData = computed(() => {
   if (!datos || datos.length === 0) {
@@ -310,6 +351,8 @@ async function exportToExcel() {
           </Button>
           <ThemeToggle />
         </div>
+
+        <!-- (La verificación de normalidad se muestra debajo de las estadísticas, no aquí) -->
       </div>
     </nav>
 
@@ -387,7 +430,9 @@ async function exportToExcel() {
               { label: 'Rango', value: rango, tooltip: 'Diferencia entre el valor máximo y el mínimo. Indica la dispersión de los datos.' },
               { label: 'Varianza', value: varianza, tooltip: 'Medida de dispersión que indica qué tan alejados están los datos del promedio. Varianza poblacional.' },
               { label: 'Desviación Estándar', value: desviacionEstandar, tooltip: 'Raíz cuadrada de la varianza. Indica la dispersión promedio de los datos respecto a la media.' },
-              { label: 'Curtosis', value: curtosis, tooltip: 'Mide el grado de concentración de los datos alrededor de la media. Curtosis > 0 indica distribución leptocúrtica (pico alto), < 0 platicúrtica (pico bajo).' }
+              { label: 'Curtosis', value: curtosis, tooltip: 'Mide el grado de concentración de los datos alrededor de la media. Curtosis > 0 indica distribución leptocúrtica (pico alto), < 0 platicúrtica (pico bajo).' },
+              { label: 'Chi-cuadrado', value: chiCua, tooltip: 'Estadístico Chi-cuadrado (suma de (Oi-Ei)^2 / Ei) generado para la tabla de frecuencias.' },
+              { label: 'Grados de libertad', value: gradosLibertad, tooltip: 'Grados de libertad usados en la prueba Chi-cuadrado.' }
             ]" :key="nombre">
               <TooltipTrigger as-child>
                 <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-neutral-800 dark:to-neutral-900 rounded-xl p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-help">
@@ -403,6 +448,36 @@ async function exportToExcel() {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+        </div>
+
+        <!-- Resultado de la prueba Chi-cuadrado / verificación de normalidad -->
+        <div class="mt-4">
+          <div v-if="normalityStatus.type === 'warning'" class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-800 text-yellow-800 flex items-start gap-3">
+            <Info class="h-6 w-6 text-yellow-600" />
+            <div>
+              <p class="font-semibold">Advertencia</p>
+              <p class="text-sm mt-1">{{ normalityStatus.text }}</p>
+              <p v-if="chiInverso !== null" class="text-xs mt-1 text-gray-600 dark:text-gray-300">Chi inverso: {{ truncate(chiInverso as number, Number(decimales)) }}</p>
+            </div>
+          </div>
+
+          <div v-else-if="normalityStatus.type === 'normal'" class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800 text-green-800 flex items-start gap-3">
+            <Info class="h-6 w-6 text-green-600" />
+            <div>
+              <p class="font-semibold">Resultado: Distribución Normal</p>
+              <p class="text-sm mt-1">{{ normalityStatus.text }}</p>
+              <p class="text-xs mt-1 text-gray-600 dark:text-gray-300">Chi: {{ chiCua }} — Chi inverso: {{ truncate(chiInverso as number, Number(decimales)) }}</p>
+            </div>
+          </div>
+
+          <div v-else class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800 text-red-800 flex items-start gap-3">
+            <Info class="h-6 w-6 text-red-600" />
+            <div>
+              <p class="font-semibold">Resultado: No Normal</p>
+              <p class="text-sm mt-1">{{ normalityStatus.text }}</p>
+              <p class="text-xs mt-1 text-gray-600 dark:text-gray-300">Chi: {{ chiCua }} — Chi inverso: {{ truncate(chiInverso as number, Number(decimales)) }}</p>
+            </div>
+          </div>
         </div>
 
         <!-- Histograma -->

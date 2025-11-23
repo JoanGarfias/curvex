@@ -101,8 +101,17 @@ class StatisticsController extends Controller
             $percentiles = $service->obtenerPercentiles($listaNumeros, 100);
 
             // Generar tabla de frecuencias
-            $frequencyTable = $frequencyService->generateFrequencyTable($listaNumeros);
+            $frequencyTable = $frequencyService->generateFrequencyTable($listaNumeros, $promedio);
 
+            //Generar datos de chi
+            $chiResults = $frequencyService->generateChiData(
+                                            $frequencyTable["tabla_frecuencias"],
+                                            $promedio,
+                                            $desviacionEstandar,
+                                            $n,
+                                            $frequencyTable["info_intervalos"]["numero_intervalos"]
+                                            );
+            //$chiResults["chi_inverso"] = 0.001;
 
             // 4. CREAR EL JSON DE RESPUESTA
             // (Equivalente a jTextArea2.setText(...))
@@ -122,6 +131,7 @@ class StatisticsController extends Controller
                 'percentiles' => $percentiles,
                 'data' => $listaNumeros,
                 'frequency_table' => $frequencyTable, // Nueva: tabla de frecuencias
+                'chi_results' => $chiResults,
             ];
 
             // 5. DEVOLVER RESPUESTA
@@ -134,6 +144,25 @@ class StatisticsController extends Controller
             return response()->json(['message' => 'Ocurrió un error inesperado.', 'error' => $e->getMessage()], 500);
         }
     }
+
+    public function normdist(Request $request){
+        $x = $request->input('x');
+        $promedio = $request->input('promedio');
+        $desviacionEstandar = $request->input('desviacion');
+
+        $normDistAcumulado = FrequencyService::normDistAcumulado($x, $promedio, $desviacionEstandar);
+
+        if($normDistAcumulado === NAN){
+            return response()->json([
+                "message" => "Error en el cálculo de la distribución normal."
+            ], 400);
+        }
+
+        return response()->json([
+            "resultado" => $normDistAcumulado
+        ], 200);
+    }
+
 }
 
 ?>

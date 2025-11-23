@@ -95,7 +95,12 @@ function analyze() {
       deciles: data.deciles || [],
       percentiles: data.percentiles || [],
       data: data.data || [],
-      frequency_table: data.frequency_table || undefined
+      frequency_table: data.frequency_table || undefined,
+      chi_results: data.chi_results || {
+        chicua: 0,
+        chi_inverso: 0,
+        grados_libertad: 0,
+      },
     };
 
     showResults.value = true;
