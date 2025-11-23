@@ -111,6 +111,7 @@ class StatisticsController extends Controller
                                             $n,
                                             $frequencyTable["info_intervalos"]["numero_intervalos"]
                                             );
+            //$chiResults["chi_inverso"] = 0.001;
 
             // 4. CREAR EL JSON DE RESPUESTA
             // (Equivalente a jTextArea2.setText(...))
