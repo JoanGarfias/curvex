@@ -8,6 +8,7 @@ use App\Http\Controllers\CorreccionStatisticsController;
 
 
 Route::post('/calculate-statistics', [StatisticsController::class, 'calculate']);
+Route::post('/test-normdist', [StatisticsController::class, 'normdist']);
 Route::post('/calculate-frequency', [FrecuencyTableController::class, 'calculateFrequency']);
 Route::post('/correct-frequency', [CorreccionStatisticsController::class, 'corregir']);
 

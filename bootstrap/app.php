@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'calculate-statistics',
             'correct-frequency',
+            '/test-normdist',
         ]);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
