@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Log;
-use MathPHP\Probability\Distribution\Continuous;
 
 class FrequencyService
 {
@@ -131,7 +130,7 @@ class FrequencyService
      */
     private function construirTablaResultados(array $limites, array $frecuencias, int $numIntervalos, int $n, float $promedio): array
     {
-        $normal = new Continuous\Normal(round($promedio), 2);
+        // Usar la implementación local de la CDF normal (desviación por defecto = 2)
 
         $tablaResultados = [];
         $frecAcumulada = 0;
@@ -150,8 +149,8 @@ class FrequencyService
             $frec_rel_pct = ($n > 0) ? ($frec / $n) * 100 : 0;
             $frec_rel_acum_pct = ($n > 0) ? ($frecAcumulada / $n) * 100 : 0;
 
-            $prob_li = $normal->cdf($lim_inf);
-            $prob_sup = $normal->cdf($lim_sup);
+            $prob_li = self::normDistAcumulado($lim_inf, $promedio, 2);
+            $prob_sup = self::normDistAcumulado($lim_sup, $promedio, 2);
             $prob_total = $prob_sup - $prob_li;
             $esp = $prob_total * $n;
 
@@ -212,25 +211,34 @@ class FrequencyService
             $sumaChiCua += (pow(1.0 * ($Oi-$Ei), 2) ) / $Ei;
         }
 
-        //Grados de libertad = desviacion - 1 + numero de clases
+        // Grados de libertad: usar número de clases (ajustado según expectativa del usuario)
+        $gradosDeLibertad = max(1, (int) $numeroDeClases);
 
-        $gradosDeLibertad = round($desviacionEstandar) - 1 + $numeroDeClases;
-
-        /*Por defecto 
-        $probIzquierda = 1 - $alpha;
-        $which = STATS_CDF_X;
-        $xACalcular = 0.0;
-        
-        $valorCritico = stats_cdf_chisquare(
-            $xACalcular,
-            $gradosDeLibertad,
-            $probIzquierda,
-            $which
-        );*/
+        // Calcular p-valor y valores críticos (chi inversa para p acumulada 0.95 y 0.99)
+        $pValue = null;
+        $critical95 = null;
+        $critical99 = null;
+        try {
+            $pValue = 1.0 - $this->chiCdf($sumaChiCua, $gradosDeLibertad);
+            $critical95 = $this->chiInverse(0.95, $gradosDeLibertad);
+            $critical99 = $this->chiInverse(0.99, $gradosDeLibertad);
+        } catch (\Throwable $e) {
+            // Si falla el cálculo numérico, dejamos valores en null
+        }
 
         return [
             "chicua" => $sumaChiCua,
-            "grados_libertad" => $gradosDeLibertad
+            "chicua_statistic" => $sumaChiCua,
+            "statistic" => $sumaChiCua,
+            "grados_libertad" => $gradosDeLibertad,
+            "degrees_of_freedom" => $gradosDeLibertad,
+            "grados_libertad_raw" => $gradosDeLibertad,
+            "p_value" => $pValue,
+            "critical_0_95" => $critical95,
+            "critical_0_99" => $critical99,
+            // Compatibilidad con front-end: chi inverso (valor crítico 0.95)
+            "chi_inverso" => $critical95,
+            "chi_inverse" => $critical95,
         ];
 
     }
@@ -283,6 +291,100 @@ class FrequencyService
         $erf = 1.0 - (((($a5 * $t + $a4) * $t + $a3) * $t + $a2) * $t + $a1) * $t * exp(-$y * $y);
 
         return $sign * $erf;
+    }
+
+    /**
+     * CDF de la chi-cuadrada (regularizada) usando gamma incompleta.
+     * @param float $x
+     * @param int $df
+     * @return float
+     */
+    private function chiCdf(float $x, int $df): float
+    {
+        return $this->gammainc($x / 2.0, $df / 2.0);
+    }
+
+    /**
+     * Inversa (cuantil) de la chi-cuadrada para probabilidad acumulada p.
+     * Busca x tal que CDF(x) = p.
+     *
+     * @param float $p (0..1)
+     * @param int $df
+     * @return float|null
+     */
+    public function chiInverse(float $p, int $df): ?float
+    {
+        if ($p <= 0.0 || $p >= 1.0) return null;
+
+        $low = 0.0;
+        $high = max(1.0, $df * 10.0);
+        $iter = 0;
+        while ($this->chiCdf($high, $df) < $p && $iter < 200) {
+            $high *= 2.0;
+            $iter++;
+        }
+
+        $tol = 1e-8;
+        $i = 0;
+        while (($high - $low) > $tol && $i < 200) {
+            $mid = ($low + $high) / 2.0;
+            $cdf = $this->chiCdf($mid, $df);
+            if ($cdf < $p) {
+                $low = $mid;
+            } else {
+                $high = $mid;
+            }
+            $i++;
+        }
+
+        return ($low + $high) / 2.0;
+    }
+
+    /**
+     * Gamma incompleta regularizada (aproximación simple).
+     */
+    private function gammainc(float $x, float $a): float
+    {
+        if ($x < 0 || $a <= 0) return NAN;
+        $gl = $this->gammaLower($x, $a);
+        $g = $this->gammaFunc($a);
+        return $gl / $g;
+    }
+
+    private function gammaLower(float $x, float $a): float
+    {
+        $sum = 1.0 / $a;
+        $term = $sum;
+        for ($n = 1; $n < 100; $n++) {
+            $term *= $x / ($a + $n);
+            $sum += $term;
+        }
+        return pow($x, $a) * exp(-$x) * $sum;
+    }
+
+    private function gammaFunc(float $z): float
+    {
+        $p = [
+            676.5203681218851,
+            -1259.1392167224028,
+            771.32342877765313,
+            -176.61502916214059,
+            12.507343278686905,
+            -0.13857109526572012,
+            9.9843695780195716e-6,
+            1.5056327351493116e-7
+        ];
+        $g = 7;
+        if ($z < 0.5) {
+            return M_PI / (sin(M_PI * $z) * $this->gammaFunc(1 - $z));
+        }
+        $z -= 1;
+        $x = 0.99999999999980993;
+        for ($i = 0; $i < count($p); $i++) {
+            $x += $p[$i] / ($z + $i + 1);
+        }
+        $t = $z + $g + 0.5;
+        return sqrt(2 * M_PI) * pow($t, $z + 0.5) * exp(-$t) * $x;
     }
 
 }
