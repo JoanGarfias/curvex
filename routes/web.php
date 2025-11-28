@@ -5,10 +5,11 @@ use Inertia\Inertia;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\FrecuencyTableController;
 use App\Http\Controllers\CorreccionStatisticsController;
-
+use App\Http\Controllers\MuestroAceptacionController;
 
 Route::post('/calculate-statistics', [StatisticsController::class, 'calculate']);
 Route::post('/test-normdist', [StatisticsController::class, 'normdist']);
+Route::post('/test-muestroaceptacion', [MuestroAceptacionController::class, 'test']);
 Route::post('/calculate-frequency', [FrecuencyTableController::class, 'calculateFrequency']);
 Route::post('/correct-frequency', [CorreccionStatisticsController::class, 'corregir']);
 
