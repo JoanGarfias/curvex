@@ -16,19 +16,39 @@ class MuestroAceptacionController extends Controller
             'k' => 'required|integer|min:0',
             'p' => 'required|numeric|min:0|max:1',
         ]);
+        
+        // Validar que k <= n después de la validación inicial
+        if ($validated['k'] > $validated['n']) {
+            return response()->json([
+                'message' => 'El valor de k no puede ser mayor que n.',
+                'errors' => [
+                    'k' => ['El número de éxitos (k) debe ser menor o igual al número de ensayos (n).']
+                ]
+            ], 422);
+        }
 
         Log::info('Muestro Aceptacion test received:', $validated);
 
-        $muestreoService = new  MuestreoAceptacionService();
-        $resultado = $muestreoService->binomDistAcum($validated['n'], $validated['k'], $validated['p']);
-        //$resultado = $muestreoService->binomDist($validated['n'], 2);
+        $muestreoService = new MuestreoAceptacionService();
+        
+        // Convertir p a float explícitamente
+        $n = (int) $validated['n'];
+        $k = (int) $validated['k'];
+        $p = (float) $validated['p'];
+        
+        // Calcular distribución binomial acumulativa
+        $resultadoAcumulado = $muestreoService->binomDistAcum($n, $k, $p);
+        
+        // Calcular distribución binomial puntual para referencia
+        $resultadoPuntual = $muestreoService->binomDist($n, $k, $p);
 
         return response()->json([
-            'n' => $validated['n'],
-            'k' => $validated['k'],
-            'p' => $validated['p'],
-            'resultado' => $resultado,
-            'message' => 'Muestro Aceptacion test received successfully.'
+            'n' => $n,
+            'k' => $k,
+            'p' => $p,
+            'probabilidad_acumulada' => $resultadoAcumulado,  // P(X ≤ k)
+            'probabilidad_puntual' => $resultadoPuntual,      // P(X = k)
+            'message' => 'Distribución binomial calculada correctamente.'
         ], 200);
     }
 }
