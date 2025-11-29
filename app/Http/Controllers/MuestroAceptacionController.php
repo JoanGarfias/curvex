@@ -76,7 +76,7 @@ class MuestroAceptacionController extends Controller
                 $punto = array();
                 $punto["p"] = round($i, 4);
                 $punto["LTPD"] = false;
-                $punto["AQL"] = false;
+                $punto["AQT"] = false;
                 $punto["res"] = $muestreoService->binomDistAcum($distancias["n"], $distancias["c"], round($i, 4));
                 $datos[] = $punto;
                 $i+=0.01;
@@ -85,14 +85,14 @@ class MuestroAceptacionController extends Controller
             $punto = array();
             $punto["p"] = $LTPD;
             $punto["LTPD"] = true;
-            $punto["AQL"] = false;
+            $punto["AQT"] = false;
             $punto["res"] = $muestreoService->binomDistAcum($distancias["n"], $distancias["c"], $LTPD);
             $datos[] = $punto;
 
             $punto = array();
             $punto["p"] = $AQT;
             $punto["LTPD"] = false;
-            $punto["AQL"] = true;
+            $punto["AQT"] = true;
             $punto["res"] = $muestreoService->binomDistAcum($distancias["n"], $distancias["c"], $AQT);
             $datos[] = $punto;
 
@@ -103,7 +103,7 @@ class MuestroAceptacionController extends Controller
                 $punto = array();
                 $punto["p"] = round($i, 4);
                 $punto["LTPD"] = false;
-                $punto["AQL"] = false;
+                $punto["AQT"] = false;
                 $punto["res"] = $muestreoService->binomDistAcum($distancias["n"], $distancias["c"], round($i, 4));
                 $datos[] = $punto;
                 $i+=round($constante, 4);
@@ -112,14 +112,14 @@ class MuestroAceptacionController extends Controller
             $punto = array();
             $punto["p"] = $LTPD;
             $punto["LTPD"] = true;
-            $punto["AQL"] = false;
+            $punto["AQT"] = false;
             $punto["res"] = $muestreoService->binomDistAcum($distancias["n"], $distancias["c"], $LTPD);
             $datos[] = $punto;
 
             $punto = array();
             $punto["p"] = $AQT;
             $punto["LTPD"] = false;
-            $punto["AQL"] = true;
+            $punto["AQT"] = true;
             $punto["res"] = $muestreoService->binomDistAcum($distancias["n"], $distancias["c"], $AQT);
             $datos[] = $punto;
         }
