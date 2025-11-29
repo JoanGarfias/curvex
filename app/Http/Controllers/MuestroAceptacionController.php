@@ -69,11 +69,64 @@ class MuestroAceptacionController extends Controller
             
             $n+=1;
         }
+        $datos = array();
+        if($LTPD <= 0.1){
+            $i = 0.01;
+            while($i < 0.10){
+                $punto = array();
+                $punto["p"] = round($i, 4);
+                $punto["LTPD"] = false;
+                $punto["AQL"] = false;
+                $punto["res"] = $muestreoService->binomDistAcum($distancias["n"], $distancias["c"], round($i, 4));
+                $datos[] = $punto;
+                $i+=0.01;
+            }
 
-        /*Insertar aqui codigo para obtener la grafica*/
+            $punto = array();
+            $punto["p"] = $LTPD;
+            $punto["LTPD"] = true;
+            $punto["AQL"] = false;
+            $punto["res"] = $muestreoService->binomDistAcum($distancias["n"], $distancias["c"], $LTPD);
+            $datos[] = $punto;
+
+            $punto = array();
+            $punto["p"] = $AQT;
+            $punto["LTPD"] = false;
+            $punto["AQL"] = true;
+            $punto["res"] = $muestreoService->binomDistAcum($distancias["n"], $distancias["c"], $AQT);
+            $datos[] = $punto;
+
+        }else{
+            $constante = round(($LTPD / 10  ), 8);
+            $i =  round($constante, 4);
+            while($i < $LTPD){
+                $punto = array();
+                $punto["p"] = round($i, 4);
+                $punto["LTPD"] = false;
+                $punto["AQL"] = false;
+                $punto["res"] = $muestreoService->binomDistAcum($distancias["n"], $distancias["c"], round($i, 4));
+                $datos[] = $punto;
+                $i+=round($constante, 4);
+            }
+
+            $punto = array();
+            $punto["p"] = $LTPD;
+            $punto["LTPD"] = true;
+            $punto["AQL"] = false;
+            $punto["res"] = $muestreoService->binomDistAcum($distancias["n"], $distancias["c"], $LTPD);
+            $datos[] = $punto;
+
+            $punto = array();
+            $punto["p"] = $AQT;
+            $punto["LTPD"] = false;
+            $punto["AQL"] = true;
+            $punto["res"] = $muestreoService->binomDistAcum($distancias["n"], $distancias["c"], $AQT);
+            $datos[] = $punto;
+        }
 
         return response()->json([
             'distancia_menor' => $distancias,
+            'grafica' => $datos
         ], 200);
     
     }
