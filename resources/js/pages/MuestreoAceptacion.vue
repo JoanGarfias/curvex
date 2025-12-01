@@ -1,6 +1,7 @@
 <template>
+  <Head title="Muestreo de Aceptación" />
   <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
-    <div class="max-w-6xl mx-auto">
+    <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="text-center mb-8">
         <div class="flex items-center justify-center gap-3 mb-3">
@@ -16,9 +17,10 @@
         </p>
       </div>
 
-      <div class="grid md:grid-cols-2 gap-6">
-        <!-- Formulario -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+      <div class="grid lg:grid-cols-3 gap-6">
+        <!-- Formulario - Columna fija -->
+        <div class="lg:col-span-1">
+          <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 sticky top-4">
           <div class="flex items-center gap-2 mb-6">
             <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
@@ -141,10 +143,11 @@
               </div>
             </div>
           </div>
+          </div>
         </div>
 
-        <!-- Resultados -->
-        <div class="space-y-6">
+        <!-- Resultados - 2 columnas -->
+        <div class="lg:col-span-2 space-y-6">
           <template v-if="results">
             <!-- Resultados numéricos -->
             <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
@@ -209,6 +212,145 @@
                 </div>
               </div>
             </div>
+
+            <!-- Tabla de Probabilidades -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+              <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                Tabla de Probabilidades de Aceptación
+              </h2>
+              
+              <div class="max-h-80 overflow-y-auto border border-gray-200 rounded-lg">
+                <table class="w-full text-sm">
+                  <thead class="sticky top-0 bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                      <th class="px-4 py-3 text-left font-semibold text-gray-700">
+                        Proporción (p)
+                      </th>
+                      <th class="px-4 py-3 text-right font-semibold text-gray-700">
+                        P(Aceptar)
+                      </th>
+                      <th class="px-4 py-3 text-center font-semibold text-gray-700">
+                        Tipo
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(punto, index) in results.grafica"
+                      :key="index"
+                      :class="[
+                        'border-b border-gray-100 hover:bg-gray-50 transition-colors',
+                        punto.AQT ? 'bg-gray-100 font-semibold' : '',
+                        punto.LTPD ? 'bg-gray-100 font-semibold' : ''
+                      ]"
+                    >
+                      <td class="px-4 py-3 text-gray-900">
+                        {{ punto.p.toFixed(4) }}
+                      </td>
+                      <td class="px-4 py-3 text-right text-gray-900">
+                        {{ punto.res.toFixed(4) }}
+                        <span class="text-xs text-gray-500 ml-1">
+                          ({{ (punto.res * 100).toFixed(2) }}%)
+                        </span>
+                      </td>
+                      <td class="px-4 py-3 text-center">
+                        <span
+                          v-if="punto.AQT"
+                          class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white border-2 border-black text-black"
+                        >
+                          AQL
+                        </span>
+                        <span
+                          v-else-if="punto.LTPD"
+                          class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-black text-white"
+                        >
+                          LTPD
+                        </span>
+                        <span v-else class="text-gray-400 text-xs">
+                          —
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
+                <p>
+                  <strong>Nota:</strong> Valores más altos = mayor probabilidad de aceptar el lote.
+                </p>
+              </div>
+            </div>
+
+            <!-- Grid para las dos tablas pequeñas -->
+            <div class="grid md:grid-cols-2 gap-6">
+              <!-- Tabla de Parámetros Utilizados -->
+              <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+              <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                Parámetros del Cálculo
+              </h2>
+              
+              <table class="w-full text-sm">
+                <tbody>
+                  <tr class="border-b border-gray-100">
+                    <td class="px-4 py-3 font-medium text-gray-700">AQL</td>
+                    <td class="px-4 py-3 text-right text-gray-900">
+                      {{ (results.distancia_menor.AQT * 100).toFixed(2) }}%
+                    </td>
+                  </tr>
+                  <tr class="border-b border-gray-100">
+                    <td class="px-4 py-3 font-medium text-gray-700">LTPD</td>
+                    <td class="px-4 py-3 text-right text-gray-900">
+                      {{ (results.distancia_menor.LTPD * 100).toFixed(2) }}%
+                    </td>
+                  </tr>
+                  <tr class="border-b border-gray-100">
+                    <td class="px-4 py-3 font-medium text-gray-700">1 - α</td>
+                    <td class="px-4 py-3 text-right text-gray-900">
+                      {{ (results.distancia_menor['1-alpha'] * 100).toFixed(2) }}%
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-3 font-medium text-gray-700">β</td>
+                    <td class="px-4 py-3 text-right text-gray-900">
+                      {{ (results.distancia_menor.beta * 100).toFixed(2) }}%
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Resumen Estadístico -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+              <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                Interpretación
+              </h2>
+              
+              <div class="space-y-3 text-sm text-gray-700">
+                <div class="flex items-start gap-2">
+                  <div class="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></div>
+                  <p>
+                    <strong>Tamaño de muestra (n={{ results.distancia_menor.n }}):</strong> 
+                    Número de unidades que debes inspeccionar de cada lote.
+                  </p>
+                </div>
+                <div class="flex items-start gap-2">
+                  <div class="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></div>
+                  <p>
+                    <strong>Criterio de aceptación (c={{ results.distancia_menor.c }}):</strong> 
+                    Acepta si hay {{ results.distancia_menor.c }} o menos defectos, rechaza si hay más.
+                  </p>
+                </div>
+                <div class="flex items-start gap-2">
+                  <div class="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></div>
+                  <p>
+                    <strong>Precisión ({{ results.distancia_menor.distancia.toFixed(4) }}):</strong> 
+                    Qué tan cerca está el plan de los valores ideales deseados.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
           </template>
 
           <div v-else class="bg-white rounded-2xl shadow-lg p-12 border border-gray-200 text-center">
@@ -227,10 +369,14 @@
 
 <script>
 import { ref, nextTick } from 'vue';
+import { Head } from '@inertiajs/vue3';
 import Chart from 'chart.js/auto';
 
 export default {
   name: 'MuestreoAceptacion',
+  components: {
+    Head
+  },
   
   setup() {
     const formData = ref({
