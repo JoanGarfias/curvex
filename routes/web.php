@@ -13,13 +13,10 @@ Route::post('/test-muestroaceptacion', [MuestroAceptacionController::class, 'cal
 Route::post('/calculate-frequency', [FrecuencyTableController::class, 'calculateFrequency']);
 Route::post('/correct-frequency', [CorreccionStatisticsController::class, 'corregir']);
 
-// Home page: render the Welcome page only
-Route::get('/', function () {
-    return Inertia::render('Welcome');
-})->name('home');
+Route::get('/', function () {return Inertia::render('MainMenu');})->name('home');
 
-Route::get('/correccionvarianza', function () {
-    return Inertia::render('Correccion');
-})->name('correcion de varianza');
+Route::get('/calculadora', function () {return Inertia::render('Welcome'); })->name('calculadora');
 
-// Dashboard and auth-related routes removed intentionally.
+Route::get('/muestreo-aceptacion', function () {return Inertia::render('MuestreoAceptacion');})->name('muestreo');
+
+Route::get('/correccionvarianza', function () {return Inertia::render('Correccion');})->name('correcion de varianza');
