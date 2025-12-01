@@ -5,7 +5,6 @@ import CurvexIcon from '@/icons/CurvexIcon.vue';
 import FooterComp from '@/components/FooterComp.vue';
 import { Button } from '@/components/ui/button';
 
-// Iconos de Lucide (asegúrate de tenerlos instalados o usa los que prefieras)
 import { BarChart3, CheckCircle2, Calculator, ArrowRight } from "lucide-vue-next";
 
 // Definición de las opciones del menú
