@@ -25,6 +25,9 @@ El proyecto está construido utilizando el siguiente stack de tecnologías:
 
 # Imágenes
 
+<img width="1177" height="941" alt="image" src="https://github.com/user-attachments/assets/b1a86d3c-a1eb-4393-8f2e-83a9a061a87b" />
+
+
 <img width="1602" height="915" alt="image" src="https://github.com/user-attachments/assets/44de5a5e-9b03-4227-853a-4901a3e4d72d" />
 
 <img width="1602" height="915" alt="image" src="https://github.com/user-attachments/assets/af989eef-1859-49ad-9150-66f6b4f4b64e" />
