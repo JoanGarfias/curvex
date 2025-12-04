@@ -18,7 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'calculate-statistics',
             'correct-frequency',
             '/test-normdist',
-            '/test-muestroaceptacion'
+            '/test-muestroaceptacion',
+            '/test-muestroaceptacion2'
         ]);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);

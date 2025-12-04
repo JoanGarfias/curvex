@@ -10,6 +10,7 @@ use App\Http\Controllers\MuestroAceptacionController;
 Route::post('/calculate-statistics', [StatisticsController::class, 'calculate']);
 Route::post('/test-normdist', [StatisticsController::class, 'normdist']);
 Route::post('/test-muestroaceptacion', [MuestroAceptacionController::class, 'calcular']);
+Route::post('/test-muestroaceptacion2', [MuestroAceptacionController::class, 'calcular2']);
 Route::post('/calculate-frequency', [FrecuencyTableController::class, 'calculateFrequency']);
 Route::post('/correct-frequency', [CorreccionStatisticsController::class, 'corregir']);
 
