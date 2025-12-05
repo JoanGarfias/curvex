@@ -167,7 +167,7 @@ class MuestreoAceptacionService {
         $AQT = $menoraql;
         $LTPD = $menorltpd;
 
-        $distancias["AQT"] = $menoraql;
+        $distancias["AQL"] = $menoraql;
         $distancias["LTPD"] = $menorltpd;
 
         $probabilidadaqt = $this->binomDistAcum($n, $c, $AQT);
