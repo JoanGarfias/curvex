@@ -5,9 +5,6 @@ import axios from '@/lib/axios';
 // Componentes
 import { Head } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
-import ThemeToggle from '@/components/ThemeToggle.vue';
-import CurvexIcon from '@/icons/CurvexIcon.vue';
-import UploadFile from '@/icons/UploadFile.vue';
 import {
   Select,
   SelectContent,
@@ -26,21 +23,25 @@ import {
 import { Info } from "lucide-vue-next";
 import FooterComp from '@/components/FooterComp.vue';
 import Textarea from '@/components/ui/textarea/Textarea.vue';
+import MainLayout from '@/layouts/MainLayout.vue';
 
 // Tipos
 import type { Resultado } from '@/types/corregido';
 import Resultados from '@/components/Corregidos1.vue';
 
-import type { Resultado2 } from '@/types/corregido2';
+import type { Resultado as Resultado2 } from '@/types/corregido2';
 import Resultados2 from '@/components/Corregidos2.vue';
+
+const breadcrumbs = [
+  { title: 'Inicio', href: '/' },
+  { title: 'Corrección de Varianza' }
+];
 
 const resultados = ref<Resultado | null>(null);
 const resultados2 = ref<Resultado2 | null>(null);
 const showResults = ref(false);
 
-const mode = 'text';
 const infinito = ref<'0' | '1'>('0');
-const csvFile = ref<File | null>(null);
 const text = ref('');
 const error = ref('');
 const cantdatoscorregido = ref('');
@@ -79,8 +80,8 @@ function analyze() {
 
   errorMessage.value = ''; // Reinicia el mensaje anterior
 
-  // Validación local si el modo es texto
-  if (mode.value === 'text') {
+  // Validación local para texto
+  if (text.value.trim()) {
     const input = text.value.trim();
     const validPattern = /^-?\d+(\.\d+)?(\s+-?\d+(\.\d+)?)*$/;
     if (!validPattern.test(input)) {
@@ -119,13 +120,13 @@ function analyze() {
   })
   .then((response) => {
     const data = response.data;
-    if(infinito.value === '1' && promedio.value < 0){
+    if(infinito.value === '1' && parseFloat(promedio.value) < 0){
       errorMessage.value = 'El promedio no puede ser negativo.';
       loading.value = false;
       return;
     }
 
-    if(cantdatos.value < 0){
+    if(parseFloat(cantdatos.value) < 0){
       errorMessage.value = 'La cantidad de datos totales no puede ser menor a cero.';
       loading.value = false;
       return;
@@ -137,7 +138,6 @@ function analyze() {
             count: data.count,
             mean: data.mean,
             variance: data.variance,
-            standard_deviation: data.standard_deviation,
             alpha: data.alpha,
             valor_critico: data.valor_critico,
             h: data.h,
@@ -195,7 +195,7 @@ function handleGoBack() {
 </script>
 
 <template>
-  <Head title="Curvex" />
+  <Head title="Corrección de Varianza" />
 
   <!-- Vista de Resultados -->
   <Resultados 
@@ -211,26 +211,17 @@ function handleGoBack() {
   />
 
   <!-- Vista Principal -->
-  <div v-else class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#f8fafc] to-[#eef2f3] dark:from-[#0f0f0f] dark:to-[#1a1a1a] text-gray-800 dark:text-gray-100 transition-all p-4 sm:p-6">
-    <!-- Navbar -->
-    <nav class="w-full max-w-5xl flex items-center justify-between mb-6 sm:mb-8 px-2 sm:px-4">
-      <div class="flex items-center gap-2 sm:gap-3">
-        <CurvexIcon class="w-8 h-8 sm:w-10 sm:h-10" />
-        <span class="text-xl sm:text-2xl font-extrabold tracking-tight">Curvex</span>
-      </div>
-      <ThemeToggle />
-    </nav>
-
-    <!-- Hero -->
-    <section class="text-center mb-6 sm:mb-8 pt-4 sm:pt-8 px-4">
-      <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight">Curvex</h1>
-      <h2 class="mt-3 sm:mt-4 text-lg sm:text-2xl md:text-3xl font-semibold text-gray-700 dark:text-gray-200 max-w-3xl mx-auto px-2">
-        Analiza tus datos, calcula estadísticas y visualiza resultados de forma sencilla
-      </h2>
-      <p class="mt-2 sm:mt-3 text-base sm:text-lg text-gray-500 dark:text-gray-400 px-2">
-        Elige una acción en la caja de selección.
-      </p>
-    </section>
+  <MainLayout v-else :breadcrumbs="breadcrumbs">
+    <div class="flex flex-col items-center text-gray-800 dark:text-gray-100">
+      <!-- Hero -->
+      <section class="text-center mb-6 sm:mb-8 pt-4 sm:pt-8 px-4">
+        <h2 class="mt-3 sm:mt-4 text-lg sm:text-2xl md:text-3xl font-semibold text-gray-700 dark:text-gray-200 max-w-3xl mx-auto px-2">
+          Corrección de datos de varianza a partir de una muestra
+        </h2>
+        <p class="mt-2 sm:mt-3 text-base sm:text-lg text-gray-500 dark:text-gray-400 px-2">
+          Elige una acción en la caja de selección.
+        </p>
+      </section>
 
     <!-- Card de controles -->
     <div class="w-full max-w-4xl bg-white/80 dark:bg-[#0b0b0b]/80 backdrop-blur rounded-lg shadow-md p-4 sm:p-6 mx-auto">
@@ -261,7 +252,7 @@ function handleGoBack() {
         </Select>
       </div>
 
-        <div v-if="infinito === '1'" class="mt-2 w-full grid gap-4 w-full min-w-0 space-y-2">
+        <div v-if="infinito === '1'" class="mt-2 w-full grid gap-4 min-w-0 space-y-2">
         <!-- Modo finito. Lo se me equivoque y esta al reves pero ya seria un rollo cambiarlo. Por que estas leyendo esto jajaja-->
           <div class="w-full min-w-0 space-y-2">
             <label class="block text-sm font-medium mb-2">
@@ -443,7 +434,7 @@ function handleGoBack() {
         </div>
 
         
-        <div v-else class="mt-2 w-full grid gap-4 w-full min-w-0 space-y-2">
+        <div v-else class="mt-2 w-full grid gap-4 min-w-0 space-y-2">
         <!-- Modo infinito -->
          <div class="w-full min-w-0 space-y-2">
           <label class="block text-sm font-medium mb-2">
@@ -553,5 +544,6 @@ function handleGoBack() {
     </div>
 
     <FooterComp />
-  </div>
+    </div>
+  </MainLayout>
 </template>

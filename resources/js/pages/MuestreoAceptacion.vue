@@ -1,21 +1,21 @@
 <template>
   <Head title="Muestreo de Aceptación" />
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-8">
-    <div class="max-w-7xl mx-auto">
-      <!-- Header -->
-      <div class="text-center mb-8">
-        <div class="flex items-center justify-center gap-3 mb-3">
-          <svg class="w-8 h-8 text-gray-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-          </svg>
-          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-            Muestreo de Aceptación
-          </h1>
-        </div>
-        <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-          Calcula el plan de muestreo óptimo basado en niveles de calidad aceptable y tolerancia
-        </p>
+  
+  <MainLayout :breadcrumbs="breadcrumbs">
+    <!-- Header -->
+    <div class="text-center mb-6 sm:mb-8 pt-4 sm:pt-8">
+      <div class="flex items-center justify-center gap-3 mb-3">
+        <svg class="w-7 h-7 sm:w-8 sm:h-8 text-gray-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+        </svg>
+        <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+          Muestreo de Aceptación
+        </h1>
       </div>
+      <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300 max-w-2xl mx-auto px-2">
+        Calcula el plan de muestreo óptimo basado en niveles de calidad aceptable y tolerancia
+      </p>
+    </div>
 
       <div class="grid lg:grid-cols-3 gap-6">
         <!-- Formulario - Columna fija -->
@@ -357,211 +357,227 @@
           </div>
           </template>
 
-          <div v-else class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-12 border border-gray-200 dark:border-gray-700 text-center">
-            <svg class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-            </svg>
-            <p class="text-gray-500 dark:text-gray-400">
-              Ingresa los parámetros y haz clic en calcular para ver los resultados
-            </p>
-          </div>
+        <div v-else class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-12 border border-gray-200 dark:border-gray-700 text-center">
+          <svg class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+          </svg>
+          <p class="text-gray-500 dark:text-gray-400">
+            Ingresa los parámetros y haz clic en calcular para ver los resultados
+          </p>
         </div>
       </div>
     </div>
-  </div>
+  </MainLayout>
 </template>
 
-<script>
+<script setup lang="ts">
 import { ref, nextTick } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import Chart from 'chart.js/auto';
+import type { Chart as ChartType } from 'chart.js/auto';
+import MainLayout from '@/layouts/MainLayout.vue';
 
-export default {
-  name: 'MuestreoAceptacion',
-  components: {
-    Head
-  },
+const breadcrumbs = [
+  { title: 'Inicio', href: '/' },
+  { title: 'Muestreo de Aceptación' }
+];
+
+interface FormData {
+  AQT: string;
+  LTPD: string;
+  '1-alpha': string;
+  beta: string;
+}
+
+interface FormErrors {
+  [key: string]: string;
+}
+
+interface GraficaPoint {
+  p: number;
+  res: number;
+  AQT?: boolean;
+  LTPD?: boolean;
+}
+
+interface ResultData {
+  distancia_menor: {
+    n: number;
+    c: number;
+    distancia: number;
+    AQT: number;
+    LTPD: number;
+    '1-alpha': number;
+    beta: number;
+  };
+  grafica: GraficaPoint[];
+}
+
+const formData = ref<FormData>({
+  AQT: '',
+  LTPD: '',
+  '1-alpha': '',
+  beta: ''
+});
+
+const errors = ref<FormErrors>({});
+const loading = ref(false);
+const results = ref<ResultData | null>(null);
+const chartCanvas = ref<HTMLCanvasElement | null>(null);
+let chartInstance: ChartType | null = null;
+
+const clearError = (field: string) => {
+  if (errors.value[field]) {
+    delete errors.value[field];
+  }
+};
+
+const validate = () => {
+  const newErrors: FormErrors = {};
   
-  setup() {
-    const formData = ref({
-      AQT: '',
-      LTPD: '',
-      '1-alpha': '',
-      beta: ''
+  (Object.keys(formData.value) as Array<keyof FormData>).forEach(key => {
+    const value = parseFloat(formData.value[key]);
+    if (!formData.value[key]) {
+      newErrors[key] = 'Campo requerido';
+    } else if (isNaN(value) || value < 0 || value > 1) {
+      newErrors[key] = 'Debe ser entre 0 y 1';
+    }
+  });
+
+  if (!newErrors.AQT && !newErrors.LTPD) {
+    if (parseFloat(formData.value.LTPD) < parseFloat(formData.value.AQT)) {
+      newErrors.LTPD = 'LTPD debe ser mayor que AQL';
+    }
+  }
+
+  errors.value = newErrors;
+  return Object.keys(newErrors).length === 0;
+};
+
+const renderChart = async (data: ResultData) => {
+  await nextTick();
+  
+  if (!chartCanvas.value) return;
+
+  // Destruir gráfica anterior si existe
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
+
+  const ctx = chartCanvas.value.getContext('2d');
+  if (!ctx) return;
+  
+  // Preparar datos
+  const chartData = data.grafica.map(point => ({
+    x: point.p,
+    y: point.res,
+    isAQT: point.AQT,
+    isLTPD: point.LTPD
+  }));
+
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [{
+        label: 'Probabilidad de Aceptación',
+        data: chartData,
+        borderColor: '#000',
+        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+        borderWidth: 2,
+        pointRadius: (context) => {
+          const point = context.raw as { isAQT?: boolean; isLTPD?: boolean };
+          return (point.isAQT || point.isLTPD) ? 6 : 0;
+        },
+        pointBackgroundColor: (context) => {
+          const point = context.raw as { isAQT?: boolean; isLTPD?: boolean };
+          if (point.isAQT) return '#fff';
+          if (point.isLTPD) return '#000';
+          return '#000';
+        },
+        pointBorderColor: (context) => {
+          const point = context.raw as { isAQT?: boolean; isLTPD?: boolean };
+          if (point.isAQT) return '#000';
+          if (point.isLTPD) return '#fff';
+          return '#000';
+        },
+        pointBorderWidth: 2,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top'
+        },
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              return `P(Aceptar): ${context.parsed.y.toFixed(4)}`;
+            },
+            title: (context) => {
+              return `p = ${context[0].parsed.x.toFixed(4)}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'linear',
+          title: {
+            display: true,
+            text: 'Proporción de Defectos (p)'
+          },
+          min: 0,
+          max: Math.max(...chartData.map((d: { x: number }) => d.x)) * 1.1
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'P(Aceptar)'
+          },
+          min: 0,
+          max: 1
+        }
+      }
+    }
+  });
+};
+
+const handleSubmit = async () => {
+  if (!validate()) return;
+
+  loading.value = true;
+
+  try {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement;
+    const response = await fetch('/test-muestroaceptacion', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': csrfToken?.content || ''
+      },
+      body: JSON.stringify(formData.value)
     });
 
-    const errors = ref({});
-    const loading = ref(false);
-    const results = ref(null);
-    const chartCanvas = ref(null);
-    let chartInstance = null;
-
-    const clearError = (field) => {
-      if (errors.value[field]) {
-        delete errors.value[field];
+    const data = await response.json();
+    
+    if (response.ok) {
+      results.value = data;
+      await renderChart(data);
+    } else {
+      // Manejar errores del servidor
+      if (data.errors) {
+        errors.value = data.errors;
       }
-    };
-
-    const validate = () => {
-      const newErrors = {};
-      
-      Object.keys(formData.value).forEach(key => {
-        const value = parseFloat(formData.value[key]);
-        if (!formData.value[key]) {
-          newErrors[key] = 'Campo requerido';
-        } else if (isNaN(value) || value < 0 || value > 1) {
-          newErrors[key] = 'Debe ser entre 0 y 1';
-        }
-      });
-
-      if (!newErrors.AQT && !newErrors.LTPD) {
-        if (parseFloat(formData.value.LTPD) < parseFloat(formData.value.AQT)) {
-          newErrors.LTPD = 'LTPD debe ser mayor que AQL';
-        }
-      }
-
-      errors.value = newErrors;
-      return Object.keys(newErrors).length === 0;
-    };
-
-    const renderChart = async (data) => {
-      await nextTick();
-      
-      if (!chartCanvas.value) return;
-
-      // Destruir gráfica anterior si existe
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
-
-      const ctx = chartCanvas.value.getContext('2d');
-      
-      // Preparar datos
-      const chartData = data.grafica.map(point => ({
-        x: point.p,
-        y: point.res,
-        isAQT: point.AQT,
-        isLTPD: point.LTPD
-      }));
-
-      chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          datasets: [{
-            label: 'Probabilidad de Aceptación',
-            data: chartData,
-            borderColor: '#000',
-            backgroundColor: 'rgba(0, 0, 0, 0.1)',
-            borderWidth: 2,
-            pointRadius: (context) => {
-              const point = context.raw;
-              return (point.isAQT || point.isLTPD) ? 6 : 0;
-            },
-            pointBackgroundColor: (context) => {
-              const point = context.raw;
-              if (point.isAQT) return '#fff';
-              if (point.isLTPD) return '#000';
-              return '#000';
-            },
-            pointBorderColor: (context) => {
-              const point = context.raw;
-              if (point.isAQT) return '#000';
-              if (point.isLTPD) return '#fff';
-              return '#000';
-            },
-            pointBorderWidth: 2,
-            tension: 0.3
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: true,
-              position: 'top'
-            },
-            tooltip: {
-              callbacks: {
-                label: (context) => {
-                  return `P(Aceptar): ${context.parsed.y.toFixed(4)}`;
-                },
-                title: (context) => {
-                  return `p = ${context[0].parsed.x.toFixed(4)}`;
-                }
-              }
-            }
-          },
-          scales: {
-            x: {
-              type: 'linear',
-              title: {
-                display: true,
-                text: 'Proporción de Defectos (p)'
-              },
-              min: 0,
-              max: Math.max(...chartData.map(d => d.x)) * 1.1
-            },
-            y: {
-              title: {
-                display: true,
-                text: 'P(Aceptar)'
-              },
-              min: 0,
-              max: 1
-            }
-          }
-        }
-      });
-    };
-
-    const handleSubmit = async () => {
-      if (!validate()) return;
-
-      loading.value = true;
-
-      try {
-        const response = await fetch('/test-muestroaceptacion', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-          },
-          body: JSON.stringify(formData.value)
-        });
-
-        const data = await response.json();
-        
-        if (response.ok) {
-          results.value = data;
-          await renderChart(data);
-        } else {
-          // Manejar errores del servidor
-          if (data.errors) {
-            errors.value = data.errors;
-          }
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Hubo un error al calcular. Por favor intenta de nuevo.');
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    return {
-      formData,
-      errors,
-      loading,
-      results,
-      chartCanvas,
-      clearError,
-      handleSubmit
-    };
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Hubo un error al calcular. Por favor intenta de nuevo.');
+  } finally {
+    loading.value = false;
   }
 };
 </script>
-
-<style scoped>
-/* Tailwind classes ya incluidas en el template */
-</style>
