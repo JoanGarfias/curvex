@@ -1,24 +1,21 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-8">
-    
-  <NavBar />
-
   <Head title="Muestreo de Aceptación" />
-    <div class="max-w-7xl mx-auto">
-      <!-- Header -->
-      <div class="text-center mb-8">
-        <div class="flex items-center justify-center gap-3 mb-3">
-          <svg class="w-8 h-8 text-gray-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-          </svg>
-          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-            Muestreo de Aceptación
-          </h1>
-        </div>
-        <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-          Calcula el plan de muestreo óptimo basado en niveles de calidad aceptable y tolerancia
-        </p>
+  
+  <MainLayout :breadcrumbs="breadcrumbs">
+    <!-- Header -->
+    <div class="text-center mb-6 sm:mb-8 pt-4 sm:pt-8">
+      <div class="flex items-center justify-center gap-3 mb-3">
+        <svg class="w-7 h-7 sm:w-8 sm:h-8 text-gray-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+        </svg>
+        <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+          Muestreo de Aceptación
+        </h1>
       </div>
+      <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300 max-w-2xl mx-auto px-2">
+        Calcula el plan de muestreo óptimo basado en niveles de calidad aceptable y tolerancia
+      </p>
+    </div>
 
       <div class="grid lg:grid-cols-3 gap-6">
         <!-- Formulario - Columna fija -->
@@ -155,7 +152,96 @@
 
         <!-- Resultados - 2 columnas -->
         <div class="lg:col-span-2 space-y-6">
-          <template v-if="results">
+          <!-- Skeletons mientras carga -->
+          <template v-if="loading">
+            <!-- Skeleton: Resultados numéricos -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 animate-pulse">
+              <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4"></div>
+              
+              <div class="grid grid-cols-3 gap-4">
+                <div class="text-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-gray-200 dark:border-gray-600">
+                  <div class="h-4 bg-gray-200 dark:bg-gray-600 rounded w-2/3 mx-auto mb-2"></div>
+                  <div class="h-10 bg-gray-200 dark:bg-gray-600 rounded w-16 mx-auto mb-2"></div>
+                  <div class="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/2 mx-auto"></div>
+                </div>
+                
+                <div class="text-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-gray-200 dark:border-gray-600">
+                  <div class="h-4 bg-gray-200 dark:bg-gray-600 rounded w-2/3 mx-auto mb-2"></div>
+                  <div class="h-10 bg-gray-200 dark:bg-gray-600 rounded w-16 mx-auto mb-2"></div>
+                  <div class="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/2 mx-auto"></div>
+                </div>
+                
+                <div class="text-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-gray-200 dark:border-gray-600">
+                  <div class="h-4 bg-gray-200 dark:bg-gray-600 rounded w-2/3 mx-auto mb-2"></div>
+                  <div class="h-10 bg-gray-200 dark:bg-gray-600 rounded w-16 mx-auto mb-2"></div>
+                  <div class="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/2 mx-auto"></div>
+                </div>
+              </div>
+
+              <div class="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                <div class="h-4 bg-gray-200 dark:bg-gray-600 rounded w-1/4 mb-2"></div>
+                <div class="h-4 bg-gray-200 dark:bg-gray-600 rounded w-full"></div>
+              </div>
+            </div>
+
+            <!-- Skeleton: Gráfica -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 animate-pulse">
+              <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
+              
+              <div class="w-full h-80 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                <svg class="w-16 h-16 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+                </svg>
+              </div>
+
+              <div class="mt-4 flex items-center justify-center gap-6">
+                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+              </div>
+            </div>
+
+            <!-- Skeleton: Tabla -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 animate-pulse">
+              <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mb-4"></div>
+              
+              <div class="space-y-3">
+                <div class="flex gap-4">
+                  <div class="h-10 bg-gray-100 dark:bg-gray-700 rounded flex-1"></div>
+                  <div class="h-10 bg-gray-100 dark:bg-gray-700 rounded flex-1"></div>
+                  <div class="h-10 bg-gray-100 dark:bg-gray-700 rounded flex-1"></div>
+                </div>
+                <div class="h-8 bg-gray-50 dark:bg-gray-700/50 rounded"></div>
+                <div class="h-8 bg-gray-50 dark:bg-gray-700/50 rounded"></div>
+                <div class="h-8 bg-gray-50 dark:bg-gray-700/50 rounded"></div>
+                <div class="h-8 bg-gray-50 dark:bg-gray-700/50 rounded"></div>
+                <div class="h-8 bg-gray-50 dark:bg-gray-700/50 rounded"></div>
+              </div>
+            </div>
+
+            <!-- Skeleton: Grid 2 columnas -->
+            <div class="grid md:grid-cols-2 gap-6">
+              <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 animate-pulse">
+                <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
+                <div class="space-y-3">
+                  <div class="h-10 bg-gray-50 dark:bg-gray-700/50 rounded"></div>
+                  <div class="h-10 bg-gray-50 dark:bg-gray-700/50 rounded"></div>
+                  <div class="h-10 bg-gray-50 dark:bg-gray-700/50 rounded"></div>
+                  <div class="h-10 bg-gray-50 dark:bg-gray-700/50 rounded"></div>
+                </div>
+              </div>
+
+              <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 animate-pulse">
+                <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
+                <div class="space-y-3">
+                  <div class="h-6 bg-gray-50 dark:bg-gray-700/50 rounded"></div>
+                  <div class="h-6 bg-gray-50 dark:bg-gray-700/50 rounded"></div>
+                  <div class="h-6 bg-gray-50 dark:bg-gray-700/50 rounded"></div>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <template v-else-if="results">
             <!-- Resultados numéricos -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
               <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
@@ -368,10 +454,9 @@
               Ingresa los parámetros y haz clic en calcular para ver los resultados
             </p>
           </div>
-        </div>
       </div>
     </div>
-  </div>
+  </MainLayout>
 </template>
 
 <script setup lang="ts">
@@ -379,7 +464,12 @@ import { ref, nextTick } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import Chart from 'chart.js/auto';
 import type { Chart as ChartType } from 'chart.js/auto';
-import NavBar from '@/components/NavBar.vue';
+import MainLayout from '@/layouts/MainLayout.vue';
+
+const breadcrumbs = [
+  { title: 'Inicio', href: '/' },
+  { title: 'Muestreo de Aceptación' }
+];
 
 interface FormData {
   AQT: string;
@@ -552,7 +642,7 @@ const handleSubmit = async () => {
 
   try {
     const csrfToken = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement;
-    const response = await fetch('/test-muestroaceptacion', {
+    const response = await fetch('/calc-muestroaceptacion', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -565,17 +655,19 @@ const handleSubmit = async () => {
     
     if (response.ok) {
       results.value = data;
+      loading.value = false;
+      await nextTick(); // Esperar a que el DOM se actualice
       await renderChart(data);
     } else {
       // Manejar errores del servidor
       if (data.errors) {
         errors.value = data.errors;
       }
+      loading.value = false;
     }
   } catch (error) {
     console.error('Error:', error);
     alert('Hubo un error al calcular. Por favor intenta de nuevo.');
-  } finally {
     loading.value = false;
   }
 };
