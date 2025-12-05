@@ -149,7 +149,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import MainLayout from '@/layouts/MainLayout.vue';
 import MuestreoFormAQLLTPD from '@/components/muestreo/MuestreoFormAQLLTPD.vue';
@@ -180,14 +180,30 @@ const formData = ref<FormData>({
   beta: ''
 });
 
-const { errors, clearError, validate } = useMuestreoValidation(mode.value);
-const { startTour, initTour } = useMuestreoTour(mode.value);
+const { errors, clearError, validate, changeMode : changeValidationMode } = useMuestreoValidation(mode.value);
+const { startTour, initTour, changeMode: changeTourMode } = useMuestreoTour(mode.value);
+
+
+watch(mode, (newMode: ModeType) => {
+  // Limpiar errores al cambiar de modo
+  Object.keys(errors.value).forEach(key => {
+    clearError(key as keyof FormData);
+  });
+
+  console.log(`Modo cambiado a: ${newMode}`);
+  // Cambiar modo en los composables
+  changeValidationMode(newMode);
+  changeTourMode(newMode);
+});
 
 // Inicializar tour
 initTour();
 
 const handleSubmit = async () => {
-  if (!validate(formData.value)) return;
+  if (!validate(formData.value)){
+    console.log(`Errores: ${JSON.stringify(errors.value)}`);
+    return; 
+  }
 
   loading.value = true;
   try {
