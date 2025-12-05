@@ -17,136 +17,223 @@
       </p>
     </div>
 
+
+    
+    <!-- Selector de Modo -->
+    <div class="mt-6 flex justify-center pb-5">
+      <div class="inline-flex bg-white dark:bg-gray-800 rounded-lg p-1 border-2 border-gray-200 dark:border-gray-700">
+        <button
+          @click="mode = 'aql-ltpd'"
+          :class="[
+            'px-6 py-2 rounded-md font-medium transition-all',
+            mode === 'aql-ltpd'
+              ? 'bg-black dark:bg-white text-white dark:text-black'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+          ]"
+        >
+          Modo AQL/LTPD
+        </button>
+        <button
+          @click="mode = 'n-c'"
+          :class="[
+            'px-6 py-2 rounded-md font-medium transition-all',
+            mode === 'n-c'
+              ? 'bg-black dark:bg-white text-white dark:text-black'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+          ]"
+        >
+          Modo n/c
+        </button>
+      </div>
+    </div>
+
       <div class="grid lg:grid-cols-3 gap-6">
         <!-- Formulario - Columna fija -->
         <div class="lg:col-span-1">
           <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 sticky top-4">
-          <div class="flex items-center gap-2 mb-6">
-            <svg class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-            </svg>
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Parámetros</h2>
-          </div>
-
-          <div class="space-y-5">
-            <!-- AQL -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                AQL (Nivel de Calidad Aceptable)
-                <span class="ml-1 text-gray-400 dark:text-gray-500 text-xs">0 - 1</span>
-              </label>
-              <input
-                v-model="formData.AQT"
-                type="number"
-                step="0.01"
-                min="0"
-                max="1"
-                :class="[
-                  'w-full px-4 py-3 rounded-lg border-2 transition-colors outline-none',
-                  'dark:bg-gray-700 dark:text-white dark:placeholder-gray-400',
-                  errors.AQT ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 hover:border-gray-300 focus:border-black dark:border-gray-600 dark:hover:border-gray-500 dark:focus:border-white'
-                ]"
-                placeholder="Ej: 0.02"
-                @input="clearError('AQT')"
-              />
-              <p v-if="errors.AQT" class="text-red-500 dark:text-red-400 text-xs mt-1">{{ errors.AQT }}</p>
-            </div>
-
-            <!-- LTPD -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                LTPD (Tolerancia del Lote)
-                <span class="ml-1 text-gray-400 dark:text-gray-500 text-xs">0 - 1</span>
-              </label>
-              <input
-                v-model="formData.LTPD"
-                type="number"
-                step="0.01"
-                min="0"
-                max="1"
-                :class="[
-                  'w-full px-4 py-3 rounded-lg border-2 transition-colors outline-none',
-                  'dark:bg-gray-700 dark:text-white dark:placeholder-gray-400',
-                  errors.LTPD ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 hover:border-gray-300 focus:border-black dark:border-gray-600 dark:hover:border-gray-500 dark:focus:border-white'
-                ]"
-                placeholder="Ej: 0.10"
-                @input="clearError('LTPD')"
-              />
-              <p v-if="errors.LTPD" class="text-red-500 dark:text-red-400 text-xs mt-1">{{ errors.LTPD }}</p>
-            </div>
-
-            <!-- 1-alpha -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                1 - α (Confianza del Productor)
-                <span class="ml-1 text-gray-400 dark:text-gray-500 text-xs">0 - 1</span>
-              </label>
-              <input
-                v-model="formData['1-alpha']"
-                type="number"
-                step="0.01"
-                min="0"
-                max="1"
-                :class="[
-                  'w-full px-4 py-3 rounded-lg border-2 transition-colors outline-none',
-                  'dark:bg-gray-700 dark:text-white dark:placeholder-gray-400',
-                  errors['1-alpha'] ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 hover:border-gray-300 focus:border-black dark:border-gray-600 dark:hover:border-gray-500 dark:focus:border-white'
-                ]"
-                placeholder="Ej: 0.95"
-                @input="clearError('1-alpha')"
-              />
-              <p v-if="errors['1-alpha']" class="text-red-500 dark:text-red-400 text-xs mt-1">{{ errors['1-alpha'] }}</p>
-            </div>
-
-            <!-- Beta -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                β (Riesgo del Consumidor)
-                <span class="ml-1 text-gray-400 dark:text-gray-500 text-xs">0 - 1</span>
-              </label>
-              <input
-                v-model="formData.beta"
-                type="number"
-                step="0.01"
-                min="0"
-                max="1"
-                :class="[
-                  'w-full px-4 py-3 rounded-lg border-2 transition-colors outline-none',
-                  'dark:bg-gray-700 dark:text-white dark:placeholder-gray-400',
-                  errors.beta ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 hover:border-gray-300 focus:border-black dark:border-gray-600 dark:hover:border-gray-500 dark:focus:border-white'
-                ]"
-                placeholder="Ej: 0.10"
-                @input="clearError('beta')"
-              />
-              <p v-if="errors.beta" class="text-red-500 dark:text-red-400 text-xs mt-1">{{ errors.beta }}</p>
-            </div>
-
-            <button
-              @click="handleSubmit"
-              :disabled="loading"
-              class="w-full bg-black dark:bg-white text-white dark:text-black py-3 rounded-lg font-semibold hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
-            >
-              {{ loading ? 'Calculando...' : 'Calcular Plan de Muestreo' }}
-            </button>
-          </div>
-
-          <!-- Guía -->
-          <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-            <div class="flex items-start gap-2">
-              <svg class="w-5 h-5 text-gray-600 dark:text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            <div class="flex items-center gap-2 mb-6">
+              <svg class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
               </svg>
-              <div class="text-xs text-gray-600 dark:text-gray-300">
-                <p class="font-medium mb-1">Guía rápida:</p>
-                <ul class="space-y-1 list-disc list-inside">
-                  <li>AQL: % defectos que consideras aceptable</li>
-                  <li>LTPD: % defectos máximo tolerable</li>
-                  <li>1-α: Confianza (típico: 0.95)</li>
-                  <li>β: Riesgo consumidor (típico: 0.10)</li>
-                </ul>
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Parámetros</h2>
+            </div>
+
+            <div class="space-y-5">
+              <!-- Modo AQL/LTPD -->
+              <template v-if="mode === 'aql-ltpd'">
+                <!-- AQL -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                    AQL (Nivel de Calidad Aceptable)
+                    <span class="ml-1 text-gray-400 dark:text-gray-500 text-xs">0 - 1</span>
+                  </label>
+                  <input
+                    v-model="formData.AQT"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="1"
+                    :class="[
+                      'w-full px-4 py-3 rounded-lg border-2 transition-colors outline-none',
+                      'dark:bg-gray-700 dark:text-white dark:placeholder-gray-400',
+                      errors.AQT ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 hover:border-gray-300 focus:border-black dark:border-gray-600 dark:hover:border-gray-500 dark:focus:border-white'
+                    ]"
+                    placeholder="Ej: 0.02"
+                    @input="clearError('AQT')"
+                  />
+                  <p v-if="errors.AQT" class="text-red-500 dark:text-red-400 text-xs mt-1">{{ errors.AQT }}</p>
+                </div>
+
+                <!-- LTPD -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                    LTPD (Tolerancia del Lote)
+                    <span class="ml-1 text-gray-400 dark:text-gray-500 text-xs">0 - 1</span>
+                  </label>
+                  <input
+                    v-model="formData.LTPD"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="1"
+                    :class="[
+                      'w-full px-4 py-3 rounded-lg border-2 transition-colors outline-none',
+                      'dark:bg-gray-700 dark:text-white dark:placeholder-gray-400',
+                      errors.LTPD ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 hover:border-gray-300 focus:border-black dark:border-gray-600 dark:hover:border-gray-500 dark:focus:border-white'
+                    ]"
+                    placeholder="Ej: 0.10"
+                    @input="clearError('LTPD')"
+                  />
+                  <p v-if="errors.LTPD" class="text-red-500 dark:text-red-400 text-xs mt-1">{{ errors.LTPD }}</p>
+                </div>
+              </template>
+
+              <!-- Modo n/c -->
+              <template v-else>
+                <!-- n -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                    n (Tamaño de Muestra)
+                    <span class="ml-1 text-gray-400 dark:text-gray-500 text-xs">≥ 2</span>
+                  </label>
+                  <input
+                    v-model="formData.n"
+                    type="number"
+                    min="2"
+                    step="1"
+                    :class="[
+                      'w-full px-4 py-3 rounded-lg border-2 transition-colors outline-none',
+                      'dark:bg-gray-700 dark:text-white dark:placeholder-gray-400',
+                      errors.n ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 hover:border-gray-300 focus:border-black dark:border-gray-600 dark:hover:border-gray-500 dark:focus:border-white'
+                    ]"
+                    placeholder="Ej: 50"
+                    @input="clearError('n')"
+                  />
+                  <p v-if="errors.n" class="text-red-500 dark:text-red-400 text-xs mt-1">{{ errors.n }}</p>
+                </div>
+
+                <!-- c -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                    c (Criterio de Aceptación)
+                    <span class="ml-1 text-gray-400 dark:text-gray-500 text-xs">0 - 7</span>
+                  </label>
+                  <input
+                    v-model="formData.c"
+                    type="number"
+                    min="0"
+                    max="7"
+                    step="1"
+                    :class="[
+                      'w-full px-4 py-3 rounded-lg border-2 transition-colors outline-none',
+                      'dark:bg-gray-700 dark:text-white dark:placeholder-gray-400',
+                      errors.c ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 hover:border-gray-300 focus:border-black dark:border-gray-600 dark:hover:border-gray-500 dark:focus:border-white'
+                    ]"
+                    placeholder="Ej: 2"
+                    @input="clearError('c')"
+                  />
+                  <p v-if="errors.c" class="text-red-500 dark:text-red-400 text-xs mt-1">{{ errors.c }}</p>
+                </div>
+              </template>
+
+              <!-- 1-alpha (común para ambos modos) -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  1 - α (Confianza del Productor)
+                  <span class="ml-1 text-gray-400 dark:text-gray-500 text-xs">0 - 1</span>
+                </label>
+                <input
+                  v-model="formData['1-alpha']"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="1"
+                  :class="[
+                    'w-full px-4 py-3 rounded-lg border-2 transition-colors outline-none',
+                    'dark:bg-gray-700 dark:text-white dark:placeholder-gray-400',
+                    errors['1-alpha'] ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 hover:border-gray-300 focus:border-black dark:border-gray-600 dark:hover:border-gray-500 dark:focus:border-white'
+                  ]"
+                  placeholder="Ej: 0.95"
+                  @input="clearError('1-alpha')"
+                />
+                <p v-if="errors['1-alpha']" class="text-red-500 dark:text-red-400 text-xs mt-1">{{ errors['1-alpha'] }}</p>
+              </div>
+
+              <!-- Beta (común para ambos modos) -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  β (Riesgo del Consumidor)
+                  <span class="ml-1 text-gray-400 dark:text-gray-500 text-xs">0 - 1</span>
+                </label>
+                <input
+                  v-model="formData.beta"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="1"
+                  :class="[
+                    'w-full px-4 py-3 rounded-lg border-2 transition-colors outline-none',
+                    'dark:bg-gray-700 dark:text-white dark:placeholder-gray-400',
+                    errors.beta ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 hover:border-gray-300 focus:border-black dark:border-gray-600 dark:hover:border-gray-500 dark:focus:border-white'
+                  ]"
+                  placeholder="Ej: 0.10"
+                  @input="clearError('beta')"
+                />
+                <p v-if="errors.beta" class="text-red-500 dark:text-red-400 text-xs mt-1">{{ errors.beta }}</p>
+              </div>
+
+              <button
+                @click="handleSubmit"
+                :disabled="loading"
+                class="w-full bg-black dark:bg-white text-white dark:text-black py-3 rounded-lg font-semibold hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
+              >
+                {{ loading ? 'Calculando...' : 'Calcular Plan de Muestreo' }}
+              </button>
+            </div>
+
+            <!-- Guía -->
+            <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+              <div class="flex items-start gap-2">
+                <svg class="w-5 h-5 text-gray-600 dark:text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="text-xs text-gray-600 dark:text-gray-300">
+                  <p class="font-medium mb-1">Guía rápida:</p>
+                  <ul v-if="mode === 'aql-ltpd'" class="space-y-1 list-disc list-inside">
+                    <li>AQL: % defectos que consideras aceptable</li>
+                    <li>LTPD: % defectos máximo tolerable</li>
+                    <li>1-α: Confianza (típico: 0.95)</li>
+                    <li>β: Riesgo consumidor (típico: 0.10)</li>
+                  </ul>
+                  <ul v-else class="space-y-1 list-disc list-inside">
+                    <li>n: Tamaño de la muestra a inspeccionar</li>
+                    <li>c: Defectos permitidos para aceptar</li>
+                    <li>1-α: Confianza (típico: 0.95)</li>
+                    <li>β: Riesgo consumidor (típico: 0.10)</li>
+                  </ul>
+                </div>
               </div>
             </div>
-          </div>
           </div>
         </div>
 
@@ -245,24 +332,32 @@
             <!-- Resultados numéricos -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
               <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                Plan de Muestreo Óptimo
+                {{ mode === 'aql-ltpd' ? 'Plan de Muestreo Óptimo' : 'Resultados del Análisis' }}
               </h2>
               
               <div class="grid grid-cols-3 gap-4">
                 <div class="text-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-gray-200 dark:border-gray-600">
-                  <p class="text-sm text-gray-600 dark:text-gray-300 mb-1">Tamaño Muestra</p>
-                  <p class="text-3xl font-bold text-black dark:text-white">
-                    {{ results.distancia_menor.n }}
+                  <p class="text-sm text-gray-600 dark:text-gray-300 mb-1">
+                    {{ mode === 'aql-ltpd' ? 'Tamaño Muestra' : 'AQL Calculado' }}
                   </p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">unidades</p>
+                  <p class="text-3xl font-bold text-black dark:text-white">
+                    {{ mode === 'aql-ltpd' ? results.distancia_menor.n : ((results.distancia_menor.AQL || 0) * 100).toFixed(2) + '%' }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {{ mode === 'aql-ltpd' ? 'unidades' : 'nivel aceptable' }}
+                  </p>
                 </div>
                 
                 <div class="text-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-gray-200 dark:border-gray-600">
-                  <p class="text-sm text-gray-600 dark:text-gray-300 mb-1">Criterio</p>
-                  <p class="text-3xl font-bold text-black dark:text-white">
-                    {{ results.distancia_menor.c }}
+                  <p class="text-sm text-gray-600 dark:text-gray-300 mb-1">
+                    {{ mode === 'aql-ltpd' ? 'Criterio' : 'LTPD Calculado' }}
                   </p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">defectos máx</p>
+                  <p class="text-3xl font-bold text-black dark:text-white">
+                    {{ mode === 'aql-ltpd' ? results.distancia_menor.c : ((results.distancia_menor.LTPD || 0) * 100).toFixed(2) + '%' }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {{ mode === 'aql-ltpd' ? 'defectos máx' : 'tolerancia' }}
+                  </p>
                 </div>
                 
                 <div class="text-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-gray-200 dark:border-gray-600">
@@ -388,13 +483,13 @@
                   <tr class="border-b border-gray-100 dark:border-gray-700">
                     <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">AQL</td>
                     <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
-                      {{ (results.distancia_menor.AQT * 100).toFixed(2) }}%
+                      {{ ((results.distancia_menor.AQT || results.distancia_menor.AQL || 0) * 100).toFixed(2) }}%
                     </td>
                   </tr>
                   <tr class="border-b border-gray-100 dark:border-gray-700">
                     <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">LTPD</td>
                     <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
-                      {{ (results.distancia_menor.LTPD * 100).toFixed(2) }}%
+                      {{ ((results.distancia_menor.LTPD || 0) * 100).toFixed(2) }}%
                     </td>
                   </tr>
                   <tr class="border-b border-gray-100 dark:border-gray-700">
@@ -476,6 +571,8 @@ interface FormData {
   LTPD: string;
   '1-alpha': string;
   beta: string;
+  n: string;
+  c: string;
 }
 
 interface FormErrors {
@@ -494,8 +591,9 @@ interface ResultData {
     n: number;
     c: number;
     distancia: number;
-    AQT: number;
-    LTPD: number;
+    AQT?: number;
+    LTPD?: number;
+    AQL?: number;
     '1-alpha': number;
     beta: number;
   };
@@ -506,9 +604,12 @@ const formData = ref<FormData>({
   AQT: '',
   LTPD: '',
   '1-alpha': '',
+  n: '',
+  c: '',
   beta: ''
 });
 
+const mode = ref('aql-ltpd'); // 'aql-ltpd' o 'n-c'
 const errors = ref<FormErrors>({});
 const loading = ref(false);
 const results = ref<ResultData | null>(null);
@@ -524,19 +625,47 @@ const clearError = (field: string) => {
 const validate = () => {
   const newErrors: FormErrors = {};
   
-  (Object.keys(formData.value) as Array<keyof FormData>).forEach(key => {
-    const value = parseFloat(formData.value[key]);
-    if (!formData.value[key]) {
-      newErrors[key] = 'Campo requerido';
-    } else if (isNaN(value) || value < 0 || value > 1) {
-      newErrors[key] = 'Debe ser entre 0 y 1';
-    }
-  });
+  if (mode.value === 'aql-ltpd') {
+    // Validar AQL, LTPD, 1-alpha, beta
+    ['AQT', 'LTPD', '1-alpha', 'beta'].forEach(key => {
+      const value = parseFloat(formData.value[key as keyof FormData]);
+      if (!formData.value[key as keyof FormData]) {
+        newErrors[key] = 'Campo requerido';
+      } else if (isNaN(value) || value < 0 || value > 1) {
+        newErrors[key] = 'Debe ser entre 0 y 1';
+      }
+    });
 
-  if (!newErrors.AQT && !newErrors.LTPD) {
-    if (parseFloat(formData.value.LTPD) < parseFloat(formData.value.AQT)) {
-      newErrors.LTPD = 'LTPD debe ser mayor que AQL';
+    if (!newErrors.AQT && !newErrors.LTPD) {
+      if (parseFloat(formData.value.LTPD) < parseFloat(formData.value.AQT)) {
+        newErrors.LTPD = 'LTPD debe ser mayor que AQL';
+      }
     }
+  } else {
+    // Validar n, c, 1-alpha, beta
+    const n = parseInt(formData.value.n);
+    const c = parseInt(formData.value.c);
+    
+    if (!formData.value.n) {
+      newErrors.n = 'Campo requerido';
+    } else if (isNaN(n) || n < 2) {
+      newErrors.n = 'Debe ser entero mayor o igual a 2';
+    }
+
+    if (formData.value.c !== '0' && !formData.value.c) {
+      newErrors.c = 'Campo requerido';
+    } else if (isNaN(c) || c < 0 || c > 7) {
+      newErrors.c = 'Debe ser entero entre 0 y 7';
+    }
+
+    ['1-alpha', 'beta'].forEach(key => {
+      const value = parseFloat(formData.value[key as keyof FormData]);
+      if (!formData.value[key as keyof FormData]) {
+        newErrors[key] = 'Campo requerido';
+      } else if (isNaN(value) || value < 0 || value > 1) {
+        newErrors[key] = 'Debe ser entre 0 y 1';
+      }
+    });
   }
 
   errors.value = newErrors;
@@ -639,16 +768,32 @@ const handleSubmit = async () => {
   if (!validate()) return;
 
   loading.value = true;
+  const endpoint = mode.value === 'aql-ltpd' ? '/calc-muestroaceptacion' : '/calc-muestroaceptacion2';
+  
+  // Preparar datos según el modo
+  const dataToSend = mode.value === 'aql-ltpd' 
+    ? {
+        AQT: formData.value.AQT,
+        LTPD: formData.value.LTPD,
+        '1-alpha': formData.value['1-alpha'],
+        beta: formData.value.beta
+      }
+    : {
+        n: parseInt(formData.value.n),
+        c: parseInt(formData.value.c),
+        '1-alpha': formData.value['1-alpha'],
+        beta: formData.value.beta
+      };
 
   try {
     const csrfToken = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement;
-    const response = await fetch('/calc-muestroaceptacion', {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-CSRF-TOKEN': csrfToken?.content || ''
       },
-      body: JSON.stringify(formData.value)
+      body: JSON.stringify(dataToSend)
     });
 
     const data = await response.json();
@@ -671,4 +816,5 @@ const handleSubmit = async () => {
     loading.value = false;
   }
 };
+
 </script>

@@ -20,8 +20,8 @@ Route::post('/calculate-statistics', [StatisticsController::class, 'calculate'])
 Route::post('/calculate-frequency', [FrecuencyTableController::class, 'calculateFrequency']);
 Route::post('/correct-frequency', [CorreccionStatisticsController::class, 'corregir']);
 Route::post('/calc-muestroaceptacion', [MuestroAceptacionController::class, 'calcular']);
+Route::post('/calc-muestroaceptacion2', [MuestroAceptacionController::class, 'calcular2']);
 
 /* RUTAS PARA TESTING */
 
 Route::post('/test-normdist', [StatisticsController::class, 'normdist']);
-Route::post('/test-muestroaceptacion2', [MuestroAceptacionController::class, 'calcular2']);
