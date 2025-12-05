@@ -99,8 +99,14 @@ export function useMuestreoTour(mode: ModeType) {
     });
   };
 
+  const changeMode = (newMode: ModeType) => {
+    mode = newMode;
+    console.log(`Cambiando modo de validación a: ${mode}`);
+  }
+
   return {
     startTour,
-    initTour
+    initTour,
+    changeMode
   };
 }

@@ -11,9 +11,15 @@ export function useMuestreoValidation(mode: ModeType) {
     }
   };
 
+  const changeMode = (newMode: ModeType) => {
+    mode = newMode;
+    console.log(`Cambiando modo de validación a: ${mode}`);
+  }
+
   const validate = (formData: FormData): boolean => {
+    console.log(`Validando formulario en modo: ${mode}`);
     const newErrors: FormErrors = {};
-    
+
     if (mode === 'aql-ltpd') {
       // Validar AQL, LTPD, 1-alpha, beta
       ['AQT', 'LTPD', '1-alpha', 'beta'].forEach(key => {
@@ -64,6 +70,7 @@ export function useMuestreoValidation(mode: ModeType) {
   return {
     errors,
     clearError,
-    validate
+    validate,
+    changeMode
   };
 }
