@@ -180,8 +180,8 @@ const formData = ref<FormData>({
   beta: ''
 });
 
-const { errors, clearError, validate } = useMuestreoValidation(mode.value);
-const { startTour, initTour } = useMuestreoTour(mode.value);
+const { errors, clearError, validate } = useMuestreoValidation(mode);
+const { startTour, initTour } = useMuestreoTour(mode);
 
 // Inicializar tour
 initTour();
@@ -190,9 +190,8 @@ const handleSubmit = async () => {
   if (!validate(formData.value)) return;
 
   loading.value = true;
-
   try {
-    const data = await MuestreoApiService.calculate(mode.value, formData.value);
+    const data = await MuestreoApiService.calculate(mode, formData.value);
     results.value = data;
   } catch (error) {
     console.error('Error:', error);

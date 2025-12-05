@@ -148,8 +148,8 @@
         <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
           Parámetros del Cálculo
         </h2>
-        
-        <table class="w-full text-sm">
+        <div v-if="mode === 'aql-ltpd'">
+          <table class="w-full text-sm">
           <tbody>
             <tr class="border-b border-gray-100 dark:border-gray-700">
               <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">AQL</td>
@@ -177,6 +177,37 @@
             </tr>
           </tbody>
         </table>
+        </div>
+        <div v-else>
+          <table class="w-full text-sm">
+          <tbody>
+            <tr class="border-b border-gray-100 dark:border-gray-700">
+              <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">n</td>
+              <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
+                {{ ((results.distancia_menor.n || 0))}}
+              </td>
+            </tr>
+            <tr class="border-b border-gray-100 dark:border-gray-700">
+              <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">c</td>
+              <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
+                {{ ((results.distancia_menor.c || 0) )}}
+              </td>
+            </tr>
+            <tr class="border-b border-gray-100 dark:border-gray-700">
+              <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">1 - α</td>
+              <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
+                {{ (results.distancia_menor['1-alpha'] * 100).toFixed(2) }}%
+              </td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">β</td>
+              <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
+                {{ (results.distancia_menor.beta * 100).toFixed(2) }}%
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
       </div>
 
       <!-- Resumen Estadístico -->
@@ -184,20 +215,45 @@
         <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
           Interpretación
         </h2>
-        
-        <div class="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+        <div v-if="mode === 'aql-ltpd'">
+          <div class="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+            <div class="flex items-start gap-2">
+              <div class="w-2 h-2 rounded-full bg-black dark:bg-white mt-2 flex-shrink-0"></div>
+              <p>
+                <strong>Tamaño de muestra (n={{ results.distancia_menor.n }}):</strong> 
+                Número de unidades que debes inspeccionar de cada lote.
+              </p>
+            </div>
+            <div class="flex items-start gap-2">
+              <div class="w-2 h-2 rounded-full bg-black dark:bg-white mt-2 flex-shrink-0"></div>
+              <p>
+                <strong>Criterio de aceptación (c={{ results.distancia_menor.c }}):</strong> 
+                Acepta si hay {{ results.distancia_menor.c }} o menos defectos, rechaza si hay más.
+              </p>
+            </div>
+            <div class="flex items-start gap-2">
+              <div class="w-2 h-2 rounded-full bg-black dark:bg-white mt-2 flex-shrink-0"></div>
+              <p>
+                <strong>Precisión ({{ results.distancia_menor.distancia.toFixed(4) }}):</strong> 
+                Qué tan cerca está el plan de los valores ideales deseados.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div v-else>
+          <div class="space-y-3 text-sm text-gray-700 dark:text-gray-300">
           <div class="flex items-start gap-2">
             <div class="w-2 h-2 rounded-full bg-black dark:bg-white mt-2 flex-shrink-0"></div>
             <p>
-              <strong>Tamaño de muestra (n={{ results.distancia_menor.n }}):</strong> 
-              Número de unidades que debes inspeccionar de cada lote.
+              <strong>Límite de calidad aceptable (AQL={{ ((results.distancia_menor.AQT || results.distancia_menor.AQL || 0) * 100).toFixed(2) }}%):</strong> 
+              Representa el máximo porcentaje de defectos que puede considerarse satisfactorio para una muestra específica.
             </p>
           </div>
           <div class="flex items-start gap-2">
             <div class="w-2 h-2 rounded-full bg-black dark:bg-white mt-2 flex-shrink-0"></div>
             <p>
-              <strong>Criterio de aceptación (c={{ results.distancia_menor.c }}):</strong> 
-              Acepta si hay {{ results.distancia_menor.c }} o menos defectos, rechaza si hay más.
+              <strong>Porcentaje de tolerancia de lote defectuoso (LTPD={{ ((results.distancia_menor.LTPD || 0) * 100).toFixed(2) }}%):</strong> 
+              Representa el peor nivel de calidad que el consumidor está dispuesto a tolerar en cualquier lote.
             </p>
           </div>
           <div class="flex items-start gap-2">
@@ -208,6 +264,8 @@
             </p>
           </div>
         </div>
+        </div>
+        
       </div>
     </div>
   </div>
