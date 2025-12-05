@@ -1,18 +1,18 @@
 <template>
   <Head title="Muestreo de Aceptación" />
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-8">
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="text-center mb-8">
         <div class="flex items-center justify-center gap-3 mb-3">
-          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-8 h-8 text-gray-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
           </svg>
-          <h1 class="text-3xl md:text-4xl font-bold text-gray-900">
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
             Muestreo de Aceptación
           </h1>
         </div>
-        <p class="text-gray-600 max-w-2xl mx-auto">
+        <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
           Calcula el plan de muestreo óptimo basado en niveles de calidad aceptable y tolerancia
         </p>
       </div>
@@ -20,20 +20,20 @@
       <div class="grid lg:grid-cols-3 gap-6">
         <!-- Formulario - Columna fija -->
         <div class="lg:col-span-1">
-          <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 sticky top-4">
+          <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 sticky top-4">
           <div class="flex items-center gap-2 mb-6">
-            <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
             </svg>
-            <h2 class="text-xl font-semibold text-gray-900">Parámetros</h2>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Parámetros</h2>
           </div>
 
           <div class="space-y-5">
             <!-- AQL -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                 AQL (Nivel de Calidad Aceptable)
-                <span class="ml-1 text-gray-400 text-xs">0 - 1</span>
+                <span class="ml-1 text-gray-400 dark:text-gray-500 text-xs">0 - 1</span>
               </label>
               <input
                 v-model="formData.AQT"
@@ -43,19 +43,20 @@
                 max="1"
                 :class="[
                   'w-full px-4 py-3 rounded-lg border-2 transition-colors outline-none',
-                  errors.AQT ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-gray-300 focus:border-black'
+                  'dark:bg-gray-700 dark:text-white dark:placeholder-gray-400',
+                  errors.AQT ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 hover:border-gray-300 focus:border-black dark:border-gray-600 dark:hover:border-gray-500 dark:focus:border-white'
                 ]"
                 placeholder="Ej: 0.02"
                 @input="clearError('AQT')"
               />
-              <p v-if="errors.AQT" class="text-red-500 text-xs mt-1">{{ errors.AQT }}</p>
+              <p v-if="errors.AQT" class="text-red-500 dark:text-red-400 text-xs mt-1">{{ errors.AQT }}</p>
             </div>
 
             <!-- LTPD -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                 LTPD (Tolerancia del Lote)
-                <span class="ml-1 text-gray-400 text-xs">0 - 1</span>
+                <span class="ml-1 text-gray-400 dark:text-gray-500 text-xs">0 - 1</span>
               </label>
               <input
                 v-model="formData.LTPD"
@@ -65,19 +66,20 @@
                 max="1"
                 :class="[
                   'w-full px-4 py-3 rounded-lg border-2 transition-colors outline-none',
-                  errors.LTPD ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-gray-300 focus:border-black'
+                  'dark:bg-gray-700 dark:text-white dark:placeholder-gray-400',
+                  errors.LTPD ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 hover:border-gray-300 focus:border-black dark:border-gray-600 dark:hover:border-gray-500 dark:focus:border-white'
                 ]"
                 placeholder="Ej: 0.10"
                 @input="clearError('LTPD')"
               />
-              <p v-if="errors.LTPD" class="text-red-500 text-xs mt-1">{{ errors.LTPD }}</p>
+              <p v-if="errors.LTPD" class="text-red-500 dark:text-red-400 text-xs mt-1">{{ errors.LTPD }}</p>
             </div>
 
             <!-- 1-alpha -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                 1 - α (Confianza del Productor)
-                <span class="ml-1 text-gray-400 text-xs">0 - 1</span>
+                <span class="ml-1 text-gray-400 dark:text-gray-500 text-xs">0 - 1</span>
               </label>
               <input
                 v-model="formData['1-alpha']"
@@ -87,19 +89,20 @@
                 max="1"
                 :class="[
                   'w-full px-4 py-3 rounded-lg border-2 transition-colors outline-none',
-                  errors['1-alpha'] ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-gray-300 focus:border-black'
+                  'dark:bg-gray-700 dark:text-white dark:placeholder-gray-400',
+                  errors['1-alpha'] ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 hover:border-gray-300 focus:border-black dark:border-gray-600 dark:hover:border-gray-500 dark:focus:border-white'
                 ]"
                 placeholder="Ej: 0.95"
                 @input="clearError('1-alpha')"
               />
-              <p v-if="errors['1-alpha']" class="text-red-500 text-xs mt-1">{{ errors['1-alpha'] }}</p>
+              <p v-if="errors['1-alpha']" class="text-red-500 dark:text-red-400 text-xs mt-1">{{ errors['1-alpha'] }}</p>
             </div>
 
             <!-- Beta -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                 β (Riesgo del Consumidor)
-                <span class="ml-1 text-gray-400 text-xs">0 - 1</span>
+                <span class="ml-1 text-gray-400 dark:text-gray-500 text-xs">0 - 1</span>
               </label>
               <input
                 v-model="formData.beta"
@@ -109,30 +112,31 @@
                 max="1"
                 :class="[
                   'w-full px-4 py-3 rounded-lg border-2 transition-colors outline-none',
-                  errors.beta ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-gray-300 focus:border-black'
+                  'dark:bg-gray-700 dark:text-white dark:placeholder-gray-400',
+                  errors.beta ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 hover:border-gray-300 focus:border-black dark:border-gray-600 dark:hover:border-gray-500 dark:focus:border-white'
                 ]"
                 placeholder="Ej: 0.10"
                 @input="clearError('beta')"
               />
-              <p v-if="errors.beta" class="text-red-500 text-xs mt-1">{{ errors.beta }}</p>
+              <p v-if="errors.beta" class="text-red-500 dark:text-red-400 text-xs mt-1">{{ errors.beta }}</p>
             </div>
 
             <button
               @click="handleSubmit"
               :disabled="loading"
-              class="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              class="w-full bg-black dark:bg-white text-white dark:text-black py-3 rounded-lg font-semibold hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
             >
               {{ loading ? 'Calculando...' : 'Calcular Plan de Muestreo' }}
             </button>
           </div>
 
           <!-- Guía -->
-          <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
             <div class="flex items-start gap-2">
-              <svg class="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 text-gray-600 dark:text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
-              <div class="text-xs text-gray-600">
+              <div class="text-xs text-gray-600 dark:text-gray-300">
                 <p class="font-medium mb-1">Guía rápida:</p>
                 <ul class="space-y-1 list-disc list-inside">
                   <li>AQL: % defectos que consideras aceptable</li>
@@ -150,38 +154,38 @@
         <div class="lg:col-span-2 space-y-6">
           <template v-if="results">
             <!-- Resultados numéricos -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                 Plan de Muestreo Óptimo
               </h2>
               
               <div class="grid grid-cols-3 gap-4">
-                <div class="text-center p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
-                  <p class="text-sm text-gray-600 mb-1">Tamaño Muestra</p>
-                  <p class="text-3xl font-bold text-black">
+                <div class="text-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-gray-200 dark:border-gray-600">
+                  <p class="text-sm text-gray-600 dark:text-gray-300 mb-1">Tamaño Muestra</p>
+                  <p class="text-3xl font-bold text-black dark:text-white">
                     {{ results.distancia_menor.n }}
                   </p>
-                  <p class="text-xs text-gray-500 mt-1">unidades</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">unidades</p>
                 </div>
                 
-                <div class="text-center p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
-                  <p class="text-sm text-gray-600 mb-1">Criterio</p>
-                  <p class="text-3xl font-bold text-black">
+                <div class="text-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-gray-200 dark:border-gray-600">
+                  <p class="text-sm text-gray-600 dark:text-gray-300 mb-1">Criterio</p>
+                  <p class="text-3xl font-bold text-black dark:text-white">
                     {{ results.distancia_menor.c }}
                   </p>
-                  <p class="text-xs text-gray-500 mt-1">defectos máx</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">defectos máx</p>
                 </div>
                 
-                <div class="text-center p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
-                  <p class="text-sm text-gray-600 mb-1">Precisión</p>
-                  <p class="text-2xl font-bold text-black">
+                <div class="text-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-gray-200 dark:border-gray-600">
+                  <p class="text-sm text-gray-600 dark:text-gray-300 mb-1">Precisión</p>
+                  <p class="text-2xl font-bold text-black dark:text-white">
                     {{ results.distancia_menor.distancia.toFixed(4) }}
                   </p>
-                  <p class="text-xs text-gray-500 mt-1">distancia</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">distancia</p>
                 </div>
               </div>
 
-              <div class="mt-4 p-4 bg-black text-white rounded-lg">
+              <div class="mt-4 p-4 bg-black dark:bg-white text-white dark:text-black rounded-lg">
                 <p class="text-sm font-medium mb-1">Regla de Decisión:</p>
                 <p class="text-sm">
                   Inspecciona <strong>{{ results.distancia_menor.n }}</strong> unidades. 
@@ -192,8 +196,8 @@
             </div>
 
             <!-- Gráfica -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                 Curva Característica de Operación
               </h2>
               
@@ -201,35 +205,35 @@
                 <canvas ref="chartCanvas"></canvas>
               </div>
 
-              <div class="mt-4 flex items-center justify-center gap-6 text-xs text-gray-600">
+              <div class="mt-4 flex items-center justify-center gap-6 text-xs text-gray-600 dark:text-gray-300">
                 <div class="flex items-center gap-2">
-                  <div class="w-4 h-4 rounded-full bg-white border-2 border-black"></div>
+                  <div class="w-4 h-4 rounded-full bg-white dark:bg-gray-800 border-2 border-black dark:border-white"></div>
                   <span>Punto AQL</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <div class="w-4 h-4 rounded-full bg-black border-2 border-white"></div>
+                  <div class="w-4 h-4 rounded-full bg-black dark:bg-white border-2 border-white dark:border-black"></div>
                   <span>Punto LTPD</span>
                 </div>
               </div>
             </div>
 
             <!-- Tabla de Probabilidades -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                 Tabla de Probabilidades de Aceptación
               </h2>
               
-              <div class="max-h-80 overflow-y-auto border border-gray-200 rounded-lg">
+              <div class="max-h-80 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg">
                 <table class="w-full text-sm">
-                  <thead class="sticky top-0 bg-gray-50 border-b-2 border-gray-200">
+                  <thead class="sticky top-0 bg-gray-50 dark:bg-gray-700 border-b-2 border-gray-200 dark:border-gray-600">
                     <tr>
-                      <th class="px-4 py-3 text-left font-semibold text-gray-700">
+                      <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-200">
                         Proporción (p)
                       </th>
-                      <th class="px-4 py-3 text-right font-semibold text-gray-700">
+                      <th class="px-4 py-3 text-right font-semibold text-gray-700 dark:text-gray-200">
                         P(Aceptar)
                       </th>
-                      <th class="px-4 py-3 text-center font-semibold text-gray-700">
+                      <th class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">
                         Tipo
                       </th>
                     </tr>
@@ -239,34 +243,34 @@
                       v-for="(punto, index) in results.grafica"
                       :key="index"
                       :class="[
-                        'border-b border-gray-100 hover:bg-gray-50 transition-colors',
-                        punto.AQT ? 'bg-gray-100 font-semibold' : '',
-                        punto.LTPD ? 'bg-gray-100 font-semibold' : ''
+                        'border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors',
+                        punto.AQT ? 'bg-gray-100 dark:bg-gray-700 font-semibold' : '',
+                        punto.LTPD ? 'bg-gray-100 dark:bg-gray-700 font-semibold' : ''
                       ]"
                     >
-                      <td class="px-4 py-3 text-gray-900">
+                      <td class="px-4 py-3 text-gray-900 dark:text-gray-100">
                         {{ punto.p.toFixed(4) }}
                       </td>
-                      <td class="px-4 py-3 text-right text-gray-900">
+                      <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
                         {{ punto.res.toFixed(4) }}
-                        <span class="text-xs text-gray-500 ml-1">
+                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">
                           ({{ (punto.res * 100).toFixed(2) }}%)
                         </span>
                       </td>
                       <td class="px-4 py-3 text-center">
                         <span
                           v-if="punto.AQT"
-                          class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white border-2 border-black text-black"
+                          class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white dark:bg-gray-800 border-2 border-black dark:border-white text-black dark:text-white"
                         >
                           AQL
                         </span>
                         <span
                           v-else-if="punto.LTPD"
-                          class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-black text-white"
+                          class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-black dark:bg-white text-white dark:text-black"
                         >
                           LTPD
                         </span>
-                        <span v-else class="text-gray-400 text-xs">
+                        <span v-else class="text-gray-400 dark:text-gray-500 text-xs">
                           —
                         </span>
                       </td>
@@ -275,7 +279,7 @@
                 </table>
               </div>
 
-              <div class="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
+              <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-xs text-gray-600 dark:text-gray-300">
                 <p>
                   <strong>Nota:</strong> Valores más altos = mayor probabilidad de aceptar el lote.
                 </p>
@@ -285,34 +289,34 @@
             <!-- Grid para las dos tablas pequeñas -->
             <div class="grid md:grid-cols-2 gap-6">
               <!-- Tabla de Parámetros Utilizados -->
-              <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">
+              <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                 Parámetros del Cálculo
               </h2>
               
               <table class="w-full text-sm">
                 <tbody>
-                  <tr class="border-b border-gray-100">
-                    <td class="px-4 py-3 font-medium text-gray-700">AQL</td>
-                    <td class="px-4 py-3 text-right text-gray-900">
+                  <tr class="border-b border-gray-100 dark:border-gray-700">
+                    <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">AQL</td>
+                    <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
                       {{ (results.distancia_menor.AQT * 100).toFixed(2) }}%
                     </td>
                   </tr>
-                  <tr class="border-b border-gray-100">
-                    <td class="px-4 py-3 font-medium text-gray-700">LTPD</td>
-                    <td class="px-4 py-3 text-right text-gray-900">
+                  <tr class="border-b border-gray-100 dark:border-gray-700">
+                    <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">LTPD</td>
+                    <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
                       {{ (results.distancia_menor.LTPD * 100).toFixed(2) }}%
                     </td>
                   </tr>
-                  <tr class="border-b border-gray-100">
-                    <td class="px-4 py-3 font-medium text-gray-700">1 - α</td>
-                    <td class="px-4 py-3 text-right text-gray-900">
+                  <tr class="border-b border-gray-100 dark:border-gray-700">
+                    <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">1 - α</td>
+                    <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
                       {{ (results.distancia_menor['1-alpha'] * 100).toFixed(2) }}%
                     </td>
                   </tr>
                   <tr>
-                    <td class="px-4 py-3 font-medium text-gray-700">β</td>
-                    <td class="px-4 py-3 text-right text-gray-900">
+                    <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">β</td>
+                    <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
                       {{ (results.distancia_menor.beta * 100).toFixed(2) }}%
                     </td>
                   </tr>
@@ -321,28 +325,28 @@
             </div>
 
             <!-- Resumen Estadístico -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                 Interpretación
               </h2>
               
-              <div class="space-y-3 text-sm text-gray-700">
+              <div class="space-y-3 text-sm text-gray-700 dark:text-gray-300">
                 <div class="flex items-start gap-2">
-                  <div class="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></div>
+                  <div class="w-2 h-2 rounded-full bg-black dark:bg-white mt-2 flex-shrink-0"></div>
                   <p>
                     <strong>Tamaño de muestra (n={{ results.distancia_menor.n }}):</strong> 
                     Número de unidades que debes inspeccionar de cada lote.
                   </p>
                 </div>
                 <div class="flex items-start gap-2">
-                  <div class="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></div>
+                  <div class="w-2 h-2 rounded-full bg-black dark:bg-white mt-2 flex-shrink-0"></div>
                   <p>
                     <strong>Criterio de aceptación (c={{ results.distancia_menor.c }}):</strong> 
                     Acepta si hay {{ results.distancia_menor.c }} o menos defectos, rechaza si hay más.
                   </p>
                 </div>
                 <div class="flex items-start gap-2">
-                  <div class="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></div>
+                  <div class="w-2 h-2 rounded-full bg-black dark:bg-white mt-2 flex-shrink-0"></div>
                   <p>
                     <strong>Precisión ({{ results.distancia_menor.distancia.toFixed(4) }}):</strong> 
                     Qué tan cerca está el plan de los valores ideales deseados.
@@ -353,11 +357,11 @@
           </div>
           </template>
 
-          <div v-else class="bg-white rounded-2xl shadow-lg p-12 border border-gray-200 text-center">
-            <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div v-else class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-12 border border-gray-200 dark:border-gray-700 text-center">
+            <svg class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
             </svg>
-            <p class="text-gray-500">
+            <p class="text-gray-500 dark:text-gray-400">
               Ingresa los parámetros y haz clic en calcular para ver los resultados
             </p>
           </div>
