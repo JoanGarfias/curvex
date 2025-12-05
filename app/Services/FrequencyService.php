@@ -189,13 +189,13 @@ class FrequencyService
             $normDistLimiteInferior = self::normDistAcumulado(
                 $claseData['limite_inferior'],
                 $promedio,
-                round($desviacionEstandar)
+                round($desviacionEstandar,4)
             );
 
             $normDistLimiteSuperior = self::normDistAcumulado(
                 $claseData['limite_superior'],
                 $promedio,
-                round($desviacionEstandar)
+                round($desviacionEstandar,4)
             );
 
             Log::info("Limite Inferior: " . $claseData['limite_inferior'] . " - NormDist: " . $normDistLimiteInferior);
