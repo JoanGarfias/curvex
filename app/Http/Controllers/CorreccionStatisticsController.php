@@ -7,246 +7,98 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
-use MathPHP\Probability\Distribution\Continuous\StudentT;
-use MathPHP\Probability\Distribution\Continuous\StandardNormal;
-use Exception; // Para el try-catch general
+use Exception;
 
 use App\Services\StatisticService;
 use App\Services\FrequencyService;
+use App\Services\CorreccionService;
 
 class CorreccionStatisticsController extends Controller
 {
+    protected CorreccionService $correccionService;
+
+    public function __construct(CorreccionService $correccionService)
+    {
+        $this->correccionService = $correccionService;
+    }
     /**
      * Recibe una lista de números y calcula sus estadísticas.
      *
-     * @param Request $request
+     * @param StatisticsCorreccionRequest $request
      * @return JsonResponse
      */
     public function corregir(StatisticsCorreccionRequest $request): JsonResponse
     {
-        // 1. VALIDACIÓN (Equivalente a jTextArea1.getText().isBlank() y NumberFormatException)
         $data = $request->validated();
-        $service = new StatisticService();
-        $frequencyService = new FrequencyService();
 
-        // 2. OBTENER NÚMEROS (Equivalente a tu bloque 'try' inicial)
+        // Procesar datos de entrada
+        $numbers = $this->correccionService->procesarDatos($data);
 
-        if (isset($data['file'])) {
-            $numbers = [];
-            $path = $data['file']->getRealPath();
-            $content = file_get_contents($path);
-            
-            // Eliminar BOM (Byte Order Mark) si existe
-            $content = preg_replace('/^\xEF\xBB\xBF/', '', $content);
-            
-            // Dividir por saltos de línea y procesar cada línea
-            $lines = preg_split('/\r\n|\r|\n/', $content);
-            
-            foreach ($lines as $line) {
-                $line = trim($line);
-                if (empty($line)) continue;
-                
-                // Intentar separar por comas, espacios o tabulaciones
-                $values = preg_split('/[,\s\t]+/', $line);
-                
-                foreach ($values as $value) {
-                    $trimmed = trim($value);
-                    if ($trimmed !== '' && is_numeric($trimmed)) {
-                        $numbers[] = floatval($trimmed);
-                    }
-                }
-            }
-        } else if(isset($data['values'])){
-            // Parse space-separated numbers
-            $numbers = preg_split('/\s+/', trim($data['values']));
-            $numbers = array_filter(array_map('floatval', $numbers));
-        } else{
-            if(!isset($data['infinito']) || $data['infinito'] == true){
-                return response()->json(['message' => 'Ocurrió un error.', 'error' => "Proporcione valores de la muestra, o cambie el metodo de correccion de varianza."], 422);
+        // Validar si se requieren datos cuando modo es infinito
+        if (empty($numbers)) {
+            if (!isset($data['infinito']) || $data['infinito'] == true) {
+                return response()->json([
+                    'message' => 'Ocurrió un error.',
+                    'error' => "Proporcione valores de la muestra, o cambie el metodo de correccion de varianza."
+                ], 422);
             }
         }
-        
+
         try {
             Log::info('Varianza muestral');
-            $modo = 0;
-            if(isset($data['infinito']))
-                $modo = $data['infinito'] ? 1 : 0;
 
-            if(isset($data['modovarianza']))
-                $modovarianza = $data['modovarianza'] ? 1 : 0;
+            // Extraer parámetros
+            $modo = isset($data['infinito']) && $data['infinito'] ? 1 : 0;
+            $modovarianza = isset($data['modovarianza']) && $data['modovarianza'] ? 1 : 0;
+            $cantdatos = $data['cantdatos'] ?? 0;
+            $error = $data['error'] ?? 0;
+            $confiabilidad = $data['confiabilidad'] ?? 0;
+            $cantdatoscorregido = $data['cantdatoscorregido'] ?? 0;
+            $varianzanueva = $data['varianza'] ?? 0;
+            $promedionuevo = $data['promedio'] ?? 0;
 
-            $cantdatos = 0;
-            if(isset($data['cantdatos']))
-                $cantdatos = $data['cantdatos'] ? $data['cantdatos'] : 0;
+            // Validar confiabilidad
+            $this->correccionService->validarConfiabilidad($confiabilidad);
 
-            $error = 0;
-            if(isset($data['error']))
-                $error = $data['error'] ? $data['error'] : 0;
-
-            $confiabilidad = 0;
-            if(isset($data['confiabilidad']))
-                $confiabilidad = $data['confiabilidad'] ? $data['confiabilidad'] : 0;
-            
-            if($confiabilidad < 0 || $confiabilidad > 100){
-                return response()->json(['message' => 'Ocurrió un error.', 'error' => "La confiabilidad no puede ser menor a 0 o mayor a 100. Ingresa otro valor para tu confiabilidad."], 500);
+            // Ejecutar cálculo según el modo
+            if ($modo == 1) {
+                // Modo infinito (paso 1)
+                $resultados = $this->correccionService->calcularModoInfinito(
+                    $numbers,
+                    $cantdatos,
+                    $confiabilidad,
+                    $error
+                );
+            } else {
+                // Modo sin infinito (paso 2)
+                if ($modovarianza == 1) {
+                    // Sin datos de muestra
+                    $resultados = $this->correccionService->calcularSinInfinitoSinMuestra(
+                        $cantdatos,
+                        $cantdatoscorregido,
+                        $confiabilidad,
+                        $varianzanueva,
+                        $promedionuevo
+                    );
+                } else {
+                    // Con datos de muestra
+                    $resultados = $this->correccionService->calcularSinInfinitoConMuestra(
+                        $numbers,
+                        $cantdatos,
+                        $confiabilidad,
+                        $varianzanueva,
+                        $promedionuevo
+                    );
+                }
             }
 
-            $cantdatoscorregido = 0;
-            if(isset($data['cantdatoscorregido']))
-                $cantdatoscorregido = $data['cantdatoscorregido'] ? $data['cantdatoscorregido'] : 0;
-
-            $varianzanueva = 0;
-            if(isset($data['varianza']))
-                $varianzanueva = $data['varianza'] ? $data['varianza'] : 0;
-
-            $promedionuevo = 0;
-            if(isset($data['promedio']))
-                $promedionuevo = $data['promedio'] ? $data['promedio'] : 0;
-
-
-            if($modo == 0){ 
-            //sin infinito (paso 2 ejercicio)
-            if($modovarianza == 1){
-                //No se usan datos de una muestra
-                if($cantdatoscorregido < 0){
-                    return response()->json(['message' => 'Ocurrió un error.', 'error' => "La cantidad de la muestra corregida de datos debe ser mayor a cero. Ingresa otro total de datos en la muestra corregida."], 500);
-                }
-
-                if($cantdatoscorregido >= $cantdatos){
-                    return response()->json(['message' => 'Ocurrió un error.', 'error' => "La cantidad de la muestra corregida de datos es mayor al total ingresado de datos. Ingresa otro total o coloca un total menor de datos en la muestra corregida."], 500);
-                }
-
-                $alpha = 1 - ($confiabilidad/100);
-                
-
-                $varianza2 = ((($cantdatos - $cantdatoscorregido)/$cantdatos)*(($varianzanueva)/$cantdatoscorregido));
-                $desviacion2 = sqrt($varianza2);
-                $valorCritico = 0;
-
-                if($cantdatoscorregido <= 30){
-                    //Se saca la t
-                    $distribution = new StudentT($cantdatoscorregido-1);
-                    $valorCritico = $distribution->inverse2Tails(($alpha));
-                    $limite = $desviacion2 * $valorCritico;
-                }else{
-                    //Se saca la z
-                    $distribution = new StandardNormal();
-                    $alpha_half = (1 - ($confiabilidad / 100)) / 2;
-                    $p_acumulada_positiva = 1 - $alpha_half; // Ej: 1 - 0.025 = 0.975
-                    $valorCritico = $distribution->inverse($p_acumulada_positiva); 
-                    $limite = $desviacion2 * $valorCritico;
-                    $alpha = $alpha_half;
-                }
-                
-
-                $resultados = [
-                    'variance' => $varianzanueva, // Varianza poblacional
-                    'alpha' => $alpha, // Nueva: tabla de frecuencias
-                    'valor_critico' => $valorCritico, // Nueva: tabla de frecuencias
-                    'variance2' => $varianza2, // Varianza poblacional
-                    'desviacion2' => $desviacion2,
-                    'limite' => $limite,
-                    'promedio' => $promedionuevo,
-                    'cosa' => ($cantdatoscorregido>=30? 'Distribución Normal Estándar' : 'Distribución T'),   
-                ];
-            }else{
-                //Se usan datos de una muestra
-                $listaNumeros = $numbers;
-
-                // int n = obtenerCantNumeros(...)
-                $n = count($listaNumeros);
-
-                if($n >= $cantdatos){
-                    return response()->json(['message' => 'Ocurrió un error.', 'error' => "La cantidad de la muestra de datos es mayor al total ingresado de datos. Ingresa otro total o coloca menos datos en la muestra."], 500);
-                }
-
-                // double promedio = promedio(mat, n)
-                $promedio = $service->promedio($listaNumeros, $n);
-
-                // double varianza = obtenerVarianza(mat,n,promedio)
-                $varianza = $service->obtenerVarianza($listaNumeros, $n, $promedio, 1);
-
-                $alpha = 1 - ($confiabilidad/100);
-                
-                $cantdatoscorregido = $n;
-                $varianza2 = ((($cantdatos - $cantdatoscorregido)/$cantdatos)*(($varianzanueva)/$cantdatoscorregido));
-                $desviacion2 = sqrt($varianza2);
-                $valorCritico = 0;
-
-                if($cantdatoscorregido <= 30){
-                    //Se saca la t
-                    $distribution = new StudentT($cantdatoscorregido-1);
-                    $valorCritico = $distribution->inverse2Tails(($alpha));
-                    $limite = $desviacion2 * $valorCritico;
-                }else{
-                    //Se saca la z
-                    $distribution = new StandardNormal();
-                    $alpha_half = (1 - ($confiabilidad / 100)) / 2;
-                    $p_acumulada_positiva = 1 - $alpha_half; // Ej: 1 - 0.025 = 0.975
-                    $valorCritico = $distribution->inverse($p_acumulada_positiva); 
-                    $limite = $desviacion2 * $valorCritico;
-                    $alpha = $alpha_half;
-                }
-                
-
-                $resultados = [
-                    'variance' => $varianzanueva, // Varianza poblacional
-                    'alpha' => $alpha, // Nueva: tabla de frecuencias
-                    'valor_critico' => $valorCritico, // Nueva: tabla de frecuencias
-                    'variance2' => $varianza2, // Varianza poblacional
-                    'desviacion2' => $desviacion2,
-                    'limite' => $limite,
-                    'promedio' => $promedionuevo,
-                    'cosa' => ($cantdatoscorregido>=30? 'Distribución Normal Estándar' : 'Distribución T'),   
-                ];
-            }
-                
-            }else if($modo == 1){ 
-            //con infinito (paso 1 ejercicio)
-                
-                $listaNumeros = $numbers;
-
-                // int n = obtenerCantNumeros(...)
-                $n = count($listaNumeros);
-
-                if($n >= $cantdatos){
-                    return response()->json(['message' => 'Ocurrió un error.', 'error' => "La cantidad de la muestra de datos es mayor al total ingresado de datos. Ingresa otro total o coloca menos datos en la muestra."], 500);
-                }
-
-                // double promedio = promedio(mat, n)
-                $promedio = $service->promedio($listaNumeros, $n);
-
-                // double varianza = obtenerVarianza(mat,n,promedio)
-                $varianza = $service->obtenerVarianza($listaNumeros, $n, $promedio, 1);
-
-                $alpha = 1 - ($confiabilidad/100);
-                $distribution = new StudentT($n-1);
-                $valorCritico = $distribution->inverse2Tails(($alpha));
-
-                $h = (($cantdatos*($valorCritico**2))*$varianza) / ((1000*($error**2))+(($valorCritico**2)*$varianza));
-
-                $varianza2 = (($cantdatos - $h)/$cantdatos)*(($varianza**2)/$h);
-
-                $resultados = [
-                    'count' => $n,
-                    'mean' => $promedio,
-                    'variance' => $varianza, // Varianza poblacional
-                    'alpha' => $alpha, // Nueva: tabla de frecuencias
-                    'valor_critico' => $valorCritico, // Nueva: tabla de frecuencias
-                    'h' => $h, // Nueva: tabla de frecuencias
-                    'hreal' => ceil($h),
-                ];
-            }
-            
-
-            // 5. DEVOLVER RESPUESTA
-            // (Equivalente a JOptionPane.showMessageDialog(rootPane, "Operación exitosa!"))
             return response()->json($resultados, 200);
 
         } catch (Exception $e) {
-            // 6. MANEJO DE ERRORES GENERALES
-            // (Equivalente a tu 'catch(Exception e)')
-            return response()->json(['message' => 'Ocurrió un error inesperado.', 'error' => $e->getMessage()], 500);
+            return response()->json([
+                'message' => 'Ocurrió un error inesperado.',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }
