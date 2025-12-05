@@ -473,40 +473,77 @@
             <!-- Grid para las dos tablas pequeñas -->
             <div class="grid md:grid-cols-2 gap-6">
               <!-- Tabla de Parámetros Utilizados -->
-              <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                Parámetros del Cálculo
-              </h2>
-              
-              <table class="w-full text-sm">
-                <tbody>
-                  <tr class="border-b border-gray-100 dark:border-gray-700">
-                    <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">AQL</td>
-                    <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
-                      {{ ((results.distancia_menor.AQT || results.distancia_menor.AQL || 0) * 100).toFixed(2) }}%
-                    </td>
-                  </tr>
-                  <tr class="border-b border-gray-100 dark:border-gray-700">
-                    <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">LTPD</td>
-                    <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
-                      {{ ((results.distancia_menor.LTPD || 0) * 100).toFixed(2) }}%
-                    </td>
-                  </tr>
-                  <tr class="border-b border-gray-100 dark:border-gray-700">
-                    <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">1 - α</td>
-                    <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
-                      {{ (results.distancia_menor['1-alpha'] * 100).toFixed(2) }}%
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">β</td>
-                    <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
-                      {{ (results.distancia_menor.beta * 100).toFixed(2) }}%
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+<div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+  <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+    Parámetros del Cálculo
+  </h2>
+  
+  <table class="w-full text-sm">
+    <tbody>
+      <!-- Modo AQL/LTPD: Mostrar parámetros de entrada -->
+      <template v-if="mode === 'aql-ltpd'">
+        <tr class="border-b border-gray-100 dark:border-gray-700">
+          <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">AQL (entrada)</td>
+          <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
+            {{ ((results.distancia_menor.AQT || 0) * 100).toFixed(2) }}%
+          </td>
+        </tr>
+        <tr class="border-b border-gray-100 dark:border-gray-700">
+          <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">LTPD (entrada)</td>
+          <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
+            {{ ((results.distancia_menor.LTPD || 0) * 100).toFixed(2) }}%
+          </td>
+        </tr>
+      </template>
+
+      <!-- Modo n/c: Mostrar n, c como entrada y AQL/LTPD calculados -->
+      <template v-else>
+        <tr class="border-b border-gray-100 dark:border-gray-700">
+          <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">n (entrada)</td>
+          <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
+            {{ results.distancia_menor.n }}
+          </td>
+        </tr>
+        <tr class="border-b border-gray-100 dark:border-gray-700">
+          <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">c (entrada)</td>
+          <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
+            {{ results.distancia_menor.c }}
+          </td>
+        </tr>
+        <tr class="border-b border-gray-100 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
+          <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">
+            AQL (calculado)
+          </td>
+          <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
+            {{ ((results.distancia_menor.AQL || 0) * 100).toFixed(2) }}%
+          </td>
+        </tr>
+        <tr class="border-b border-gray-100 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
+          <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">
+            LTPD (calculado)
+          </td>
+          <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
+            {{ ((results.distancia_menor.LTPD || 0) * 100).toFixed(2) }}%
+          </td>
+        </tr>
+      </template>
+
+      <!-- Parámetros comunes para ambos modos -->
+      <tr class="border-b border-gray-100 dark:border-gray-700">
+        <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">1 - α</td>
+        <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
+          {{ (results.distancia_menor['1-alpha'] * 100).toFixed(2) }}%
+        </td>
+      </tr>
+      <tr>
+        <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">β</td>
+        <td class="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
+          {{ (results.distancia_menor.beta * 100).toFixed(2) }}%
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
             <!-- Resumen Estadístico -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
