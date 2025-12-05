@@ -161,7 +161,6 @@ import { useMuestreoValidation } from '@/composables/useMuestreoValidation';
 import { useMuestreoTour } from '@/composables/useMuestreoTour';
 import { MuestreoApiService } from '@/services/muestreoApi';
 import type { FormData, ResultData, ModeType } from '@/types/muestreo';
-import 'driver.js/dist/driver.css';
 
 const breadcrumbs = [
   { title: 'Inicio', href: '/' },
@@ -184,6 +183,9 @@ const formData = ref<FormData>({
 const { errors, clearError, validate } = useMuestreoValidation(mode.value);
 const { startTour, initTour } = useMuestreoTour(mode.value);
 
+// Inicializar tour
+initTour();
+
 const handleSubmit = async () => {
   if (!validate(formData.value)) return;
 
@@ -199,9 +201,6 @@ const handleSubmit = async () => {
     loading.value = false;
   }
 };
-
-// Inicializar tour
-initTour();
 </script>
 
 <style>

@@ -1,3 +1,6 @@
+/* Importar estilos base de driver.js */
+@import 'driver.js/dist/driver.css';
+
 /* Driver.js custom styles para combinar con shadcn y tema gray */
 .driver-popover {
   background: white;
