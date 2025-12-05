@@ -68,7 +68,8 @@ class CorreccionService
     private function procesarTexto(string $values): array
     {
         $numbers = preg_split('/\s+/', trim($values));
-        return array_filter(array_map('floatval', $numbers));
+        // array_values() reindexea el array desde 0 después de filtrar
+        return array_values(array_filter(array_map('floatval', $numbers)));
     }
 
     /**
@@ -86,7 +87,7 @@ class CorreccionService
      */
     public function validarTamanoMuestra(int $tamanoMuestra, int $totalDatos): void
     {
-        if ($tamanoMuestra >= $totalDatos) {
+        if ($tamanoMuestra > $totalDatos) {
             throw new Exception("La cantidad de la muestra de datos es mayor al total ingresado de datos. Ingresa otro total o coloca menos datos en la muestra.");
         }
     }
