@@ -1,21 +1,24 @@
 <template>
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-8">
+    
+  <NavBar />
+
   <Head title="Muestreo de Aceptación" />
-  
-  <MainLayout :breadcrumbs="breadcrumbs">
-    <!-- Header -->
-    <div class="text-center mb-6 sm:mb-8 pt-4 sm:pt-8">
-      <div class="flex items-center justify-center gap-3 mb-3">
-        <svg class="w-7 h-7 sm:w-8 sm:h-8 text-gray-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-        </svg>
-        <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-          Muestreo de Aceptación
-        </h1>
+    <div class="max-w-7xl mx-auto">
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <div class="flex items-center justify-center gap-3 mb-3">
+          <svg class="w-8 h-8 text-gray-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+          </svg>
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+            Muestreo de Aceptación
+          </h1>
+        </div>
+        <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+          Calcula el plan de muestreo óptimo basado en niveles de calidad aceptable y tolerancia
+        </p>
       </div>
-      <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300 max-w-2xl mx-auto px-2">
-        Calcula el plan de muestreo óptimo basado en niveles de calidad aceptable y tolerancia
-      </p>
-    </div>
 
       <div class="grid lg:grid-cols-3 gap-6">
         <!-- Formulario - Columna fija -->
@@ -357,17 +360,18 @@
           </div>
           </template>
 
-        <div v-else class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-12 border border-gray-200 dark:border-gray-700 text-center">
-          <svg class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-          </svg>
-          <p class="text-gray-500 dark:text-gray-400">
-            Ingresa los parámetros y haz clic en calcular para ver los resultados
-          </p>
+          <div v-else class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-12 border border-gray-200 dark:border-gray-700 text-center">
+            <svg class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+            </svg>
+            <p class="text-gray-500 dark:text-gray-400">
+              Ingresa los parámetros y haz clic en calcular para ver los resultados
+            </p>
+          </div>
         </div>
       </div>
     </div>
-  </MainLayout>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -375,12 +379,7 @@ import { ref, nextTick } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import Chart from 'chart.js/auto';
 import type { Chart as ChartType } from 'chart.js/auto';
-import MainLayout from '@/layouts/MainLayout.vue';
-
-const breadcrumbs = [
-  { title: 'Inicio', href: '/' },
-  { title: 'Muestreo de Aceptación' }
-];
+import NavBar from '@/components/NavBar.vue';
 
 interface FormData {
   AQT: string;
