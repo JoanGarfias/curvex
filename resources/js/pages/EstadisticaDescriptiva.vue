@@ -6,8 +6,6 @@ import axios from '@/lib/axios';
 import { Head } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
-import ThemeToggle from '@/components/ThemeToggle.vue';
-import CurvexIcon from '@/icons/CurvexIcon.vue';
 import UploadFile from '@/icons/UploadFile.vue';
 import {
   Select,
@@ -31,6 +29,12 @@ import Textarea from '@/components/ui/textarea/Textarea.vue';
 // Tipos
 import type { Resultado } from '@/types/Resultado';
 import Resultados from '@/components/Resultados.vue';
+import MainLayout from '@/layouts/MainLayout.vue';
+
+const breadcrumbs = [
+  { title: 'Inicio', href: '/' },
+  { title: 'Análisis Estadístico' }
+];
 
 const resultados = ref<Resultado | null>(null);
 const showResults = ref(false);
@@ -177,19 +181,10 @@ function handleGoBack() {
   />
 
   <!-- Vista Principal -->
-  <div v-else class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#f8fafc] to-[#eef2f3] dark:from-[#0f0f0f] dark:to-[#1a1a1a] text-gray-800 dark:text-gray-100 transition-all p-4 sm:p-6">
-    <!-- Navbar -->
-    <nav class="w-full max-w-5xl flex items-center justify-between mb-6 sm:mb-8 px-2 sm:px-4">
-      <div class="flex items-center gap-2 sm:gap-3">
-        <CurvexIcon class="w-8 h-8 sm:w-10 sm:h-10" />
-        <span class="text-xl sm:text-2xl font-extrabold tracking-tight">Curvex</span>
-      </div>
-      <ThemeToggle />
-    </nav>
-
-    <!-- Hero -->
-    <section class="text-center mb-6 sm:mb-8 pt-4 sm:pt-8 px-4">
-      <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight">Curvex</h1>
+  <MainLayout v-else :breadcrumbs="breadcrumbs">
+    <div class="flex flex-col items-center text-gray-800 dark:text-gray-100">
+      <!-- Hero -->
+      <section class="text-center mb-6 sm:mb-8 pt-4 sm:pt-8 px-4">
       <h2 class="mt-3 sm:mt-4 text-lg sm:text-2xl md:text-3xl font-semibold text-gray-700 dark:text-gray-200 max-w-3xl mx-auto px-2">
         Analiza tus datos, calcula estadísticas y visualiza resultados de forma sencilla
       </h2>
@@ -197,7 +192,7 @@ function handleGoBack() {
         Arrastra y suelta tus archivos CSV o escribe tu matriz de datos directamente para comenzar.
       </p>
       <Link href="/correccionvarianza">
-        <Button class="mt-4 w-full text-sm sm:text-base py-5 sm:py-6 h-auto">
+        <Button variant="link" class="mt-4 w-full text-sm sm:text-base py-5 sm:py-6 h-auto">
               Si quieres corregir tus datos de varianza a partir de una muestra, da click aqui.
         </Button>
       </Link>
@@ -313,5 +308,6 @@ function handleGoBack() {
     </div>
 
     <FooterComp />
-  </div>
+    </div>
+  </MainLayout>
 </template>

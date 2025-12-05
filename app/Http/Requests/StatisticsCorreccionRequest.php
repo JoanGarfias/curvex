@@ -2,12 +2,11 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use App\Rules\NumberList;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class StatisticsCorreccionRequest extends FormRequest
+class StatisticsCorreccionRequest extends ApiFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
