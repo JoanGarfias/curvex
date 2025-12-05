@@ -19,9 +19,9 @@
 
 
     
-    <!-- Selector de Modo -->
-    <div class="mt-6 flex justify-center pb-5">
-      <div class="inline-flex bg-white dark:bg-gray-800 rounded-lg p-1 border-2 border-gray-200 dark:border-gray-700">
+    <!-- Selector de Modo y Tour Button -->
+    <div class="mt-6 flex justify-center items-center gap-4 pb-5">
+      <div id="mode-selector" class="inline-flex bg-white dark:bg-gray-800 rounded-lg p-1 border-2 border-gray-200 dark:border-gray-700">
         <button
           @click="mode = 'aql-ltpd'"
           :class="[
@@ -45,12 +45,24 @@
           Modo n/c
         </button>
       </div>
+      
+      <!-- Tour Button -->
+      <button
+        @click="startTour"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg border border-gray-300 dark:border-gray-600 transition-colors"
+        title="Ver guía interactiva"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span class="text-sm font-medium">Guía</span>
+      </button>
     </div>
 
       <div class="grid lg:grid-cols-3 gap-6">
         <!-- Formulario - Columna fija -->
         <div class="lg:col-span-1">
-          <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 sticky top-4">
+          <div id="form-container" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 sticky top-4">
             <div class="flex items-center gap-2 mb-6">
               <svg class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
@@ -62,7 +74,7 @@
               <!-- Modo AQL/LTPD -->
               <template v-if="mode === 'aql-ltpd'">
                 <!-- AQL -->
-                <div>
+                <div id="aql-input">
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                     AQL (Nivel de Calidad Aceptable)
                     <span class="ml-1 text-gray-400 dark:text-gray-500 text-xs">0 - 1</span>
@@ -111,7 +123,7 @@
               <!-- Modo n/c -->
               <template v-else>
                 <!-- n -->
-                <div>
+                <div id="n-input">
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                     n (Tamaño de Muestra)
                     <span class="ml-1 text-gray-400 dark:text-gray-500 text-xs">≥ 2</span>
@@ -157,7 +169,7 @@
               </template>
 
               <!-- 1-alpha (común para ambos modos) -->
-              <div>
+              <div id="alpha-input">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   1 - α (Confianza del Productor)
                   <span class="ml-1 text-gray-400 dark:text-gray-500 text-xs">0 - 1</span>
@@ -180,7 +192,7 @@
               </div>
 
               <!-- Beta (común para ambos modos) -->
-              <div>
+              <div id="beta-input">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   β (Riesgo del Consumidor)
                   <span class="ml-1 text-gray-400 dark:text-gray-500 text-xs">0 - 1</span>
@@ -203,6 +215,7 @@
               </div>
 
               <button
+                id="submit-button"
                 @click="handleSubmit"
                 :disabled="loading"
                 class="w-full bg-black dark:bg-white text-white dark:text-black py-3 rounded-lg font-semibold hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
@@ -212,7 +225,7 @@
             </div>
 
             <!-- Guía -->
-            <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+            <div id="guide-info" class="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
               <div class="flex items-start gap-2">
                 <svg class="w-5 h-5 text-gray-600 dark:text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -592,11 +605,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from 'vue';
+import { ref, nextTick, onMounted } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import Chart from 'chart.js/auto';
 import type { Chart as ChartType } from 'chart.js/auto';
 import MainLayout from '@/layouts/MainLayout.vue';
+import { driver } from 'driver.js';
+import 'driver.js/dist/driver.css';
 
 const breadcrumbs = [
   { title: 'Inicio', href: '/' },
@@ -854,4 +869,105 @@ const handleSubmit = async () => {
   }
 };
 
+// Driver.js tour configuration
+const startTour = () => {
+  const driverObj = driver({
+    showProgress: true,
+    showButtons: ['next', 'previous', 'close'],
+    steps: [
+      {
+        element: '#mode-selector',
+        popover: {
+          title: '🎯 Selector de Modo',
+          description: 'Elige entre dos modos de cálculo: <strong>AQL/LTPD</strong> para calcular n y c, o <strong>n/c</strong> para calcular AQL y LTPD.',
+          side: 'bottom',
+          align: 'center'
+        }
+      },
+      {
+        element: '#form-container',
+        popover: {
+          title: '📝 Formulario de Parámetros',
+          description: 'Ingresa los valores necesarios según el modo seleccionado. Todos los campos son obligatorios y deben estar en el rango válido.',
+          side: 'right',
+          align: 'start'
+        }
+      },
+      {
+        element: mode.value === 'aql-ltpd' ? '#aql-input' : '#n-input',
+        popover: {
+          title: mode.value === 'aql-ltpd' ? '📊 AQL (Nivel de Calidad Aceptable)' : '🔢 Tamaño de Muestra (n)',
+          description: mode.value === 'aql-ltpd' 
+            ? 'Porcentaje de defectos que consideras <strong>aceptable</strong> en tu proceso. Valor entre 0 y 1 (ej: 0.02 = 2%).'
+            : 'Número de unidades que deseas inspeccionar de cada lote. Debe ser al menos 2.',
+          side: 'left',
+          align: 'start'
+        }
+      },
+      {
+        element: '#alpha-input',
+        popover: {
+          title: '✨ Confianza del Productor (1-α)',
+          description: 'Probabilidad de <strong>aceptar</strong> un lote bueno. Valor típico: <strong>0.95</strong> (95% de confianza).',
+          side: 'left',
+          align: 'start'
+        }
+      },
+      {
+        element: '#beta-input',
+        popover: {
+          title: '⚠️ Riesgo del Consumidor (β)',
+          description: 'Probabilidad de <strong>aceptar</strong> un lote malo. Valor típico: <strong>0.10</strong> (10% de riesgo).',
+          side: 'left',
+          align: 'start'
+        }
+      },
+      {
+        element: '#submit-button',
+        popover: {
+          title: '🚀 Calcular Resultados',
+          description: 'Haz clic aquí para ejecutar el cálculo. Verás skeletons mientras procesa y luego los resultados completos.',
+          side: 'top',
+          align: 'center'
+        }
+      },
+      {
+        element: '#guide-info',
+        popover: {
+          title: '💡 Guía Rápida',
+          description: 'Aquí siempre encontrarás recordatorios sobre el significado de cada parámetro según el modo activo.',
+          side: 'top',
+          align: 'start'
+        }
+      }
+    ],
+    nextBtnText: 'Siguiente →',
+    prevBtnText: '← Anterior',
+    doneBtnText: '¡Entendido! ✓',
+    progressText: '{{current}} de {{total}}',
+    onDestroyStarted: () => {
+      // Guardar en localStorage que ya se vio el tour
+      localStorage.setItem('muestreo-tour-completed', 'true');
+      driverObj.destroy();
+    }
+  });
+
+  driverObj.drive();
+};
+
+// Verificar si mostrar el tour automáticamente
+onMounted(() => {
+  const tourCompleted = localStorage.getItem('muestreo-tour-completed');
+  if (!tourCompleted) {
+    // Esperar un poco para que la página se cargue completamente
+    setTimeout(() => {
+      startTour();
+    }, 800);
+  }
+});
+
 </script>
+
+<style>
+@import '../../css/driver.css';
+</style>
