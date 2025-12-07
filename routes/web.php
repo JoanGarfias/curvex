@@ -6,6 +6,7 @@ use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\FrecuencyTableController;
 use App\Http\Controllers\CorreccionStatisticsController;
 use App\Http\Controllers\MuestroAceptacionController;
+use App\Http\Controllers\PruebaHipotesisVarianzaController;
 
 /* RUTAS PARA VISTAS */
 
@@ -21,6 +22,7 @@ Route::post('/calculate-frequency', [FrecuencyTableController::class, 'calculate
 Route::post('/correct-frequency', [CorreccionStatisticsController::class, 'corregir']);
 Route::post('/calc-muestroaceptacion', [MuestroAceptacionController::class, 'calcular']);
 Route::post('/calc-muestroaceptacion2', [MuestroAceptacionController::class, 'calcular2']);
+Route::post('/pruebahipotesistabla22', [PruebaHipotesisVarianzaController::class, 'decidir']);
 
 /* RUTAS PARA TESTING */
 
