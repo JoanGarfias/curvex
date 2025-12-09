@@ -45,22 +45,13 @@ class PruebaHipotesisVarianzaController extends Controller
         $cantidad = $validated["cantidad"];
 
         $z0 = ($promedio - $u0) / ($desviacion/sqrt($cantidad));
-        if($cantidad < 30){
-            $distribution = new StudentT($cantidad - 1);
-        }else{
-            $distribution = new StandardNormal();
-        }
-        
+        $distribution = new StandardNormal();
 
         $modo = $validated["modo"];
         switch($modo){
             case 0:
                 //Criterio de rechazo abs(z0) > z(a/2)
-                if($cantidad < 30){
-                    $za = $distribution->inverse2Tails((1-$confiabilidad)*2);
-                }else{
-                    $za = $distribution->inverse((1-$confiabilidad)/2);
-                }
+                $za = -1 * $distribution->inverse((1-$confiabilidad)/2);
 
                 if(abs($z0) > $za){
                     $veredicto = "Se rechaza la hipotesis nula.";
@@ -70,11 +61,8 @@ class PruebaHipotesisVarianzaController extends Controller
                 break;
             case 1:
                 //Criterio de rechazo z0 < -za
-                if($cantidad < 30){
-                    $za = $distribution->inverse2Tails((1-$confiabilidad)*2);
-                }else{
-                    $za = $distribution->inverse(1-$confiabilidad);
-                }
+                $za = $distribution->inverse(1-$confiabilidad);
+                
 
                 if($z0 < $za){
                     $veredicto = "Se rechaza la hipotesis nula.";
@@ -85,11 +73,7 @@ class PruebaHipotesisVarianzaController extends Controller
                 break;
             case 2:
                 //Criterio de rechazo z0 > za
-                if($cantidad < 30){
-                    $za = $distribution->inverse2Tails((1-$confiabilidad)*2);
-                }else{
-                    $za = -1 * $distribution->inverse(1-$confiabilidad);
-                }
+                $za = -1 * $distribution->inverse(1-$confiabilidad);
 
                 if($z0 > $za){
                     $veredicto = "Se rechaza la hipotesis nula.";
@@ -116,7 +100,6 @@ class PruebaHipotesisVarianzaController extends Controller
     
     public function calcular2(PruebaHipotesisVarianzaRequests2 $request){
         //Casos 4,5 y 6 de la tabla 2.2
-        $validated = $request->validated();
         $validated = $request->validated();
         $promedio1 = (float)$validated["promedio1"];
         $desviacion1 = (float)$validated["desviacion1"];
@@ -154,7 +137,7 @@ class PruebaHipotesisVarianzaController extends Controller
                 break;
             case 5:
                 //Criterio de rechazo z0 > za
-                $za = $distribution->inverse(1-$confiabilidad);
+                $za = -1 * $distribution->inverse(1-$confiabilidad);
 
                 if($z0 > $za){
                     $veredicto = "Se rechaza la hipotesis nula.";

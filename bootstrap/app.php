@@ -20,7 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
             '/test-normdist',
             '/calc-muestroaceptacion',
             '/calc-muestroaceptacion2',
-            '/pruebahipotesistabla22'
+            '/pruebahipotesistabla22',
+            '/pruebahipotesistabla23',
+            '/proportion-test'
         ]);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
