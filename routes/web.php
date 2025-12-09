@@ -7,6 +7,7 @@ use App\Http\Controllers\FrecuencyTableController;
 use App\Http\Controllers\CorreccionStatisticsController;
 use App\Http\Controllers\MuestroAceptacionController;
 use App\Http\Controllers\PruebaHipotesisVarianzaController;
+use App\Http\Controllers\ProporcionController;
 
 /* RUTAS PARA VISTAS */
 
@@ -23,6 +24,9 @@ Route::post('/correct-frequency', [CorreccionStatisticsController::class, 'corre
 Route::post('/calc-muestroaceptacion', [MuestroAceptacionController::class, 'calcular']);
 Route::post('/calc-muestroaceptacion2', [MuestroAceptacionController::class, 'calcular2']);
 Route::post('/pruebahipotesistabla22', [PruebaHipotesisVarianzaController::class, 'decidir']);
+
+// Prueba de proporciones (normal approx con corrección de continuidad)
+Route::post('/proportion-test', [ProporcionController::class, 'test']);
 
 /* RUTAS PARA TESTING */
 
