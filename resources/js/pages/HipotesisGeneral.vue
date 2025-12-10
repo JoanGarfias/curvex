@@ -120,11 +120,11 @@ const p_modoSeleccionado = ref<'two' | 'left' | 'right' | null>(null);
 const p_mostrarResultados = ref(false);
 const p_cargando = ref(false);
 
-// Inputs de tu compañero
+// Inputs
 const p_x = ref(''); // Éxitos
 const p_n = ref(''); // Tamaño muestra
 const p_p0 = ref(''); // Proporción hipotética
-const p_confiabilidad = ref(''); // Para calcular alpha (1 - conf)
+const p_confiabilidad = ref(''); // Para calcular alpha
 const p_continuity = ref(true); // Checkbox
 
 // Resultados
@@ -161,7 +161,6 @@ const calcularProporcion = async () => {
     p_cargando.value = true;
 
     try {
-        // Preparar payload como lo pide el código de tu compañero
         const alphaCalculado = 1 - parseFloat(p_confiabilidad.value);
         
         const payload = {
@@ -175,11 +174,14 @@ const calcularProporcion = async () => {
 
         const response = await axios.post('/proportion-test', payload);
         
-        // Asumiendo que el backend devuelve { z_score, p_value, verdict/decision }
-        // Ajusta estos campos según lo que realmente devuelva el controlador de tu compañero
-        p_z_stat.value = response.data.z_score || response.data.z; 
-        p_p_value.value = response.data.p_value;
-        p_veredicto.value = response.data.decision || response.data.verdict || 'Resultado Calculado';
+        // --- AQUÍ ESTÁ EL BLINDAJE ---
+        // Intentamos leer 'z_score' (estándar) O 'z0' (lo que usaba tu compañera)
+        p_z_stat.value = response.data.z_score ?? response.data.z0 ?? response.data.z; 
+        
+        // Intentamos leer 'p_value' O 'pvalue' (lo que usaba tu compañera)
+        p_p_value.value = response.data.p_value ?? response.data.pvalue;
+        
+        p_veredicto.value = response.data.decision || response.data.verdict || response.data.veredicto || 'Cálculo realizado';
         
         p_mostrarResultados.value = true;
 
@@ -294,8 +296,8 @@ const calcularProporcion = async () => {
                                 <div class="col-span-1"><label class="text-[10px] uppercase text-gray-500 font-bold">Muestra (n)</label><input v-model="z_cantidad" type="number" min="1" required class="w-full px-3 py-2 rounded border dark:bg-[#151515] dark:border-gray-700" /></div>
                             </div>
                             <div v-else class="space-y-4">
-                                <div class="p-3 border rounded bg-gray-50 dark:bg-[#151515] dark:border-gray-700"><p class="text-xs font-bold mb-2">Muestra 1</p><div class="grid grid-cols-3 gap-2"><input v-model="z_promedio1" placeholder="x̄₁" type="number" step="any" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" /><input v-model="z_desviacion1" placeholder="σ₁" type="number" step="any" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" /><input v-model="z_cantidad1" placeholder="n₁" type="number" min="1" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" /></div></div>
-                                <div class="p-3 border rounded bg-gray-50 dark:bg-[#151515] dark:border-gray-700"><p class="text-xs font-bold mb-2">Muestra 2</p><div class="grid grid-cols-3 gap-2"><input v-model="z_promedio2" placeholder="x̄₂" type="number" step="any" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" /><input v-model="z_desviacion2" placeholder="σ₂" type="number" step="any" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" /><input v-model="z_cantidad2" placeholder="n₂" type="number" min="1" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" /></div></div>
+                                <div class="p-3 border rounded bg-gray-50 dark:bg-[#151515] dark:border-gray-700"><p class="text-xs font-bold mb-2">Muestra 1</p><div class="grid grid-cols-3 gap-2"><input v-model="z_promedio1" placeholder="x̄₁" type="number" step="any" required class="w-full px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" /><input v-model="z_desviacion1" placeholder="σ₁" type="number" step="any" required class="w-full px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" /><input v-model="z_cantidad1" placeholder="n₁" type="number" min="1" required class="w-full px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" /></div></div>
+                                <div class="p-3 border rounded bg-gray-50 dark:bg-[#151515] dark:border-gray-700"><p class="text-xs font-bold mb-2">Muestra 2</p><div class="grid grid-cols-3 gap-2"><input v-model="z_promedio2" placeholder="x̄₂" type="number" step="any" required class="w-full px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" /><input v-model="z_desviacion2" placeholder="σ₂" type="number" step="any" required class="w-full px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" /><input v-model="z_cantidad2" placeholder="n₂" type="number" min="1" required class="w-full px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" /></div></div>
                             </div>
                             <div><label class="text-[10px] uppercase text-gray-500 font-bold">Confianza (1-α)</label><input v-model="z_confiabilidad" type="number" step="0.01" max="1" placeholder="0.95" required class="w-full px-3 py-2 rounded border dark:bg-[#151515] dark:border-gray-700 mt-1" /></div>
                             <Button type="submit" :disabled="!z_formularioValido || z_cargando" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white">{{ z_cargando ? 'Calculando...' : 'Calcular Z' }}</Button>
@@ -303,7 +305,7 @@ const calcularProporcion = async () => {
                         <div class="bg-indigo-50/50 dark:bg-indigo-900/10 rounded-xl p-6 border border-indigo-100 dark:border-indigo-900/30 flex flex-col justify-center items-center text-center">
                             <div v-if="!z_mostrarResultados" class="text-indigo-300 dark:text-indigo-800"><FlaskConical class="w-12 h-12 mx-auto mb-2 opacity-50" /><p class="text-sm">Resultados aquí</p></div>
                             <div v-else class="w-full space-y-4">
-                                <div :class="`p-4 rounded-lg border ${z_veredicto.includes('rechaza') ? 'bg-red-50 border-red-200 text-red-800' : 'bg-green-50 border-green-200 text-green-800'}`"><p class="font-bold text-lg">{{ z_veredicto }}</p></div>
+                                <div :class="`p-4 rounded-lg border ${z_veredicto.toLowerCase().includes('rechaza') ? 'bg-red-50 border-red-200 text-red-800' : 'bg-green-50 border-green-200 text-green-800'}`"><p class="font-bold text-lg">{{ z_veredicto }}</p></div>
                                 <div class="grid grid-cols-2 gap-4"><div class="bg-white dark:bg-black p-3 rounded border dark:border-gray-700"><p class="text-xs text-gray-500 uppercase">Z Calculado</p><p class="text-xl font-mono font-bold">{{ z_z0?.toFixed(4) }}</p></div><div class="bg-white dark:bg-black p-3 rounded border dark:border-gray-700"><p class="text-xs text-gray-500 uppercase">Z Crítico</p><p class="text-xl font-mono font-bold">{{ z_za?.toFixed(4) }}</p></div></div>
                                 <button type="button" @click="z_limpiarFormulario" class="text-xs underline text-gray-500">Limpiar</button>
                             </div>
@@ -379,7 +381,7 @@ const calcularProporcion = async () => {
                         <div class="bg-teal-50/50 dark:bg-teal-900/10 rounded-xl p-6 border border-teal-100 dark:border-teal-900/30 flex flex-col justify-center items-center text-center">
                             <div v-if="!t_mostrarResultados" class="text-teal-300 dark:text-teal-800"><Microscope class="w-12 h-12 mx-auto mb-2 opacity-50" /><p class="text-sm">Resultados aquí</p></div>
                             <div v-else class="w-full space-y-4">
-                                <div :class="`p-4 rounded-lg border ${t_veredicto.includes('rechaza') ? 'bg-red-50 border-red-200 text-red-800' : 'bg-green-50 border-green-200 text-green-800'}`"><p class="font-bold text-lg">{{ t_veredicto }}</p></div>
+                                <div :class="`p-4 rounded-lg border ${t_veredicto.toLowerCase().includes('rechaza') ? 'bg-red-50 border-red-200 text-red-800' : 'bg-green-50 border-green-200 text-green-800'}`"><p class="font-bold text-lg">{{ t_veredicto }}</p></div>
                                 <div class="grid grid-cols-2 gap-4"><div class="bg-white dark:bg-black p-3 rounded border dark:border-gray-700"><p class="text-xs text-gray-500 uppercase">t Calculado</p><p class="text-xl font-mono font-bold">{{ t_t0?.toFixed(4) }}</p></div><div class="bg-white dark:bg-black p-3 rounded border dark:border-gray-700"><p class="text-xs text-gray-500 uppercase">t Crítico</p><p class="text-xl font-mono font-bold">{{ t_ta?.toFixed(4) }}</p></div></div>
                                 <button type="button" @click="t_limpiarFormulario" class="text-xs underline text-gray-500">Limpiar</button>
                             </div>
@@ -417,7 +419,6 @@ const calcularProporcion = async () => {
                     <div class="p-4 flex justify-center items-center">
                         <div class="text-center">
                             <span class="text-sm font-bold text-gray-500 uppercase tracking-widest block mb-2">Estadístico de Prueba (Z)</span>
-                            
                             <p class="font-mono text-lg text-orange-600 dark:text-orange-400 font-bold">Z₀ = (p̂ - p₀) / √[p₀(1-p₀)/n]</p>
                             <p class="text-xs text-gray-400 mt-1">Donde p̂ = x / n</p>
                         </div>
@@ -462,12 +463,12 @@ const calcularProporcion = async () => {
                         <div class="bg-orange-50/50 dark:bg-orange-900/10 rounded-xl p-6 border border-orange-100 dark:border-orange-900/30 flex flex-col justify-center items-center text-center">
                             <div v-if="!p_mostrarResultados" class="text-orange-300 dark:text-orange-800"><PieChart class="w-12 h-12 mx-auto mb-2 opacity-50" /><p class="text-sm">Resultados aquí</p></div>
                             <div v-else class="w-full space-y-4">
-                                <div class="p-4 rounded-lg border bg-white dark:bg-black border-gray-200 dark:border-gray-800">
-                                    <p class="font-bold text-lg text-gray-800 dark:text-gray-100">{{ p_veredicto }}</p>
+                                <div :class="`p-4 rounded-lg border ${p_veredicto.toLowerCase().includes('rechaza') ? 'bg-red-50 border-red-200 text-red-500' : 'bg-emerald-50 border-emerald-200 text-emerald-600'}`">
+                                    <p class="font-bold text-lg">{{ p_veredicto }}</p>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="bg-white dark:bg-black p-3 rounded border dark:border-gray-700">
-                                        <p class="text-xs text-gray-500 uppercase">Z Score</p>
+                                        <p class="text-xs text-gray-500 uppercase">Z Score (Z₀)</p>
                                         <p class="text-xl font-mono font-bold text-orange-600 dark:text-orange-400">{{ p_z_stat?.toFixed(4) }}</p>
                                     </div>
                                     <div class="bg-white dark:bg-black p-3 rounded border dark:border-gray-700">
