@@ -162,6 +162,58 @@ const calcularT = async () => {
         t_t0.value = response.data.t0; t_ta.value = response.data.ta; t_veredicto.value = response.data.veredicto; t_mostrarResultados.value = true;
     } catch (error) { console.error(error); alert('Error en cálculo T'); } finally { t_cargando.value = false; }
 };
+
+// ==========================================
+//  LÓGICA PROPORCIÓN (NUEVO SUBTEMA)
+// ==========================================
+
+const p_mostrarResultados = ref(false);
+const p_cargando = ref(false);
+
+const p_x = ref('');
+const p_n = ref('');
+const p_p0 = ref('');
+const p_alpha = ref('0.05');
+const p_tail = ref('two');
+const p_continuity = ref(true);
+
+const p_z0 = ref<number | null>(null);
+const p_pvalue = ref<number | null>(null);
+const p_veredicto = ref('');
+
+const p_formularioValido = computed(() => {
+  return p_x.value && p_n.value && p_p0.value && p_alpha.value;
+});
+
+const calcularProporcion = async () => {
+  if (!p_formularioValido.value) return;
+  p_cargando.value = true;
+
+  try {
+    const data = {
+      x: parseInt(p_x.value),
+      n: parseInt(p_n.value),
+      p0: parseFloat(p_p0.value),
+      alpha: parseFloat(p_alpha.value),
+      tail: p_tail.value,
+      continuity: p_continuity.value,
+    };
+
+    const response = await axios.post('/proportion-test', data);
+
+    p_z0.value = response.data.z0;
+    p_pvalue.value = response.data.pvalue;
+    p_veredicto.value = response.data.veredicto;
+
+    p_mostrarResultados.value = true;
+  } catch (error) {
+    console.error(error);
+    alert("Error en prueba de proporción");
+  } finally {
+    p_cargando.value = false;
+  }
+};
+
 </script>
 
 <template>
@@ -494,6 +546,100 @@ const calcularT = async () => {
                 </div>
             </div>
         </div>
+
+        <div class="bg-white/90 dark:bg-[#0b0b0b]/90 backdrop-blur rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm transition-all duration-300"
+     :class="activeAccordion === 'proporcion' ? 'ring-2 ring-emerald-500 shadow-xl' : 'hover:border-emerald-300'">
+
+    <button @click="toggleAccordion('proporcion')" 
+            class="w-full flex items-center justify-between p-6 cursor-pointer bg-gradient-to-r from-emerald-50/50 to-transparent dark:from-emerald-900/10">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                <Scale class="w-6 h-6" />
+            </div>
+            <div>
+                <h2 class="text-xl font-bold">Prueba de Proporción</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Nuevo Subtema</p>
+            </div>
+        </div>
+        <div class="text-emerald-500">
+            <ChevronUp v-if="activeAccordion === 'proporcion'" class="w-6 h-6" />
+            <ChevronDown v-else class="w-6 h-6" />
+        </div>
+    </button>
+
+    <div v-show="activeAccordion === 'proporcion'" class="border-t border-gray-200 dark:border-gray-800 p-6">
+        
+        <div class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
+            <h3 class="font-bold text-emerald-700 dark:text-emerald-300">Fórmula:</h3>
+            <p class="font-mono text-sm text-emerald-600 dark:text-emerald-400">
+                z₀ = ( p̂ − p₀ ) / √( p₀(1−p₀) / n )
+            </p>
+        </div>
+
+        <form @submit.prevent="calcularProporcion" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            <div>
+                <label class="text-sm font-semibold">x (Éxitos)</label>
+                <input v-model="p_x" type="number"
+                    class="w-full p-2 rounded-lg bg-gray-50 dark:bg-[#111] border border-gray-300 dark:border-gray-700" />
+            </div>
+
+            <div>
+                <label class="text-sm font-semibold">n (Tamaño de muestra)</label>
+                <input v-model="p_n" type="number"
+                    class="w-full p-2 rounded-lg bg-gray-50 dark:bg-[#111] border border-gray-300 dark:border-gray-700" />
+            </div>
+
+            <div>
+                <label class="text-sm font-semibold">p₀ (Proporción hipotética)</label>
+                <input v-model="p_p0" type="number" step="0.01"
+                    class="w-full p-2 rounded-lg bg-gray-50 dark:bg-[#111] border border-gray-300 dark:border-gray-700" />
+            </div>
+
+            <div>
+                <label class="text-sm font-semibold">α (Significancia)</label>
+                <input v-model="p_alpha" type="number" step="0.01"
+                    class="w-full p-2 rounded-lg bg-gray-50 dark:bg-[#111] border border-gray-300 dark:border-gray-700" />
+            </div>
+
+            <div class="md:col-span-2 flex items-center gap-4 mt-2">
+                <label class="text-sm font-semibold">Tipo de cola:</label>
+
+                <select v-model="p_tail"
+                    class="p-2 rounded-lg bg-gray-50 dark:bg-[#111] border border-gray-300 dark:border-gray-700">
+                    <option value="two">Bilateral</option>
+                    <option value="left">Izquierda</option>
+                    <option value="right">Derecha</option>
+                </select>
+
+                <label class="flex items-center gap-2 text-sm">
+                    <input type="checkbox" v-model="p_continuity" />
+                    Corrección de continuidad
+                </label>
+            </div>
+
+            <div class="md:col-span-2 flex justify-center mt-4">
+                <Button type="submit" :disabled="p_cargando || !p_formularioValido"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2 rounded-lg flex items-center gap-2">
+                    <Calculator class="w-4 h-4" />
+                    {{ p_cargando ? 'Calculando...' : 'Calcular Proporción' }}
+                </Button>
+            </div>
+        </form>
+
+        <div v-if="p_mostrarResultados" class="mt-6 p-4 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+            <h3 class="font-bold text-emerald-700 dark:text-emerald-300 mb-2">Resultados</h3>
+
+            <p><strong>Z₀:</strong> {{ p_z0 }}</p>
+            <p><strong>p-value:</strong> {{ p_pvalue }}</p>
+            <p class="mt-2 font-semibold" :class="p_veredicto.includes('Rechaza') ? 'text-red-500' : 'text-emerald-600'">
+                {{ p_veredicto }}
+            </p>
+        </div>
+
+    </div>
+</div>
+
 
     </main>
 
