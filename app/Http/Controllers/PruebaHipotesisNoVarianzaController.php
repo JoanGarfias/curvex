@@ -51,7 +51,7 @@ class PruebaHipotesisNoVarianzaController extends Controller
         switch($modo){
             case 0:
                 //Criterio de rechazo abs(z0) > z(a/2)
-                $ta = $distribution->inverse2Tails((1-$confiabilidad)*2);
+                $ta = $distribution->inverse2Tails((1-$confiabilidad));
 
                 if(abs($t0) > $ta){
                     $veredicto = "Se rechaza la hipotesis nula.";
@@ -61,7 +61,7 @@ class PruebaHipotesisNoVarianzaController extends Controller
                 break;
             case 1:
                 //Criterio de rechazo z0 < -za
-                $ta = $distribution->inverse2Tails((1-$confiabilidad)*2);
+                $ta = -1 * $distribution->inverse2Tails((1-$confiabilidad)*2);
 
                 if($t0 < $ta){
                     $veredicto = "Se rechaza la hipotesis nula.";
@@ -89,8 +89,8 @@ class PruebaHipotesisNoVarianzaController extends Controller
             
 
         return response()->json([
-            'z0' => $t0,
-            'za' => $ta,
+            't0' => $t0,
+            'ta' => $ta,
             'veredicto' => $veredicto
 
         ], 200);
@@ -100,13 +100,13 @@ class PruebaHipotesisNoVarianzaController extends Controller
     public function calcular2(PruebaHipotesisNoVarianzaRequests2 $request){
         //Casos 4 y 5 de la tabla 2.2
         $validated = $request->validated();
-        if(isset($validated["varianzap"]) || isset($validated["boolEsVarianzaUnica"])){
+        if(isset($validated["varianzap"]) || (isset($validated["boolEsVarianzaUnica"]) && $validated["boolEsVarianzaUnica"] === true)){
             $promedio1 = (float)$validated["promedio1"];
             $cantidad1 = $validated["cantidad1"];
             $promedio2 = (float)$validated["promedio2"];
             $cantidad2 = $validated["cantidad2"];
 
-            if(isset($validated["boolEsVarianzaUnica"])){
+            if(isset($validated["boolEsVarianzaUnica"]) && $validated["boolEsVarianzaUnica"] === true){
                 $varianza1 = (float)$validated["varianza1"];
                 $varianza2 = (float)$validated["varianza2"];
 
@@ -155,7 +155,7 @@ class PruebaHipotesisNoVarianzaController extends Controller
                 break;
             case 4:
                 //Criterio de rechazo z0 < -za
-                $ta = -1 * $distribution->inverse2Tails((1-$confiabilidad));
+                $ta = -1 * $distribution->inverse2Tails((1-$confiabilidad)*2);
                 if($t0 < $ta){
                     $veredicto = "Se rechaza la hipotesis nula.";
                 }else{
@@ -165,7 +165,7 @@ class PruebaHipotesisNoVarianzaController extends Controller
                 break;
             case 5:
                 //Criterio de rechazo z0 > za
-                $ta = -1 * $distribution->inverse2Tails((1-$confiabilidad));
+                $ta = $distribution->inverse2Tails((1-$confiabilidad)*2);
 
                 if($t0 > $ta){
                     $veredicto = "Se rechaza la hipotesis nula.";
