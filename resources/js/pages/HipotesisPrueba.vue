@@ -154,7 +154,7 @@ const calcular = async () => {
       };
     }
     
-    const response = await axios.post('/api/prueba-hipotesis/calcular', data);
+    const response = await axios.post('/pruebahipotesistabla22', data);
     
     z0.value = response.data.z0;
     za.value = response.data.za;
