@@ -17,9 +17,9 @@ const activeAccordion = ref<string | null>('z-test');
 
 const toggleAccordion = (id: string) => {
     if (activeAccordion.value === id) {
-        activeAccordion.value = null; // Cerrar si ya está abierto
+        activeAccordion.value = null;
     } else {
-        activeAccordion.value = id; // Abrir nuevo
+        activeAccordion.value = id;
     }
 };
 
@@ -31,13 +31,11 @@ const z_modoSeleccionado = ref<number | null>(null);
 const z_mostrarResultados = ref(false);
 const z_cargando = ref(false);
 
-// Formulario Z
 const z_promedio = ref('');
 const z_u0 = ref('');
-const z_desviacion = ref(''); // Sigma poblacional
+const z_desviacion = ref('');
 const z_confiabilidad = ref('');
 const z_cantidad = ref('');
-// Formulario Z Doble
 const z_promedio1 = ref('');
 const z_desviacion1 = ref('');
 const z_cantidad1 = ref('');
@@ -45,7 +43,6 @@ const z_promedio2 = ref('');
 const z_desviacion2 = ref('');
 const z_cantidad2 = ref('');
 
-// Resultados Z
 const z_z0 = ref<number | null>(null);
 const z_za = ref<number | null>(null);
 const z_veredicto = ref('');
@@ -103,13 +100,11 @@ const t_modoSeleccionado = ref<number | null>(null);
 const t_mostrarResultados = ref(false);
 const t_cargando = ref(false);
 
-// Formulario T
 const t_promedio = ref('');
 const t_u0 = ref('');
-const t_varianza = ref(''); // S^2
+const t_varianza = ref('');
 const t_cantidad = ref('');
 const t_confiabilidad = ref('');
-// Formulario T Doble
 const t_promedio1 = ref('');
 const t_varianza1 = ref('');
 const t_cantidad1 = ref('');
@@ -118,7 +113,6 @@ const t_varianza2 = ref('');
 const t_cantidad2 = ref('');
 const t_asumeVarianzasIguales = ref(true);
 
-// Resultados T
 const t_t0 = ref<number | null>(null);
 const t_ta = ref<number | null>(null);
 const t_veredicto = ref('');
@@ -224,6 +218,59 @@ const calcularT = async () => {
 
             <div v-show="activeAccordion === 'z-test'" class="border-t border-gray-100 dark:border-gray-800 p-6 animate-in slide-in-from-top-2">
                 
+                <div class="overflow-x-auto mb-8 rounded-lg border border-indigo-100 dark:border-gray-800 bg-indigo-50/30 dark:bg-black/20">
+                    <div class="bg-indigo-100/50 dark:bg-gray-800/50 px-4 py-2 border-b border-indigo-100 dark:border-gray-700">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-gray-300">Tabla 2.2: Fórmulas de Referencia</h3>
+                    </div>
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-indigo-100 dark:border-gray-800 text-left">
+                                <th class="py-2 px-4 font-semibold text-gray-600 dark:text-gray-400">Hipótesis</th>
+                                <th class="py-2 px-4 font-semibold text-center text-gray-600 dark:text-gray-400">Estadístico Z₀</th>
+                                <th class="py-2 px-4 font-semibold text-center text-gray-600 dark:text-gray-400">Criterio de Rechazo</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-indigo-100 dark:divide-gray-800">
+                            <tr>
+                                <td class="py-2 px-4"><div class="text-xs">H₀: μ = μ₀ <br> H₁: μ ≠ μ₀</div></td>
+                                <td rowspan="3" class="py-2 px-4 text-center border-l border-r border-indigo-100 dark:border-gray-800">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <span class="text-xs font-bold bg-white dark:bg-gray-800 px-2 rounded mb-1 border">1 Muestra</span>
+                                        <div class="font-mono text-sm text-indigo-600 dark:text-indigo-400 font-bold">(x̄ - μ₀) / (σ / √n)</div>
+                                    </div>
+                                </td>
+                                <td class="py-2 px-4 text-center font-mono text-xs text-red-500">|Z₀| > Z(α/2)</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2 px-4"><div class="text-xs">H₀: μ ≥ μ₀ <br> H₁: μ < μ₀</div></td>
+                                <td class="py-2 px-4 text-center font-mono text-xs text-red-500">Z₀ < -Zα</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2 px-4"><div class="text-xs">H₀: μ ≤ μ₀ <br> H₁: μ > μ₀</div></td>
+                                <td class="py-2 px-4 text-center font-mono text-xs text-red-500">Z₀ > Zα</td>
+                            </tr>
+                            <tr class="bg-indigo-50/50 dark:bg-white/5">
+                                <td class="py-2 px-4"><div class="text-xs">H₀: μ₁ = μ₂ <br> H₁: μ₁ ≠ μ₂</div></td>
+                                <td rowspan="3" class="py-2 px-4 text-center border-l border-r border-indigo-100 dark:border-gray-800">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <span class="text-xs font-bold bg-white dark:bg-gray-800 px-2 rounded mb-1 border">2 Muestras</span>
+                                        <div class="font-mono text-sm text-indigo-600 dark:text-indigo-400 font-bold">(x̄₁ - x̄₂) / √(σ₁²/n₁ + σ₂²/n₂)</div>
+                                    </div>
+                                </td>
+                                <td class="py-2 px-4 text-center font-mono text-xs text-red-500">|Z₀| > Z(α/2)</td>
+                            </tr>
+                            <tr class="bg-indigo-50/50 dark:bg-white/5">
+                                <td class="py-2 px-4"><div class="text-xs">H₀: μ₁ ≥ μ₂ <br> H₁: μ₁ < μ₂</div></td>
+                                <td class="py-2 px-4 text-center font-mono text-xs text-red-500">Z₀ < -Zα</td>
+                            </tr>
+                            <tr class="bg-indigo-50/50 dark:bg-white/5">
+                                <td class="py-2 px-4"><div class="text-xs">H₀: μ₁ ≤ μ₂ <br> H₁: μ₁ > μ₂</div></td>
+                                <td class="py-2 px-4 text-center font-mono text-xs text-red-500">Z₀ > Zα</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
                 <div v-if="z_modoSeleccionado === null" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                      <button v-for="modo in z_modos" :key="modo.id" @click="z_seleccionarModo(modo.id)"
                         class="p-4 rounded-lg bg-gray-50 dark:bg-[#151515] hover:bg-indigo-50 dark:hover:bg-indigo-900/20 border border-gray-200 dark:border-gray-700 hover:border-indigo-400 transition-all text-left">
@@ -257,26 +304,24 @@ const calcularT = async () => {
                                 <div class="p-3 border rounded bg-gray-50 dark:bg-[#151515] dark:border-gray-700">
                                     <p class="text-xs font-bold mb-2">Muestra 1</p>
                                     <div class="grid grid-cols-3 gap-2">
-                                        <input v-model="z_promedio1" placeholder="x̄₁" type="number" step="any" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
-                                        <input v-model="z_desviacion1" placeholder="σ₁" type="number" step="any" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
-                                        <input v-model="z_cantidad1" placeholder="n₁" type="number" min="1" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
+                                        <input v-model="z_promedio1" placeholder="x̄₁" type="number" step="any" required class="w-full px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
+                                        <input v-model="z_desviacion1" placeholder="σ₁" type="number" step="any" required class="w-full px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
+                                        <input v-model="z_cantidad1" placeholder="n₁" type="number" min="1" required class="w-full px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
                                     </div>
                                 </div>
                                 <div class="p-3 border rounded bg-gray-50 dark:bg-[#151515] dark:border-gray-700">
                                     <p class="text-xs font-bold mb-2">Muestra 2</p>
                                     <div class="grid grid-cols-3 gap-2">
-                                        <input v-model="z_promedio2" placeholder="x̄₂" type="number" step="any" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
-                                        <input v-model="z_desviacion2" placeholder="σ₂" type="number" step="any" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
-                                        <input v-model="z_cantidad2" placeholder="n₂" type="number" min="1" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
+                                        <input v-model="z_promedio2" placeholder="x̄₂" type="number" step="any" required class="w-full px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
+                                        <input v-model="z_desviacion2" placeholder="σ₂" type="number" step="any" required class="w-full px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
+                                        <input v-model="z_cantidad2" placeholder="n₂" type="number" min="1" required class="w-full px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
                                     </div>
                                 </div>
                             </div>
-
                             <div>
                                 <label class="text-[10px] uppercase text-gray-500 font-bold">Confianza (1-α)</label>
                                 <input v-model="z_confiabilidad" type="number" step="0.01" max="1" placeholder="0.95" required class="w-full px-3 py-2 rounded border dark:bg-[#151515] dark:border-gray-700 mt-1" />
                             </div>
-
                             <Button type="submit" :disabled="!z_formularioValido || z_cargando" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
                                 {{ z_cargando ? 'Calculando...' : 'Calcular Z' }}
                             </Button>
@@ -330,6 +375,38 @@ const calcularT = async () => {
 
             <div v-show="activeAccordion === 't-student'" class="border-t border-gray-100 dark:border-gray-800 p-6 animate-in slide-in-from-top-2">
                 
+                <div class="overflow-x-auto mb-8 rounded-lg border border-teal-100 dark:border-gray-800 bg-teal-50/30 dark:bg-black/20">
+                    <div class="bg-teal-100/50 dark:bg-gray-800/50 px-4 py-2 border-b border-teal-100 dark:border-gray-700">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-gray-300">Tabla 2.3: Fórmulas de Referencia</h3>
+                    </div>
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-teal-100 dark:border-gray-800 text-left bg-teal-50/50 dark:bg-white/5">
+                                <th class="py-2 px-4 font-semibold text-gray-600 dark:text-gray-400">Caso</th>
+                                <th class="py-2 px-4 font-semibold text-center text-gray-600 dark:text-gray-400">Estadístico t₀</th>
+                                <th class="py-2 px-4 font-semibold text-center text-gray-600 dark:text-gray-400">Grados Libertad (v)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-teal-100 dark:divide-gray-800">
+                            <tr>
+                                <td class="py-2 px-4 font-medium">1 Muestra</td>
+                                <td class="py-2 px-4 text-center font-mono text-teal-600 dark:text-teal-400 font-bold">(x̄ - μ₀) / (S / √n)</td>
+                                <td class="py-2 px-4 text-center font-mono text-xs">n - 1</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2 px-4 font-medium">2 Muestras (Var. Iguales)</td>
+                                <td class="py-2 px-4 text-center font-mono text-teal-600 dark:text-teal-400 font-bold">(x̄₁ - x̄₂) / (Sp · √...)</td>
+                                <td class="py-2 px-4 text-center font-mono text-xs">n₁ + n₂ - 2</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2 px-4 font-medium">2 Muestras (Var. Diferentes)</td>
+                                <td class="py-2 px-4 text-center font-mono text-teal-600 dark:text-teal-400 font-bold">(x̄₁ - x̄₂) / √(S₁²/n₁ + S₂²/n₂)</td>
+                                <td class="py-2 px-4 text-center font-mono text-xs">Aprox. Welch</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
                 <div v-if="t_modoSeleccionado === null" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                      <button v-for="modo in t_modos" :key="modo.id" @click="t_seleccionarModo(modo.id)"
                         class="p-4 rounded-lg bg-gray-50 dark:bg-[#151515] hover:bg-teal-50 dark:hover:bg-teal-900/20 border border-gray-200 dark:border-gray-700 hover:border-teal-400 transition-all text-left">
@@ -368,26 +445,24 @@ const calcularT = async () => {
                                 <div class="p-3 border rounded bg-gray-50 dark:bg-[#151515] dark:border-gray-700">
                                     <p class="text-xs font-bold mb-2">Muestra 1</p>
                                     <div class="grid grid-cols-3 gap-2">
-                                        <input v-model="t_promedio1" placeholder="x̄₁" type="number" step="any" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
-                                        <input v-model="t_varianza1" placeholder="S₁²" type="number" step="any" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
-                                        <input v-model="t_cantidad1" placeholder="n₁" type="number" min="1" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
+                                        <input v-model="t_promedio1" placeholder="x̄₁" type="number" step="any" required class="w-full px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
+                                        <input v-model="t_varianza1" placeholder="S₁²" type="number" step="any" required class="w-full px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
+                                        <input v-model="t_cantidad1" placeholder="n₁" type="number" min="1" required class="w-full px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
                                     </div>
                                 </div>
                                 <div class="p-3 border rounded bg-gray-50 dark:bg-[#151515] dark:border-gray-700">
                                     <p class="text-xs font-bold mb-2">Muestra 2</p>
                                     <div class="grid grid-cols-3 gap-2">
-                                        <input v-model="t_promedio2" placeholder="x̄₂" type="number" step="any" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
-                                        <input v-model="t_varianza2" placeholder="S₂²" type="number" step="any" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
-                                        <input v-model="t_cantidad2" placeholder="n₂" type="number" min="1" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
+                                        <input v-model="t_promedio2" placeholder="x̄₂" type="number" step="any" required class="w-full px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
+                                        <input v-model="t_varianza2" placeholder="S₂²" type="number" step="any" required class="w-full px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
+                                        <input v-model="t_cantidad2" placeholder="n₂" type="number" min="1" required class="w-full px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" />
                                     </div>
                                 </div>
                             </div>
-
                             <div>
                                 <label class="text-[10px] uppercase text-gray-500 font-bold">Confianza (1-α)</label>
                                 <input v-model="t_confiabilidad" type="number" step="0.01" max="1" placeholder="0.95" required class="w-full px-3 py-2 rounded border dark:bg-[#151515] dark:border-gray-700 mt-1" />
                             </div>
-
                             <Button type="submit" :disabled="!t_formularioValido || t_cargando" class="w-full bg-teal-600 hover:bg-teal-700 text-white">
                                 {{ t_cargando ? 'Calculando...' : 'Calcular t-Student' }}
                             </Button>
