@@ -28,12 +28,12 @@ class FrequencyService
         $rango = $maximo - $minimo;
         
         // Validar que haya un rango (evita división por cero si todos los números son iguales)
-        if ($rango == 0) {
+        if ($rango < 0.0001) {
             return [
                 'info_intervalos' => [
                     'numero_intervalos' => 0,
                     'ancho_intervalo' => 0,
-                    'mensaje' => 'Todos los valores son idénticos'
+                    'mensaje' => 'Los valores tienen muy poca variabilidad para generar tabla de frecuencias'
                 ],
                 'tabla_frecuencias' => []
             ];
@@ -153,6 +153,12 @@ class FrequencyService
             $prob_sup = self::normDistAcumulado($lim_sup, $promedio, 2);
             $prob_total = $prob_sup - $prob_li;
             $esp = $prob_total * $n;
+            
+            // Evitar división por cero en chisinsuma
+            $chisinsuma = 0;
+            if ($esp > 0.0001) {
+                $chisinsuma = ((((int) $frec) - $esp)**2) / $esp;
+            }
 
             $tablaResultados[] = [
                 'clase' => "Clase " . ($i + 1),
@@ -167,7 +173,7 @@ class FrequencyService
                 'prob_ls' => $prob_sup,
                 'prob_total' => $prob_total,
                 'esperado' => $esp,
-                'chisinsuma' => ((((int) $frec) - $esp)**2) / $esp,
+                'chisinsuma' => $chisinsuma,
             ];
         }
 
@@ -179,10 +185,29 @@ class FrequencyService
         //alpha es el nivel de significancia, este lo da el usuario.
         //Recorro el array de tablas de frecuencias para obtener limite inferior, superior, frecuencia absoluta, etc
         
+        // Validar desviación estándar para evitar división por cero
+        if ($desviacionEstandar < 0.0000001 || empty($tablaFrecuencias)) {
+            return [
+                "chicua" => null,
+                "chicua_statistic" => null,
+                "statistic" => null,
+                "grados_libertad" => 0,
+                "degrees_of_freedom" => 0,
+                "grados_libertad_raw" => 0,
+                "p_value" => null,
+                "critical_0_95" => null,
+                "critical_0_99" => null,
+                "chi_inverso" => null,
+                "chi_inverse" => null,
+                "mensaje" => "No se puede calcular Chi-cuadrado: desviación estándar demasiado pequeña o sin datos"
+            ];
+        }
+        
         //Chi cuadrada
         $sumaChiCua = 0.0;
         
-        
+        Log::info("Cálculo de Chi-cuadrado iniciado.");
+
         foreach($tablaFrecuencias as $claseData){
             //Calcular la probabilidad de que X esté entre los límites
             $normDistLimiteInferior = self::normDistAcumulado(
@@ -207,7 +232,12 @@ class FrequencyService
             //Oi = Frecuencia absoluta
             $Ei = $probabilidadLimites * $cantidadDatos;
             $Oi = $claseData["frecuencia_absoluta"];
-            $sumaChiCua += (pow(1.0 * ($Oi-$Ei), 2) ) / $Ei;
+            
+            // Evitar división por cero: solo agregar al chi-cuadrado si Ei es mayor que un umbral mínimo
+            if ($Ei > 0.0001) {
+                Log::info("Oi: " . $Oi . " - Ei: " . $Ei);
+                $sumaChiCua += (pow(1.0 * ($Oi-$Ei), 2) ) / $Ei;
+            }
         }
 
         // Grados de libertad: usar número de clases (ajustado según expectativa del usuario)
@@ -247,7 +277,7 @@ class FrequencyService
         //Esta función asume que el parámetro de acumulado = VERDADERO y utiliza la integral
         //Se -infinito hasta x
 
-        if($desviacionEstandar <= 0.0){
+        if($desviacionEstandar <= 0.0000001){
             return NAN;
         }
 
@@ -347,15 +377,24 @@ class FrequencyService
         if ($x < 0 || $a <= 0) return NAN;
         $gl = $this->gammaLower($x, $a);
         $g = $this->gammaFunc($a);
+        
+        // Evitar división por cero
+        if (abs($g) < 1e-10) return NAN;
+        
         return $gl / $g;
     }
 
     private function gammaLower(float $x, float $a): float
     {
+        // Evitar división por cero
+        if (abs($a) < 1e-10) return NAN;
+        
         $sum = 1.0 / $a;
         $term = $sum;
         for ($n = 1; $n < 100; $n++) {
-            $term *= $x / ($a + $n);
+            $divisor = $a + $n;
+            if (abs($divisor) < 1e-10) break; // Evitar división por cero
+            $term *= $x / $divisor;
             $sum += $term;
         }
         return pow($x, $a) * exp(-$x) * $sum;
@@ -375,7 +414,14 @@ class FrequencyService
         ];
         $g = 7;
         if ($z < 0.5) {
-            return M_PI / (sin(M_PI * $z) * $this->gammaFunc(1 - $z));
+            $sinVal = sin(M_PI * $z);
+            $gammaVal = $this->gammaFunc(1 - $z);
+            $denominator = $sinVal * $gammaVal;
+            
+            // Evitar división por cero
+            if (abs($denominator) < 1e-10) return NAN;
+            
+            return M_PI / $denominator;
         }
         $z -= 1;
         $x = 0.99999999999980993;

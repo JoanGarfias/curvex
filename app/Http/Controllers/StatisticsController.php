@@ -104,13 +104,24 @@ class StatisticsController extends Controller
             $frequencyTable = $frequencyService->generateFrequencyTable($listaNumeros, $promedio);
 
             //Generar datos de chi
-            $chiResults = $frequencyService->generateChiData(
-                                            $frequencyTable["tabla_frecuencias"],
-                                            $promedio,
-                                            $desviacionEstandar,
-                                            $n,
-                                            $frequencyTable["info_intervalos"]["numero_intervalos"]
-                                            );
+            $chiResults = null;
+            // Solo calcular chi-cuadrado si hay tabla de frecuencias y desviación estándar válida
+            if (!empty($frequencyTable["tabla_frecuencias"]) && $desviacionEstandar > 0.0000001) {
+                $chiResults = $frequencyService->generateChiData(
+                                                $frequencyTable["tabla_frecuencias"],
+                                                $promedio,
+                                                $desviacionEstandar,
+                                                $n,
+                                                $frequencyTable["info_intervalos"]["numero_intervalos"]
+                                                );
+            } else {
+                $chiResults = [
+                    "mensaje" => "No se puede calcular Chi-cuadrado: los datos tienen variabilidad insuficiente",
+                    "chicua" => null,
+                    "p_value" => null,
+                    "chi_inverso" => null
+                ];
+            }
             //$chiResults["chi_inverso"] = 0.001;
 
             // 4. CREAR EL JSON DE RESPUESTA
