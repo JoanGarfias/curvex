@@ -4,6 +4,7 @@ Datos para casos 0,1,2
 Se ve en este link: https://support.ptc.com/help/mathcad/r10.0/es/index.html#page/PTC_Mathcad_Help/example_hypothesis_test_of_a_normal_mean.html
 
 No se si es de alli pero como ejemplo:
+```json
 {
 	"confiabilidad" : 0.9,
 	"cantidad" : 50,
@@ -12,14 +13,17 @@ No se si es de alli pero como ejemplo:
 	"u0": 2,
 	"modo": 2
 }
+```
 
 genera
 
+```json
 {
 	"z0": -1.8054793146296515,
 	"za": 1.2815515655446001,
 	"veredicto": "Se aplica la hipotesis nula."
 }
+```
 
 Datos para 3,4,5
 Sacados de este video: https://www.youtube.com/watch?v=X4IYPdHJgUw
@@ -198,6 +202,8 @@ Rechazamos $H_0$ (y aceptamos que venden menos) **solo si** el $Z_{calculado}$ e
 | **Cola Izquierda** | Norte < Sur | $Z < -1.645$ | Fuera de la zona de rechazo | **Falso (No venden menos).** |
 
 No me acuerdo de que ejercicio es, pero como ejemplo:
+
+```json
 {
 	"confiabilidad" : 0.99,
 	"cantidad1" : 30,
@@ -208,11 +214,14 @@ No me acuerdo de que ejercicio es, pero como ejemplo:
 	"promedio2" : 270000,
 	"modo": 5
 }
+```
 
 genera
 
+```json
 {
 	"z0": 3.327177587852354,
 	"za": 2.3263478740408385,
 	"veredicto": "Se rechaza la hipotesis nula."
 }
+```
