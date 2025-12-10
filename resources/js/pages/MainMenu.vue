@@ -3,7 +3,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import CurvexIcon from '@/icons/CurvexIcon.vue';
 import FooterComp from '@/components/FooterComp.vue';
-import { BarChart3, CheckCircle2, Calculator, ArrowRight, FlaskConical, Microscope } from "lucide-vue-next";
+import { BarChart3, CheckCircle2, Calculator, ArrowRight, FlaskConical } from "lucide-vue-next";
 
 // Definición de las opciones del menú
 const menuOptions = [
@@ -11,7 +11,7 @@ const menuOptions = [
     title: "Estadística Descriptiva & Chi²",
     description: "Calcula histogramas, tablas de frecuencia, varianza y pruebas de Chi Cuadrada.",
     icon: BarChart3,
-    route: '/estadistica-descriptiva', // Asegúrate que esta ruta exista en web.php
+    route: '/estadistica-descriptiva',
     color: "text-blue-600 dark:text-blue-400",
     bg: "bg-blue-100 dark:bg-blue-900/20",
     hoverBorder: "hover:border-blue-500"
@@ -26,22 +26,13 @@ const menuOptions = [
     hoverBorder: "hover:border-sky-500"
   },
   {
-    title: "Prueba Z (Tabla 2.2)",
-    description: "Hipótesis para medias con Varianza Conocida (Dist. Normal).",
+    title: "Pruebas de Hipótesis",
+    description: "Realiza pruebas Z (Varianza conocida) y t-Student (Varianza desconocida) para medias.",
     icon: FlaskConical,
-    route: '/pruebas-hipotesis', // Ruta a tu vista de Tabla 2.2
+    route: '/pruebas-hipotesis', // Apunta a tu nueva vista unificada
     color: "text-indigo-600 dark:text-indigo-400",
     bg: "bg-indigo-100 dark:bg-indigo-900/20",
     hoverBorder: "hover:border-indigo-500"
-  },
-  {
-    title: "Prueba t-Student (Tabla 2.3)",
-    description: "Hipótesis para medias con Varianza Desconocida (Muestras pequeñas).",
-    icon: Microscope,
-    route: '/prueba-t-student', // <--- NUEVA RUTA
-    color: "text-teal-600 dark:text-teal-400",
-    bg: "bg-teal-100 dark:bg-teal-900/20",
-    hoverBorder: "hover:border-teal-500"
   }
 ];
 </script>
@@ -61,7 +52,7 @@ const menuOptions = [
 
     <header class="text-center mb-10 sm:mb-14 max-w-3xl px-4">
       <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-4">
-        Herramientas de Análisis
+        Herramientas de <span class="text-sky-500">Análisis</span>
       </h1>
       <p class="text-base sm:text-xl text-gray-500 dark:text-gray-400">
         Selecciona el módulo de probabilidad y estadística que deseas utilizar hoy.

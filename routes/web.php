@@ -21,6 +21,11 @@ Route::get('/pruebas-hipotesis', function () {return Inertia::render('HipotesisP
 Route::get('/prueba-t-student', function () {return Inertia::render('HipotesisPruebaTabla23'); 
 })->name('hipotesis.tabla23');
 
+// Una sola ruta para todo
+Route::get('/pruebas-hipotesis', function () {return Inertia::render('HipotesisGeneral'); 
+})->name('hipotesis');
+
+
 /* RUTAS PARA CALCULOS */
 
 Route::post('/calculate-statistics', [StatisticsController::class, 'calculate']);
