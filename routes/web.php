@@ -16,6 +16,9 @@ Route::get('/', function () {return Inertia::render('MainMenu');})->name('home')
 Route::get('/estadistica-descriptiva', function () {return Inertia::render('EstadisticaDescriptiva'); })->name('calculadora');
 Route::get('/muestreo-aceptacion', function () {return Inertia::render('MuestreoAceptacion');})->name('muestreo');
 Route::get('/correccion-varianza', function () {return Inertia::render('Correccion');})->name('correcion de varianza');
+Route::get('/pruebas-hipotesis', function () {return Inertia::render('HipotesisPrueba');})->name('hipotesis');
+
+
 
 /* RUTAS PARA CALCULOS */
 

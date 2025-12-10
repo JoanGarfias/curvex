@@ -3,7 +3,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import CurvexIcon from '@/icons/CurvexIcon.vue';
 import FooterComp from '@/components/FooterComp.vue';
-import { BarChart3, CheckCircle2, Calculator, ArrowRight } from "lucide-vue-next";
+import { BarChart3, CheckCircle2, Calculator, ArrowRight, FlaskConical } from "lucide-vue-next";
 
 // Definición de las opciones del menú
 const menuOptions = [
@@ -21,6 +21,16 @@ const menuOptions = [
     description: "Evalúa lotes de productos. Determina si se aceptan o rechazan basándose en una muestra y estándares de calidad.",
     icon: CheckCircle2,
     route: '/muestreo-aceptacion',
+    color: "text-gray-900 dark:text-gray-100",
+    bg: "bg-gray-100 dark:bg-gray-800",
+    hoverBorder: "hover:border-gray-400 dark:hover:border-gray-600"
+  },
+
+  {
+    title: "Pruebas de Hipótesis",
+    description: "Realiza pruebas estadísticas para validar o rechazar hipótesis sobre parámetros poblacionales con diferentes niveles de confianza.",
+    icon: FlaskConical,
+    route: '/pruebas-hipotesis',
     color: "text-gray-900 dark:text-gray-100",
     bg: "bg-gray-100 dark:bg-gray-800",
     hoverBorder: "hover:border-gray-400 dark:hover:border-gray-600"
