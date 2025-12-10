@@ -182,20 +182,19 @@ class FrequencyService
         //Chi cuadrada
         $sumaChiCua = 0.0;
         
-        Log::info("Generando datos Chi. Promedio: " . $promedio . " - Desviación Estándar: " . round($desviacionEstandar));
-
+        
         foreach($tablaFrecuencias as $claseData){
             //Calcular la probabilidad de que X esté entre los límites
             $normDistLimiteInferior = self::normDistAcumulado(
                 $claseData['limite_inferior'],
                 $promedio,
-                round($desviacionEstandar,4)
+                round($desviacionEstandar,8)
             );
 
             $normDistLimiteSuperior = self::normDistAcumulado(
                 $claseData['limite_superior'],
                 $promedio,
-                round($desviacionEstandar,4)
+                round($desviacionEstandar,8)
             );
 
             Log::info("Limite Inferior: " . $claseData['limite_inferior'] . " - NormDist: " . $normDistLimiteInferior);
