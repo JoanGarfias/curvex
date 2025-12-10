@@ -154,7 +154,7 @@ const calcular = async () => {
       };
     }
     
-    const response = await axios.post('/api/prueba-hipotesis/calcular', data);
+    const response = await axios.post('/pruebahipotesistabla22', data);
     
     z0.value = response.data.z0;
     za.value = response.data.za;
@@ -204,7 +204,7 @@ const calcular = async () => {
 
       <!-- Tabla 2-3 -->
       <div class="bg-white/80 dark:bg-[#0b0b0b]/80 backdrop-blur rounded-xl p-6 border border-gray-200 dark:border-gray-800 max-w-4xl mx-auto">
-        <h2 class="text-xl font-bold mb-4 text-left">Tabla 2-3: Pruebas para medias con varianza conocida</h2>
+        <h2 class="text-xl font-bold mb-4 text-left">Tabla 2-2: Pruebas para medias con varianza conocida</h2>
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
