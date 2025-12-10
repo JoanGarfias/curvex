@@ -95,3 +95,41 @@
   * **`z`**: El estadístico de prueba calculado.
   * **`critical`**: El valor Z límite calculado usando la función inversa de la normal (`normalQuantile`). Depende de si la prueba es de 1 o 2 colas.
   * **`reject`**: Booleano final. `true` indica que se debe rechazar la Hipótesis Nula.
+
+### Ejemplo usando el ejercicio 4 de la clase del miercoles
+
+-----
+
+Entrada:
+```json
+{
+    "x": 41,
+    "n": 250,
+    "p0": 0.1,
+    "alpha": 0.05,
+    "tail": "two",
+    "continuity": true
+}
+```
+
+Salida:
+```json
+{
+	"x": 41,
+	"n": 250,
+	"p_hat": 0.164,
+	"p0": 0.1,
+	"alpha": 0.05,
+	"tail": "two",
+	"continuity": true,
+	"adjusted_x": 40.5,
+	"np0": 25,
+	"sd": 4.743416490252569,
+	"z": 3.2676869155073254,
+	"p_value": 0.0010844232694748879,
+	"critical": 1.959962802939117,
+	"reject": true
+}
+```
+
+Los valores importantes (tomando como referencia el codigo de las tablas) son z (que es z0), critical(za/2) y reject (que seria el equivalente a veredicto, pero en booleano).
