@@ -154,7 +154,7 @@ const calcular = async () => {
       };
     }
     
-    const response = await axios.post('/pruebahipotesistabla22', data);
+    const response = await axios.post('/api/prueba-hipotesis/calcular', data);
     
     z0.value = response.data.z0;
     za.value = response.data.za;
@@ -198,9 +198,121 @@ const calcular = async () => {
       <h1 class="text-4xl sm:text-5xl font-extrabold leading-tight mb-4">
         Pruebas de Hipótesis
       </h1>
-      <p class="text-base sm:text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
+      <p class="text-base sm:text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-8">
         Realiza pruebas estadísticas para validar o rechazar hipótesis sobre parámetros poblacionales
       </p>
+
+      <!-- Tabla 2-3 -->
+      <div class="bg-white/80 dark:bg-[#0b0b0b]/80 backdrop-blur rounded-xl p-6 border border-gray-200 dark:border-gray-800 max-w-4xl mx-auto">
+        <h2 class="text-xl font-bold mb-4 text-left">Tabla 2-3: Pruebas para medias con varianza conocida</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b-2 border-gray-300 dark:border-gray-700">
+                <th class="text-left py-3 px-4 font-bold">Hipótesis</th>
+                <th class="text-center py-3 px-4 font-bold">Estadístico de prueba</th>
+                <th class="text-center py-3 px-4 font-bold">Criterios de rechazo</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+              <!-- Fila 1 -->
+              <tr class="hover:bg-gray-50 dark:hover:bg-[#151515] transition-colors">
+                <td class="py-3 px-4">
+                  <div class="font-mono text-xs sm:text-sm">
+                    <div>H₀: μ = μ₀</div>
+                    <div>H₁: μ ≠ μ₀</div>
+                  </div>
+                </td>
+                <td rowspan="3" class="text-center py-3 px-4 border-l border-gray-200 dark:border-gray-800">
+                  <div class="flex flex-col items-center justify-center h-full">
+                    <div class="font-mono text-lg mb-2">Z₀ = </div>
+                    <div class="border-t-2 border-gray-900 dark:border-gray-100 px-4">
+                      <div class="font-mono text-sm pt-1">x̄ - μ₀</div>
+                    </div>
+                    <div class="border-t border-gray-900 dark:border-gray-100 px-4 mt-1">
+                      <div class="font-mono text-sm pt-1">σ / √n</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-center py-3 px-4 border-l border-gray-200 dark:border-gray-800">
+                  <span class="font-mono text-sm">|Z₀| > Z_{α/2}</span>
+                </td>
+              </tr>
+              <!-- Fila 2 -->
+              <tr class="hover:bg-gray-50 dark:hover:bg-[#151515] transition-colors">
+                <td class="py-3 px-4">
+                  <div class="font-mono text-xs sm:text-sm">
+                    <div>H₀: μ = μ₀</div>
+                    <div>H₁: μ < μ₀</div>
+                  </div>
+                </td>
+                <td class="text-center py-3 px-4 border-l border-gray-200 dark:border-gray-800">
+                  <span class="font-mono text-sm">Z₀ < -Z_α</span>
+                </td>
+              </tr>
+              <!-- Fila 3 -->
+              <tr class="hover:bg-gray-50 dark:hover:bg-[#151515] transition-colors">
+                <td class="py-3 px-4">
+                  <div class="font-mono text-xs sm:text-sm">
+                    <div>H₀: μ = μ₀</div>
+                    <div>H₁: μ > μ₀</div>
+                  </div>
+                </td>
+                <td class="text-center py-3 px-4 border-l border-gray-200 dark:border-gray-800">
+                  <span class="font-mono text-sm">Z₀ > Z_α</span>
+                </td>
+              </tr>
+              <!-- Fila 4 -->
+              <tr class="hover:bg-gray-50 dark:hover:bg-[#151515] transition-colors">
+                <td class="py-3 px-4">
+                  <div class="font-mono text-xs sm:text-sm">
+                    <div>H₀: μ₁ = μ₂</div>
+                    <div>H₁: μ₂ ≠ μ₂</div>
+                  </div>
+                </td>
+                <td rowspan="3" class="text-center py-3 px-4 border-l border-gray-200 dark:border-gray-800">
+                  <div class="flex flex-col items-center justify-center h-full">
+                    <div class="font-mono text-lg mb-2">Z₀ = </div>
+                    <div class="border-t-2 border-gray-900 dark:border-gray-100 px-4">
+                      <div class="font-mono text-sm pt-1">x̄₁ - x̄₂</div>
+                    </div>
+                    <div class="border-t border-gray-900 dark:border-gray-100 px-6 mt-1">
+                      <div class="font-mono text-xs pt-1">√(σ₁²/n₁ + σ₂²/n₂)</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-center py-3 px-4 border-l border-gray-200 dark:border-gray-800">
+                  <span class="font-mono text-sm">|Z₀| > Z_{α/2}</span>
+                </td>
+              </tr>
+              <!-- Fila 5 -->
+              <tr class="hover:bg-gray-50 dark:hover:bg-[#151515] transition-colors">
+                <td class="py-3 px-4">
+                  <div class="font-mono text-xs sm:text-sm">
+                    <div>H₀: μ₁ = μ₂</div>
+                    <div>H₁: μ₁ < μ₂</div>
+                  </div>
+                </td>
+                <td class="text-center py-3 px-4 border-l border-gray-200 dark:border-gray-800">
+                  <span class="font-mono text-sm">Z₀ < -Z_α</span>
+                </td>
+              </tr>
+              <!-- Fila 6 -->
+              <tr class="hover:bg-gray-50 dark:hover:bg-[#151515] transition-colors">
+                <td class="py-3 px-4">
+                  <div class="font-mono text-xs sm:text-sm">
+                    <div>H₀: μ₁ = μ₂</div>
+                    <div>H₁: μ₁ > μ₂</div>
+                  </div>
+                </td>
+                <td class="text-center py-3 px-4 border-l border-gray-200 dark:border-gray-800">
+                  <span class="font-mono text-sm">Z₀ > Z_α</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </header>
 
     <!-- Contenido Principal -->
