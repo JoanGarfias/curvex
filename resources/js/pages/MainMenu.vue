@@ -52,7 +52,7 @@ const menuOptions = [
 
     <header class="text-center mb-10 sm:mb-14 max-w-3xl px-4">
       <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-4">
-        Herramientas de <span class="text-sky-500">Análisis</span>
+        Herramientas de Análisis
       </h1>
       <p class="text-base sm:text-xl text-gray-500 dark:text-gray-400">
         Selecciona el módulo de probabilidad y estadística que deseas utilizar hoy.
