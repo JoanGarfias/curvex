@@ -17,8 +17,9 @@ Route::get('/estadistica-descriptiva', function () {return Inertia::render('Esta
 Route::get('/muestreo-aceptacion', function () {return Inertia::render('MuestreoAceptacion');})->name('muestreo');
 Route::get('/correccion-varianza', function () {return Inertia::render('Correccion');})->name('correcion de varianza');
 Route::get('/pruebas-hipotesis', function () {return Inertia::render('HipotesisPrueba');})->name('hipotesis');
-
-
+// NUEVA RUTA para Tabla 2.3 (t-Student)
+Route::get('/prueba-t-student', function () {return Inertia::render('HipotesisPruebaTabla23'); 
+})->name('hipotesis.tabla23');
 
 /* RUTAS PARA CALCULOS */
 

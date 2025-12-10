@@ -3,37 +3,45 @@ import { Head, Link } from '@inertiajs/vue3';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import CurvexIcon from '@/icons/CurvexIcon.vue';
 import FooterComp from '@/components/FooterComp.vue';
-import { BarChart3, CheckCircle2, Calculator, ArrowRight, FlaskConical } from "lucide-vue-next";
+import { BarChart3, CheckCircle2, Calculator, ArrowRight, FlaskConical, Microscope } from "lucide-vue-next";
 
 // Definición de las opciones del menú
 const menuOptions = [
   {
     title: "Estadística Descriptiva & Chi²",
-    description: "Calcula histogramas, tablas de frecuencia, varianza, deciles, cuartiles, percentiles y pruebas de Chi Cuadrada.",
+    description: "Calcula histogramas, tablas de frecuencia, varianza y pruebas de Chi Cuadrada.",
     icon: BarChart3,
-    route: '/estadistica-descriptiva',
-    color: "text-gray-900 dark:text-gray-100",
-    bg: "bg-gray-100 dark:bg-gray-800",
-    hoverBorder: "hover:border-gray-400 dark:hover:border-gray-600"
+    route: '/estadistica-descriptiva', // Asegúrate que esta ruta exista en web.php
+    color: "text-blue-600 dark:text-blue-400",
+    bg: "bg-blue-100 dark:bg-blue-900/20",
+    hoverBorder: "hover:border-blue-500"
   },
   {
     title: "Muestreo de Aceptación",
-    description: "Evalúa lotes de productos. Determina si se aceptan o rechazan basándose en una muestra y estándares de calidad.",
+    description: "Evalúa lotes (Aceptar/Rechazar) basándose en estándares de calidad.",
     icon: CheckCircle2,
     route: '/muestreo-aceptacion',
-    color: "text-gray-900 dark:text-gray-100",
-    bg: "bg-gray-100 dark:bg-gray-800",
-    hoverBorder: "hover:border-gray-400 dark:hover:border-gray-600"
+    color: "text-sky-500",
+    bg: "bg-sky-100 dark:bg-sky-900/20",
+    hoverBorder: "hover:border-sky-500"
   },
-
   {
-    title: "Pruebas de Hipótesis",
-    description: "Realiza pruebas estadísticas para validar o rechazar hipótesis sobre parámetros poblacionales con diferentes niveles de confianza.",
+    title: "Prueba Z (Tabla 2.2)",
+    description: "Hipótesis para medias con Varianza Conocida (Dist. Normal).",
     icon: FlaskConical,
-    route: '/pruebas-hipotesis',
-    color: "text-gray-900 dark:text-gray-100",
-    bg: "bg-gray-100 dark:bg-gray-800",
-    hoverBorder: "hover:border-gray-400 dark:hover:border-gray-600"
+    route: '/pruebas-hipotesis', // Ruta a tu vista de Tabla 2.2
+    color: "text-indigo-600 dark:text-indigo-400",
+    bg: "bg-indigo-100 dark:bg-indigo-900/20",
+    hoverBorder: "hover:border-indigo-500"
+  },
+  {
+    title: "Prueba t-Student (Tabla 2.3)",
+    description: "Hipótesis para medias con Varianza Desconocida (Muestras pequeñas).",
+    icon: Microscope,
+    route: '/prueba-t-student', // <--- NUEVA RUTA
+    color: "text-teal-600 dark:text-teal-400",
+    bg: "bg-teal-100 dark:bg-teal-900/20",
+    hoverBorder: "hover:border-teal-500"
   }
 ];
 </script>
@@ -45,7 +53,7 @@ const menuOptions = [
     
     <nav class="w-full max-w-5xl flex items-center justify-between mb-8 sm:mb-12 px-2 sm:px-4">
       <div class="flex items-center gap-2 sm:gap-3">
-        <CurvexIcon class="w-8 h-8 sm:w-10 sm:h-10 text-gray-900 dark:text-gray-100" />
+        <CurvexIcon class="w-8 h-8 sm:w-10 sm:h-10 text-sky-600" />
         <span class="text-xl sm:text-2xl font-extrabold tracking-tight">Curvex</span>
       </div>
       <ThemeToggle />
@@ -53,7 +61,7 @@ const menuOptions = [
 
     <header class="text-center mb-10 sm:mb-14 max-w-3xl px-4">
       <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-4">
-        Herramientas de <span class="text-gray-900 dark:text-gray-100">Análisis</span>
+        Herramientas de Análisis
       </h1>
       <p class="text-base sm:text-xl text-gray-500 dark:text-gray-400">
         Selecciona el módulo de probabilidad y estadística que deseas utilizar hoy.
@@ -77,7 +85,7 @@ const menuOptions = [
             {{ option.title }}
           </h2>
           
-          <p class="text-gray-600 dark:text-gray-400 leading-relaxed mb-6 flex-grow">
+          <p class="text-gray-600 dark:text-gray-400 leading-relaxed mb-6 flex-grow text-sm sm:text-base">
             {{ option.description }}
           </p>
 
