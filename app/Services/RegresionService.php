@@ -7,6 +7,7 @@ use App\ValueObjects\Matrix;
 use Illuminate\Support\Facades\Log;
 use App\ValueObjects\Point;
 use App\ValueObjects\Solution2VSystem;
+use Exception;
 
 class RegresionService
 {
@@ -31,12 +32,27 @@ class RegresionService
     }
 
 
-    private function calculateSSE(): void {
-        //Calcular SSE
+
+    private function calculateSSE(): float {
+        $sse = 0.0;
+
+        foreach($this->points as $p){
+            //y gorrito
+            $y_pri = $this->a->a0 + $this->a->a1 * $p->x;
+            $sse += pow($y_pri-$p->y, 2);
+        }
+        
+        return $sse;
     }
 
-    private function calculateSST(): void {
-        //Calcular SST
+    private function calculateSST(): float {
+        $sst = 0.0;
+
+        foreach($this->points as $p){
+            $sst += pow($p->y - $this->y_avg,   2);
+        }
+        
+        return $sst;
     }
     
 
@@ -65,10 +81,14 @@ class RegresionService
 
             Log::info("Coeficientes calculados: a0 = {$this->a->a0}, a1 = {$this->a->a1}");
 
+            $this->SSE = $this->calculateSSE();
+            $this->SST = $this->calculateSST();
 
-            $R2 = 0.0;
+            Log::info("SSE = $this->SSE, SST = $this->SST");
+
+            $R2 = 1 - ($this->SSE / $this->SST);
             return $R2;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error("Error al calcular los coeficientes de regresión: " . $e->getMessage());
             throw $e;
         }
