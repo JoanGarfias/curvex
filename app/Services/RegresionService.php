@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Math\CrammerSolver;
+use App\Support\Math\CrammerSolver;
 use App\ValueObjects\Matrix;
 use Illuminate\Support\Facades\Log;
 use App\ValueObjects\Point;
@@ -52,21 +52,26 @@ class RegresionService
         $sum_xy = array_reduce($this->points, fn(float $s, Point $p) => $s + ($p->x * $p->y), 0.0);
         Log::info("Sumatorias calculadas: sum_y = $sum_y, sum_x = $sum_x, sum_x2 = $sum_x2, sum_xy = $sum_xy");
 
-        $this->y_avg = $sum_y / $m;
+        try{
+            $this->y_avg = $sum_y / $m;
 
-        $matriz = new Matrix(
-            [
-                [$m, $sum_x, $sum_y],
-                [$sum_x, $sum_x2, $sum_xy],
-            ], 2, 3);
+            $matriz = new Matrix(
+                [
+                    [$m, $sum_x, $sum_y],
+                    [$sum_x, $sum_x2, $sum_xy],
+                ], 2, 3);
 
-        $this->a = CrammerSolver::solveCrammerMatrix2X2($matriz);
+            $this->a = CrammerSolver::solveCrammerMatrix2X2($matriz);
 
-        Log::info("Coeficientes calculados: a0 = {$this->a->a0}, a1 = {$this->a->a1}");
+            Log::info("Coeficientes calculados: a0 = {$this->a->a0}, a1 = {$this->a->a1}");
 
 
-        $R2 = 0.0;
-        return $R2;
+            $R2 = 0.0;
+            return $R2;
+        } catch (\Exception $e) {
+            Log::error("Error al calcular los coeficientes de regresión: " . $e->getMessage());
+            throw $e;
+        }
     }
 
 }

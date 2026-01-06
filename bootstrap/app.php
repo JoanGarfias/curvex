@@ -22,7 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
             '/calc-muestroaceptacion2',
             '/pruebahipotesistabla22',
             '/pruebahipotesistabla23',
-            '/proportion-test'
+            '/proportion-test',
+            '/calc-regresion',
         ]);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);

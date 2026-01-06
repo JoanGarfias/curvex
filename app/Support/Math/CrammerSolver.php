@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Math;
+namespace App\Support\Math;
+
 use App\ValueObjects\Matrix;
 use App\ValueObjects\Solution2VSystem;
+use Exception;
 
 class CrammerSolver {
     public static function solveCrammerMatrix2X2(Matrix $m) : Solution2VSystem{
@@ -11,8 +13,8 @@ class CrammerSolver {
         //Calcular delta general
         $delta_matrix = new Matrix(
         [
-            [ $m[0][0], $m[0][1]  ],
-            [ $m[1][0], $m[1][1]  ],
+            [ $m->data[0][0], $m->data[0][1]  ],
+            [ $m->data[1][0], $m->data[1][1]  ],
         ], 2, 3);
         $delta_general = $delta_matrix->calculateDeterminant();
 
@@ -20,8 +22,8 @@ class CrammerSolver {
         //Calcular delta X
         $delta_x_matrix = new Matrix(
         [
-            [ $terms[0], $m[0][1]  ],
-            [ $terms[1], $m[1][1]  ],  
+            [ $terms[0], $m->data[0][1]  ],
+            [ $terms[1], $m->data[1][1]  ],  
         ], 2, 2);
         $delta_x = $delta_x_matrix->calculateDeterminant();
 
@@ -29,15 +31,22 @@ class CrammerSolver {
         //Calcular delta Y
         $delta_y_matrix = new Matrix(
         [
-            [ $m[0][0], $terms[0]  ],
-            [ $m[1][0], $terms[1]  ],  
+            [ $m->data[0][0], $terms[0]  ],
+            [ $m->data[1][0], $terms[1]  ],  
         ], 2, 2);
         $delta_y = $delta_y_matrix->calculateDeterminant();
 
 
         //Calcular soluciones del sistema
-        $x = $delta_x / $delta_general;
-        $y = $delta_y / $delta_general;
+        try{
+            if($delta_general == 0){
+                throw new Exception("El sistema no tiene solución única (determinante cero).");
+            }
+            $x = $delta_x / $delta_general;
+            $y = $delta_y / $delta_general;
+        }catch (Exception $e){
+            throw $e;
+        }
 
 
         //Retornar resultado con tipado
