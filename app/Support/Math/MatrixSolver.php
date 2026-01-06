@@ -2,7 +2,7 @@
 
 namespace App\Math;
 
-class Matrix 
+class MatrixSolver
 {
     /**
      * @param float[][] $data
