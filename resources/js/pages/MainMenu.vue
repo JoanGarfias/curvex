@@ -3,7 +3,8 @@ import { Head, Link } from '@inertiajs/vue3';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import CurvexIcon from '@/icons/CurvexIcon.vue';
 import FooterComp from '@/components/FooterComp.vue';
-import { BarChart3, CheckCircle2, Calculator, ArrowRight, FlaskConical } from "lucide-vue-next";
+// Agregamos TrendingUp para el icono de regresión
+import { BarChart3, CheckCircle2, Calculator, ArrowRight, FlaskConical, TrendingUp } from "lucide-vue-next";
 
 // Definición de las opciones del menú
 const menuOptions = [
@@ -29,10 +30,19 @@ const menuOptions = [
     title: "Pruebas de Hipótesis",
     description: "Realiza pruebas Z (Varianza conocida) y t-Student (Varianza desconocida) para medias.",
     icon: FlaskConical,
-    route: '/pruebas-hipotesis', // Apunta a tu nueva vista unificada
+    route: '/pruebas-hipotesis',
     color: "text-indigo-600 dark:text-indigo-400",
     bg: "bg-indigo-100 dark:bg-indigo-900/20",
     hoverBorder: "hover:border-indigo-500"
+  },
+  {
+    title: "Análisis de Regresión",
+    description: "Calcula regresión lineal simple, correlación y coeficiente de determinación (R²).",
+    icon: TrendingUp, 
+    route: '/regresion', // Debe coincidir con web.php
+    color: "text-purple-600 dark:text-purple-400",
+    bg: "bg-purple-100 dark:bg-purple-900/20",
+    hoverBorder: "hover:border-purple-500"
   }
 ];
 </script>
