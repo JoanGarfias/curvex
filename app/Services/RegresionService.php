@@ -86,7 +86,12 @@ class RegresionService
 
             Log::info("SSE = $this->SSE, SST = $this->SST");
 
-            $R2 = 1 - ($this->SSE / $this->SST);
+            if($this->SST == 0){
+                $R2 = 1;
+            }else{
+                $R2 = 1 - ($this->SSE / $this->SST);
+            }
+            
             return $R2;
         } catch (Exception $e) {
             Log::error("Error al calcular los coeficientes de regresión: " . $e->getMessage());
