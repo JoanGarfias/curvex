@@ -140,6 +140,15 @@ const calcular = async () => {
         if (arrX.length !== arrY.length) throw new Error(`Las listas no coinciden: X tiene ${arrX.length} datos, Y tiene ${arrY.length}.`);
         if (arrX.length < 2) throw new Error("Se necesitan al menos 2 pares de datos.");
 
+        // Verificar que los valores de X varíen
+        const uniqueX = new Set(arrX);
+        if (uniqueX.size === 1) throw new Error("Los valores de X deben variar para calcular la regresión lineal.");
+
+        // Verificar que la suma de X o Y no sea cero
+        const sumx = arrX.reduce((a, b) => a + b, 0);
+        const sumy = arrY.reduce((a, b) => a + b, 0);
+        if (sumx === 0 || sumy === 0) throw new Error("La suma de los valores de X o Y no puede ser cero.");
+
         // Guardar puntos para gráfica
         points.value = arrX.map((x, i) => ({ x, y: arrY[i] }));
 
