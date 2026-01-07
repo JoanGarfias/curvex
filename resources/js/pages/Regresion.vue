@@ -48,16 +48,28 @@ const chartData = computed(() => {
     const minY = Math.min(...ys);
     const maxY = Math.max(...ys);
     
-    // Margen para la gráfica
-    const padding = 20;
+    // Márgenes para dejar espacio a los números
+    const paddingLeft = 60;
+    const paddingRight = 20;
+    const paddingTop = 20;
+    const paddingBottom = 50;
     const width = 400;
     const height = 250;
 
-    // Escalas
-    const scaleX = (val: number) => padding + ((val - minX) / (maxX - minX || 1)) * (width - 2 * padding);
-    const scaleY = (val: number) => height - padding - ((val - minY) / (maxY - minY || 1)) * (height - 2 * padding);
+    // Calcular rangos
+    const rangeX = maxX - minX || 1;
+    const rangeY = maxY - minY || 1;
 
-    // Puntos SVG
+    // Funciones de escala
+    const scaleX = (val: number) => {
+        return paddingLeft + ((val - minX) / rangeX) * (width - paddingLeft - paddingRight);
+    };
+    
+    const scaleY = (val: number) => {
+        return height - paddingBottom - ((val - minY) / rangeY) * (height - paddingTop - paddingBottom);
+    };
+
+    // Puntos para la gráfica
     const svgPoints = points.value.map(p => ({
         cx: scaleX(p.x),
         cy: scaleY(p.y),
@@ -65,19 +77,52 @@ const chartData = computed(() => {
         y: p.y
     }));
 
-    // Línea de tendencia (y = a0 + a1*x)
+    // Línea de regresión
     const x1 = minX;
     const y1 = localModel.value.a0 + localModel.value.a1 * x1;
     const x2 = maxX;
     const y2 = localModel.value.a0 + localModel.value.a1 * x2;
 
+    // GENERAR ETIQUETAS PARA LOS EJES (5 marcas en cada uno)
+    const xLabels = [];
+    const yLabels = [];
+    
+    for (let i = 0; i <= 4; i++) {
+        // Calcular valores intermedios
+        const xVal = minX + (rangeX * i / 4);
+        const yVal = minY + (rangeY * i / 4);
+        
+        // Etiquetas eje X (horizontal, abajo)
+        xLabels.push({
+            value: xVal.toFixed(1),  // 1 decimal
+            x: scaleX(xVal),
+            y: height - paddingBottom + 20  // Posición del texto
+        });
+        
+        // Etiquetas eje Y (vertical, izquierda)
+        yLabels.push({
+            value: yVal.toFixed(1),  // 1 decimal
+            x: paddingLeft - 10,  // Posición del texto
+            y: scaleY(yVal)
+        });
+    }
+
     return {
-        width, height,
+        width, 
+        height,
+        paddingLeft,
+        paddingRight,
+        paddingTop,
+        paddingBottom,
         line: {
-            x1: scaleX(x1), y1: scaleY(y1),
-            x2: scaleX(x2), y2: scaleY(y2)
+            x1: scaleX(x1), 
+            y1: scaleY(y1),
+            x2: scaleX(x2), 
+            y2: scaleY(y2)
         },
-        points: svgPoints
+        points: svgPoints,
+        xLabels,  // ← ESTO ES LO IMPORTANTE
+        yLabels   // ← ESTO TAMBIÉN
     };
 });
 
@@ -262,7 +307,7 @@ const calcular = async () => {
                                 <p class="text-xl font-mono font-bold text-gray-700 dark:text-gray-200">{{ localModel.a1.toFixed(4) }}</p>
                             </div>
                             <div class="text-center border-l border-gray-100 dark:border-gray-800">
-                                <p class="text-xs text-gray-500 uppercase">R² (Backend)</p>
+                                <p class="text-xs text-gray-500 uppercase">R²</p>
                                 <p class="text-xl font-mono font-bold text-purple-600 dark:text-purple-400">{{ serverR2?.toFixed(4) ?? localModel.r2.toFixed(4) }}</p>
                             </div>
                         </div>
@@ -288,37 +333,103 @@ const calcular = async () => {
                     </div>
 
                     <div v-if="chartData" class="bg-white dark:bg-[#0b0b0b] rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
-                        <h3 class="text-sm font-bold uppercase tracking-widest text-gray-500 mb-4">Gráfica de Tendencia</h3>
-                        <div class="w-full aspect-video bg-gray-50 dark:bg-[#151515] rounded-lg relative overflow-hidden flex items-center justify-center border border-gray-100 dark:border-gray-800">
-                            <svg :viewBox="`0 0 ${chartData.width} ${chartData.height}`" class="w-full h-full p-2">
-                                <line :x1="20" :y1="chartData.height - 20" :x2="chartData.width" :y2="chartData.height - 20" stroke="currentColor" class="text-gray-300" stroke-width="1" />
-                                <line :x1="20" :y1="chartData.height - 20" :x2="20" :y2="0" stroke="currentColor" class="text-gray-300" stroke-width="1" />
+    <h3 class="text-sm font-bold uppercase tracking-widest text-gray-500 mb-4">Gráfica de Tendencia</h3>
+    <div class="w-full aspect-video bg-gray-50 dark:bg-[#151515] rounded-lg relative overflow-hidden flex items-center justify-center border border-gray-100 dark:border-gray-800">
+        <svg :viewBox="`0 0 ${chartData.width} ${chartData.height}`" class="w-full h-full p-2">
+            
+            <!-- EJES PRINCIPALES (las líneas grises) -->
+            <line 
+                :x1="chartData.paddingLeft" 
+                :y1="chartData.height - chartData.paddingBottom" 
+                :x2="chartData.width - chartData.paddingRight" 
+                :y2="chartData.height - chartData.paddingBottom" 
+                stroke="currentColor" 
+                class="text-gray-400 dark:text-gray-600" 
+                stroke-width="2" 
+            />
+            <line 
+                :x1="chartData.paddingLeft" 
+                :y1="chartData.height - chartData.paddingBottom" 
+                :x2="chartData.paddingLeft" 
+                :y2="chartData.paddingTop" 
+                stroke="currentColor" 
+                class="text-gray-400 dark:text-gray-600" 
+                stroke-width="2" 
+            />
 
-                                <line 
-                                    :x1="chartData.line.x1" 
-                                    :y1="chartData.line.y1" 
-                                    :x2="chartData.line.x2" 
-                                    :y2="chartData.line.y2" 
-                                    stroke="currentColor" 
-                                    class="text-purple-500" 
-                                    stroke-width="2" 
-                                />
+            <!-- NÚMEROS DEL EJE X (horizontal, abajo) -->
+            <g v-for="(label, i) in chartData.xLabels" :key="'x-' + i">
+                <!-- Marquita vertical -->
+                <line 
+                    :x1="label.x" 
+                    :y1="chartData.height - chartData.paddingBottom" 
+                    :x2="label.x" 
+                    :y2="chartData.height - chartData.paddingBottom + 5" 
+                    stroke="currentColor" 
+                    class="text-gray-400" 
+                    stroke-width="1.5" 
+                />
+                <!-- Número -->
+                <text 
+                    :x="label.x" 
+                    :y="label.y" 
+                    text-anchor="middle" 
+                    class="text-[10px] fill-gray-600 dark:fill-gray-400 font-mono font-bold"
+                >
+                    {{ label.value }}
+                </text>
+            </g>
 
-                                <circle 
-                                    v-for="(p, i) in chartData.points" 
-                                    :key="i" 
-                                    :cx="p.cx" 
-                                    :cy="p.cy" 
-                                    r="4" 
-                                    class="fill-white stroke-purple-700 dark:fill-black dark:stroke-purple-400" 
-                                    stroke-width="2"
-                                >
-                                    <title>({{ p.x }}, {{ p.y }})</title>
-                                </circle>
-                            </svg>
-                        </div>
-                        <p class="text-center text-xs text-gray-400 mt-2">La línea representa el modelo lineal ajustado.</p>
-                    </div>
+            <!-- NÚMEROS DEL EJE Y (vertical, izquierda) -->
+            <g v-for="(label, i) in chartData.yLabels" :key="'y-' + i">
+                <!-- Marquita horizontal -->
+                <line 
+                    :x1="chartData.paddingLeft - 5" 
+                    :y1="label.y" 
+                    :x2="chartData.paddingLeft" 
+                    :y2="label.y" 
+                    stroke="currentColor" 
+                    class="text-gray-400" 
+                    stroke-width="1.5" 
+                />
+                <!-- Número -->
+                <text 
+                    :x="label.x" 
+                    :y="label.y + 4" 
+                    text-anchor="end" 
+                    class="text-[10px] fill-gray-600 dark:fill-gray-400 font-mono font-bold"
+                >
+                    {{ label.value }}
+                </text>
+            </g>
+
+            <!-- LÍNEA DE REGRESIÓN (morada) -->
+            <line 
+                :x1="chartData.line.x1" 
+                :y1="chartData.line.y1" 
+                :x2="chartData.line.x2" 
+                :y2="chartData.line.y2" 
+                stroke="currentColor" 
+                class="text-purple-500" 
+                stroke-width="2" 
+            />
+
+            <!-- PUNTOS DE DATOS -->
+            <circle 
+                v-for="(p, i) in chartData.points" 
+                :key="i" 
+                :cx="p.cx" 
+                :cy="p.cy" 
+                r="5" 
+                class="fill-white stroke-purple-700 dark:fill-black dark:stroke-purple-400" 
+                stroke-width="2"
+            >
+                <title>({{ p.x }}, {{ p.y }})</title>
+            </circle>
+        </svg>
+    </div>
+    <p class="text-center text-xs text-gray-400 mt-2">La línea morada representa el modelo lineal ajustado.</p>
+</div>
 
                 </div>
             </div>
