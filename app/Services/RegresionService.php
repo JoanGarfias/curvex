@@ -176,8 +176,8 @@ class RegresionLineal extends RegresionData implements RegresionOperations {
                 //u*v, v*z, z*u etc
                 $product_variables = $this
                                     ->calculateProductVariables(
-                                        array_map(fn($value) => $value->getVariableAt($i)),
-                                        $this->data
+                                        array_map(fn($value) => $value->getVariableAt($i), $this->data),
+                                        $this->getM()
                                     );
                 
                                     
@@ -186,12 +186,12 @@ class RegresionLineal extends RegresionData implements RegresionOperations {
                 
 
                 $sum_product_variables = array_map(
-                                            function($sum_array_value) use ($product_variables){
-                                                //Hacer suma de las multiplicaciones
+                                            function($sum_array_value, $index) use ($product_variables, $sum_product_variables) {
+                                                $sum_product_variables[$index] += $product_variables[$index];
                                             },
-                                            $sum_product_variables)
+                                            $sum_product_variables, array_keys($sum_product_variables)
+                                        );
             }
-
 
             $this->SSE = $this->calculateSSE();
             $this->SST = $this->calculateSST();
