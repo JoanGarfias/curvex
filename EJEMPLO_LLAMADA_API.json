@@ -1,0 +1,163 @@
+{
+  "description": "Ejemplos de cómo llamar a la API de regresión",
+  "endpoints": {
+    "regresion": {
+      "url": "POST /api/regresion/calcular",
+      "description": "Calcula la regresión lineal o exponencial basada en variables independientes y dependientes"
+    }
+  },
+  "ejemplos": {
+    "ejemplo_1_regresion_simple": {
+      "description": "Regresión lineal simple: 1 variable independiente (x) y 1 variable dependiente (y)",
+      "datos_puntos": [
+        {"x": 1, "y": 2},
+        {"x": 2, "y": 4},
+        {"x": 3, "y": 6},
+        {"x": 4, "y": 8},
+        {"x": 5, "y": 10}
+      ],
+      "payload": {
+        "dependent": "2,4,6,8,10",
+        "independent": ["1,2,3,4,5"],
+        "method": "lineal"
+      }
+    },
+    "ejemplo_2_regresion_multiple_2_variables": {
+      "description": "Regresión múltiple: 2 variables independientes (u, v) y 1 variable dependiente (y)",
+      "datos_puntos": [
+        {"u": 1, "v": 2, "y": 5},
+        {"u": 2, "v": 3, "y": 11},
+        {"u": 3, "v": 4, "y": 17},
+        {"u": 4, "v": 5, "y": 23},
+        {"u": 5, "v": 6, "y": 29}
+      ],
+      "payload": {
+        "dependent": "5,11,17,23,29",
+        "independent": [
+          "1,2,3,4,5",
+          "2,3,4,5,6"
+        ],
+        "method": "lineal"
+      }
+    },
+    "ejemplo_3_regresion_multiple_3_variables": {
+      "description": "Regresión múltiple: 3 variables independientes (u, v, z) y 1 variable dependiente (y)",
+      "datos_puntos": [
+        {"u": 1, "v": 2, "z": 3, "y": 14},
+        {"u": 2, "v": 3, "z": 4, "y": 29},
+        {"u": 3, "v": 4, "z": 5, "y": 44},
+        {"u": 4, "v": 5, "z": 6, "y": 59},
+        {"u": 5, "v": 6, "z": 7, "y": 74}
+      ],
+      "payload": {
+        "dependent": "14,29,44,59,74",
+        "independent": [
+          "1,2,3,4,5",
+          "2,3,4,5,6",
+          "3,4,5,6,7"
+        ],
+        "method": "lineal"
+      }
+    },
+    "ejemplo_4_regresion_con_decimales": {
+      "description": "Regresión lineal simple con valores decimales",
+      "datos_puntos": [
+        {"x": 1.5, "y": 3.2},
+        {"x": 2.3, "y": 4.8},
+        {"x": 3.7, "y": 7.1},
+        {"x": 4.2, "y": 8.5},
+        {"x": 5.1, "y": 10.2}
+      ],
+      "payload": {
+        "dependent": "3.2,4.8,7.1,8.5,10.2",
+        "independent": ["1.5,2.3,3.7,4.2,5.1"],
+        "method": "lineal"
+      }
+    },
+    "ejemplo_5_regresion_datos_negativos": {
+      "description": "Regresión lineal simple con valores negativos",
+      "datos_puntos": [
+        {"x": -2, "y": -4},
+        {"x": -1, "y": -2},
+        {"x": 0, "y": 0},
+        {"x": 1, "y": 2},
+        {"x": 2, "y": 4}
+      ],
+      "payload": {
+        "dependent": "-4,-2,0,2,4",
+        "independent": ["-2,-1,0,1,2"],
+        "method": "lineal"
+      }
+    }
+  },
+  "notas_importantes": [
+    "Los datos de la variable dependiente (y) deben ser una cadena con valores separados por comas",
+    "Cada variable independiente es un elemento del array 'independent' con valores separados por comas",
+    "TODOS los datos (dependientes e independientes) DEBEN tener exactamente la misma cantidad de elementos",
+    "Los valores se pueden separar con espacios alrededor de las comas: '1, 2, 3' también es válido",
+    "Se soportan valores enteros, decimales y negativos",
+    "El método puede ser 'lineal' o 'exponencial'",
+    "Se pueden tener de 1 a N variables independientes"
+  ],
+  "ejemplo_curl": {
+    "regresion_simple": "curl -X POST http://localhost:8000/api/regresion/calcular -H 'Content-Type: application/json' -d '{\"dependent\": \"2,4,6,8,10\", \"independent\": [\"1,2,3,4,5\"], \"method\": \"lineal\"}'",
+    "regresion_multiple": "curl -X POST http://localhost:8000/api/regresion/calcular -H 'Content-Type: application/json' -d '{\"dependent\": \"5,11,17,23,29\", \"independent\": [\"1,2,3,4,5\", \"2,3,4,5,6\"], \"method\": \"lineal\"}'"
+  },
+  "respuesta_esperada": {
+    "ejemplo": {
+      "message": "Cálculo de regresión realizado con éxito.",
+      "data": {
+        "R2": 0.95,
+        "method": "lineal",
+        "independent_variables_count": 1,
+        "data_points_count": 5
+      }
+    }
+  },
+  "errores_comunes": {
+    "cantidad_datos_diferente": {
+      "descripcion": "Error cuando la cantidad de datos en variables independientes y dependientes no coincide",
+      "ejemplo_incorrecto": {
+        "dependent": "1,2,3",
+        "independent": ["1,2"]
+      },
+      "respuesta": {
+        "message": "Datos incorrectos.",
+        "errors": {
+          "independent.0": [
+            "La variable independiente #0 tiene 2 datos, pero la variable dependiente tiene 3. Todas deben tener la misma cantidad de datos."
+          ]
+        }
+      }
+    },
+    "dependent_vacio": {
+      "descripcion": "Error cuando no se proporciona la variable dependiente",
+      "ejemplo_incorrecto": {
+        "independent": ["1,2,3,4,5"]
+      },
+      "respuesta": {
+        "message": "Datos incorrectos.",
+        "errors": {
+          "dependent": [
+            "Debe proporcionar los datos de la variable dependiente (y)."
+          ]
+        }
+      }
+    },
+    "independent_vacio": {
+      "descripcion": "Error cuando no se proporciona ninguna variable independiente",
+      "ejemplo_incorrecto": {
+        "dependent": "1,2,3,4,5",
+        "independent": []
+      },
+      "respuesta": {
+        "message": "Datos incorrectos.",
+        "errors": {
+          "independent": [
+            "Debe proporcionar al menos una variable independiente."
+          ]
+        }
+      }
+    }
+  }
+}
