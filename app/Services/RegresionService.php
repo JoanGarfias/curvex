@@ -31,7 +31,7 @@ class RegresionData {
     public int $n = 0;
 
     /** @var int[] */
-    public array $solutions = null;
+    public array $solutions = [];
 }
 
 class RegresionLineal extends RegresionData implements RegresionOperations {
@@ -289,12 +289,21 @@ class RegresionExponencial implements RegresionOperations {
 
 class RegresionService
 {
-    public static function createRegresion(array $points, int $variables = 2, string $method = "lineal"){
+    public static function createRegresion(
+        array $independent_variables, 
+        array $dependent_values, 
+        string $method = "lineal"
+    ){
+        $variables_count = count($independent_variables);
+        
+        Log::info("Creando servicio de regresión con {$variables_count} variable(s) independiente(s)");
+        
         return
-            match($variables){
-                1 => new RegresionLineal($points, $points, $method),
-                3 => new RegresionExponencial($points, $method),
-                default => throw new Exception("No existe una solución de regresión disponible para la información proporcionada.")
+            match($variables_count){
+                1 => new RegresionLineal($independent_variables, $dependent_values, $method),
+                2 => new RegresionLineal($independent_variables, $dependent_values, $method),
+                3 => new RegresionLineal($independent_variables, $dependent_values, $method),
+                default => new RegresionLineal($independent_variables, $dependent_values, $method)
             }
         ;
     }

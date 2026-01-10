@@ -49,7 +49,7 @@ class RegresionController extends Controller
             $method = $data['method'] ?? 'lineal';
             $regresionService = RegresionService::createRegresion(
                 $independent_variables,
-                count($independent_variables),
+                $dependent_values,
                 $method
             );
 
