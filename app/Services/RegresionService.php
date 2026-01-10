@@ -84,6 +84,27 @@ class RegresionLineal extends RegresionData implements RegresionOperations {
         return $y_model;
     }
 
+    /**Función que recibe una fila de la combinación de variables
+     * como: u, v, z, etc esto para generar multiplicaciones como
+     * u*v, v*z, u*z sin duplicados, esto para generar posteriormente
+     * la matriz para encontrar las soluciones.
+     */
+    private function calculateProductVariables(array $mixed_variables, int $m) : array {
+        $i = 0;
+        $j = 0;
+        /**@var float[] */
+        $product_variables = [];
+
+        for($i = 0; $i < $m; $i++){
+            for($j = $i; $j < $m; $j++){
+                if($i == $j) continue;
+                $product_variables[] = $mixed_variables[$i] * $mixed_variables[$j];
+            }
+        }
+
+        return $mixed_variables;
+    }
+
 
     public function calculateSSE(): float {
         $sse = 0.0;
@@ -118,21 +139,22 @@ class RegresionLineal extends RegresionData implements RegresionOperations {
 
         /** @var float[] */
         $sum_value_variables = [];
+        
         /** @var float[] */
         $sum_value_variables_squared = [];
         $sum_y = array_reduce($this->dependent_data->points, fn(float $s, float $y) => $s + $y);
+        
+        /** @var float[] */
+        $product_variables = [];
+        /** @var float[] */
+        $sum_product_variables = [];
 
         foreach($this->data as $variable_data){
             $sum_value_variables = array_reduce($variable_data->points, fn(float $s, float $value) => $s + $value, 0.0);
             $sum_value_variables_squared = array_reduce($variable_data->points, fn(float $s, float $value) => $s + pow($value, 2), 0.0);
         }
 
-
         Log::info("Sumatoria de valores de las variables ", $sum_value_variables, " sumatoria de valores de las variables al cuadrado", $sum_value_variables_squared);
-        /*
-        $sum_xy = array_reduce($this->points, fn(float $s, Point $p) => $s + ($p->x * $p->y), 0.0);
-        Log::info("Sumatorias calculadas: sum_y = $sum_y, sum_x = $sum_x, sum_x2 = $sum_x2, sum_xy = $sum_xy");
-        */
 
         try{
             $this->y_avg = $sum_y / $m;
@@ -148,7 +170,28 @@ class RegresionLineal extends RegresionData implements RegresionOperations {
             //Implementar lógica para obtener las soluciones
             //$this->a = CrammerSolver::solveCrammerMatrix2X2($matriz);
 
-            Log::info("Coeficientes calculados: a0 = {$this->a->a0}, a1 = {$this->a->a1}");
+            //Encontrar los productos entre los datos de cada variable
+            for($i = 0; $i < $m; $i++){
+                //Sacamos cada elemento de la variable y lo agregamos a un array para poder hacer el calculo de los productos
+                //u*v, v*z, z*u etc
+                $product_variables = $this
+                                    ->calculateProductVariables(
+                                        array_map(fn($value) => $value->getVariableAt($i)),
+                                        $this->data
+                                    );
+                
+                                    
+                if(empty($sum_product_variables))
+                    for($i=0; $i < $this->countVariables(); $i++) $sum_product_variables[] = 0.0;
+                
+
+                $sum_product_variables = array_map(
+                                            function($sum_array_value) use ($product_variables){
+                                                //Hacer suma de las multiplicaciones
+                                            },
+                                            $sum_product_variables)
+            }
+
 
             $this->SSE = $this->calculateSSE();
             $this->SST = $this->calculateSST();
