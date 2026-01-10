@@ -203,11 +203,12 @@ class RegresionLineal extends RegresionData implements RegresionOperations {
         */
         /** @var float[] */
         $product_dep_ind_variables = [];
+
         /** @var float[] */
         $sum_product_dep_ind_variables = [];
 
 
-        for($i=0; $i < $this->countVariables(); $i++) $sum_product_variables[] = 0.0;
+        for($i=0; $i < $this->countVariables(); $i++){ $sum_product_variables[] = 0.0; $sum_product_dep_ind_variables[] = 0.0;}
 
         foreach($this->data as $idx => $variable_data){
             $sum_val = array_reduce($variable_data->points, fn(float $s, float $value) => $s + $value, 0.0);
@@ -229,6 +230,8 @@ class RegresionLineal extends RegresionData implements RegresionOperations {
                                         array_map(fn($value) => $value->getVariableAt($i), $this->data),
                                     );    
 
+                Log::info("Calculando la suma de la multiplicación de las variables");
+
                 $sum_product_variables = array_map(
                                             function($sum_array_value, $index) use ($product_variables, $sum_product_variables) {
                                                 $sum_product_variables[$index] += $product_variables[$index];
@@ -241,15 +244,23 @@ class RegresionLineal extends RegresionData implements RegresionOperations {
                                     $this->data
                                 );
 
-                $sum_product_dep_ind_variables = array_map(
-                                                    function($sum_array_value, $index) use ($i, $sum_product_dep_ind_variables){
-                                                        $independ_value = $this->data[$index]->getVariableAt($i);
-                                                        $sum_product_dep_ind_variables += $independ_value * $this->dependent_data[$i];
-                                                    },
-                                                    $this->data, array_keys($this->data)
-                                                );
+                Log::info("Calculando la suma de la multiplicación de cada variable independiente con los datos de la variable dependiente");
+
+                // Acumular el producto de cada variable independiente con la variable dependiente
+                foreach($this->data as $index => $variable_data) {
+                    $independ_value = $variable_data->getVariableAt($i);
+                    $dependent_value = $this->dependent_data[$i];
+                    $product = $independ_value * $dependent_value;
+                    
+                    $sum_product_dep_ind_variables[$index] += $product;
+                    
+                    Log::debug("Var ind #{$index} fila {$i}: valor={$independ_value}, Y={$dependent_value}, producto={$product}, suma_acumulada={$sum_product_dep_ind_variables[$index]}");
+                }
+                
+                Log::info("Acumulado multiplicación dep-ind en fila {$i}: " . implode(",", $sum_product_dep_ind_variables));
             }
 
+            Log::info("La suma de la multiplicación de las variables dependientes con las independientes es: " . implode(",", $sum_product_dep_ind_variables));
             /**Aquí se tiene que implementar el armado de la matriz, el cálculo de la matriz inversa y su posterior multiplicación de matrices. */
 
 
