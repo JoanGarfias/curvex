@@ -105,7 +105,6 @@ class RegresionLineal extends RegresionData implements RegresionOperations {
         return $mixed_variables;
     }
 
-
     public function calculateSSE(): float {
         $sse = 0.0;
         $row_variable_value = [];
@@ -149,6 +148,17 @@ class RegresionLineal extends RegresionData implements RegresionOperations {
         /** @var float[] */
         $sum_product_variables = [];
 
+        /* Calcular multiplicaciones de variables independientes con la variable dependiente
+        ejemplo: u*y, v*y, z*y
+        */
+        /** @var float[] */
+        $product_dep_ind_variables = [];
+        /** @var float[] */
+        $sum_product_dep_ind_variables = [];
+
+
+        for($i=0; $i < $this->countVariables(); $i++) $sum_product_variables[] = 0.0;
+
         foreach($this->data as $variable_data){
             $sum_value_variables = array_reduce($variable_data->points, fn(float $s, float $value) => $s + $value, 0.0);
             $sum_value_variables_squared = array_reduce($variable_data->points, fn(float $s, float $value) => $s + pow($value, 2), 0.0);
@@ -159,17 +169,6 @@ class RegresionLineal extends RegresionData implements RegresionOperations {
         try{
             $this->y_avg = $sum_y / $m;
 
-            /*
-            $matriz = new Matrix(
-                [
-                    [$m, $sum_x, $sum_y],
-                    [$sum_x, $sum_x2, $sum_xy],
-                ], 2, 3);
-
-            */
-            //Implementar lógica para obtener las soluciones
-            //$this->a = CrammerSolver::solveCrammerMatrix2X2($matriz);
-
             //Encontrar los productos entre los datos de cada variable
             for($i = 0; $i < $m; $i++){
                 //Sacamos cada elemento de la variable y lo agregamos a un array para poder hacer el calculo de los productos
@@ -178,12 +177,7 @@ class RegresionLineal extends RegresionData implements RegresionOperations {
                                     ->calculateProductVariables(
                                         array_map(fn($value) => $value->getVariableAt($i), $this->data),
                                         $this->getM()
-                                    );
-                
-                                    
-                if(empty($sum_product_variables))
-                    for($i=0; $i < $this->countVariables(); $i++) $sum_product_variables[] = 0.0;
-                
+                                    );    
 
                 $sum_product_variables = array_map(
                                             function($sum_array_value, $index) use ($product_variables, $sum_product_variables) {
@@ -191,8 +185,25 @@ class RegresionLineal extends RegresionData implements RegresionOperations {
                                             },
                                             $sum_product_variables, array_keys($sum_product_variables)
                                         );
+
+                            $row_variable_value = array_map(
+                                    fn($variable) => $variable->getVariableAt($i),
+                                    $this->data
+                                );
+
+                $sum_product_dep_ind_variables = array_map(
+                                                    function($sum_array_value, $index) use ($i, $sum_product_dep_ind_variables){
+                                                        $independ_value = $this->data[$index]->getVariableAt($i);
+                                                        $sum_product_dep_ind_variables += $independ_value * $this->dependent_data->getVariableAt($i);
+                                                    },
+                                                    $this->data, array_keys($this->data)
+                                                );
             }
 
+            /**Aquí se tiene que implementar el armado de la matriz, el cálculo de la matriz inversa y su posterior multiplicación de matrices. */
+
+
+            //Calculamos SSE y SST
             $this->SSE = $this->calculateSSE();
             $this->SST = $this->calculateSST();
 
