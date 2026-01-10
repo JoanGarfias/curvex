@@ -103,20 +103,26 @@ class RegresionLineal extends RegresionData implements RegresionOperations {
      * u*v, v*z, u*z sin duplicados, esto para generar posteriormente
      * la matriz para encontrar las soluciones.
      */
-    private function calculateProductVariables(array $mixed_variables, int $m) : array {
+    private function calculateProductVariables(array $mixed_variables) : array {
         $i = 0;
         $j = 0;
         /**@var float[] */
         $product_variables = [];
+        $n = count($mixed_variables);
 
-        for($i = 0; $i < $m; $i++){
-            for($j = $i; $j < $m; $j++){
+        Log::info("Calculando el producto de las variables independientes... ");
+        Log::info("Se han detectado $n variables y los datos a multiplicar son: " . implode(",", $mixed_variables));
+
+        for($i = 0; $i < $n; $i++){
+            for($j = $i; $j < $n; $j++){
                 if($i == $j) continue;
                 $product_variables[] = $mixed_variables[$i] * $mixed_variables[$j];
             }
         }
 
-        return $mixed_variables;
+        Log::debug("Producto de variables independientes: ". implode(', ', $product_variables));
+
+        return $product_variables;
     }
 
     public function calculateSSE(): float {
@@ -138,7 +144,7 @@ class RegresionLineal extends RegresionData implements RegresionOperations {
             $squared_error = pow($error, 2);
             $sse += $squared_error;
 
-            Log::debug("Fila {$i}: y_actual={$y_actual}, y_predicho={$y_pri}, error={$error}, error²={$squared_error}");
+            Log::debug("Fila {$i}: y_actual={$y_actual}, y_predicho={$y_pri}, error={$error}, error**2={$squared_error}");
 
             //limpieza del array de fila de la matriz de datos de las variables independientes
             $row_variable_value = [];
@@ -221,7 +227,6 @@ class RegresionLineal extends RegresionData implements RegresionOperations {
                 $product_variables = $this
                                     ->calculateProductVariables(
                                         array_map(fn($value) => $value->getVariableAt($i), $this->data),
-                                        $this->getM()
                                     );    
 
                 $sum_product_variables = array_map(
