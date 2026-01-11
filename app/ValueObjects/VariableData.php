@@ -2,9 +2,9 @@
 
 namespace App\ValueObjects;
 
-class independentVariable {
+class VariableData {
     /** @var float[] */
-    private array $points = [];
+    public array $points = [];
 
     public function __construct(array $points)
     {
@@ -21,3 +21,6 @@ class independentVariable {
         return $this->points[$index];
     }
 }
+
+// Mantener compatibilidad con código antiguo
+class independentVariable extends VariableData {}

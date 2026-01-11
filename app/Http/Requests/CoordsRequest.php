@@ -25,15 +25,22 @@ class CoordsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "values" => ["required", "string", new Coords2Rule()]
+            "dependent" => ["required", "string"],
+            "independent" => ["required", "array", "min:1"],
+            "independent.*" => ["required", "string"],
+            "method" => ["sometimes", "string"]
         ];
     }
 
     public function messages(): array
     {
         return [
-            'values.required' => 'Debe proporcionar una cadena con coordenadas.',
-            'values.string' => 'Las coordenadas deben ser una cadena de texto.',
+            'dependent.required' => 'Debe proporcionar los datos de la variable dependiente (y).',
+            'dependent.string' => 'Los datos de la variable dependiente deben ser una cadena de texto.',
+            'independent.required' => 'Debe proporcionar al menos una variable independiente.',
+            'independent.array' => 'Las variables independientes deben ser un array.',
+            'independent.min' => 'Debe proporcionar al menos una variable independiente.',
+            'independent.*.string' => 'Cada variable independiente debe ser una cadena de texto.',
         ];
     }
 
@@ -55,5 +62,46 @@ class CoordsRequest extends FormRequest
         ], 422);
 
         throw new HttpResponseException($response);
+    }
+
+    /**
+     * Validar que todas las variables independientes y dependiente 
+     * tengan la misma cantidad de datos.
+     */
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $dependent = $this->input('dependent');
+            $independent = $this->input('independent', []);
+
+            if (!is_string($dependent) || empty($dependent)) {
+                return;
+            }
+
+            $dependent_count = count(explode(',', trim($dependent)));
+
+            foreach ($independent as $index => $ind_variable) {
+                if (!is_string($ind_variable) || empty($ind_variable)) {
+                    $validator->errors()->add(
+                        "independent.{$index}",
+                        "La variable independiente no puede estar vacía."
+                    );
+                    continue;
+                }
+
+                $ind_count = count(explode(',', trim($ind_variable)));
+
+                if ($ind_count !== $dependent_count) {
+                    $validator->errors()->add(
+                        "independent.{$index}",
+                        "La variable independiente #{$index} tiene {$ind_count} datos, " .
+                        "pero la variable dependiente tiene {$dependent_count}. " .
+                        "Todas deben tener la misma cantidad de datos."
+                    );
+                }
+            }
+        });
+
+        return $this;
     }
 }
