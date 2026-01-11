@@ -63,6 +63,8 @@ abstract class RegresionSolver {
 
     abstract public function calculateYModel(array $solutions, array $ind_term): float;
 
+    abstract public function getName(): string;
+
     protected function countVariables(): int  {
         return count($this->data);
     }

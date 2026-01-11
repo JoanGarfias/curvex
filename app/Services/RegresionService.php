@@ -4,11 +4,15 @@ namespace App\Services;
 
 use App\Support\Math\RegresionModeloLineal;
 use Illuminate\Support\Facades\Log;
+use ReflectionClass;
 use RegresionExponencial;
 
 class RegresionBetterResponse {
     public string $name = "";
-    public float $R2 = 0.0; 
+    public float $R2 = 0.0;
+
+    /** @var object|null */
+    public $model = null;
 }
 
 class RegresionService
@@ -17,11 +21,34 @@ class RegresionService
 
     public function getBetterModel(
         RegresionModeloLineal $lineal = null,
-        RegresionExponencial $exponencial = null,
+        RegresionExponencial $exponential = null,
     ): RegresionBetterResponse {
         $response = new RegresionBetterResponse();
-        
+    
 
+        $options = array_filter([$lineal, $exponential]);
+        if(empty($options)){
+            Log::warning("No se recibieron modelos de regresión");
+            return $response;
+        }
+
+        $bestModel = null;
+        $bestR2 = -INF;
+
+        foreach($options as $model){
+            $r2 = $model->getR2();
+            Log::info("Modelo". (new ReflectionClass($model))->getShortName() . "R**2 = {$r2}");
+            if($r2 > $bestR2){
+                $bestR2 = $r2;
+                $bestModel = $model;
+            }
+        }
+
+        if($bestModel !== null){
+            $response->R2 = $bestR2;
+            $response->name = new ReflectionClass($bestModel)->getShortName();
+            $response->model = $model;
+        }
 
         return $response;
     }

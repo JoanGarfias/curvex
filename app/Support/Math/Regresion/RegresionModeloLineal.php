@@ -2,7 +2,7 @@
 
 namespace App\Support\Math;
 
-class RegresionLineal extends RegresionSolver {
+class RegresionModeloLineal extends RegresionSolver {
 
     //remaning_solutions excluye a0, ya tiene el array_slice para solo hacer un loop de a_i * variable_i
     public function calculateYModel(array $solutions, array $ind_term): float {
@@ -13,5 +13,9 @@ class RegresionLineal extends RegresionSolver {
         }
 
         return $y_model;
+    }
+
+    public function getName(): string {
+        return "Lineal";
     }
 }

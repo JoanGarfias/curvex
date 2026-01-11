@@ -24,4 +24,8 @@ class RegresionModeloExponencial extends RegresionSolver {
 
         return $a * exp($b * $ind_term[0]);
     }
+
+    public function getName(): string {
+        return "Exponencial";
+    }
 }
