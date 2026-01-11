@@ -9,4 +9,4 @@
 CHANGELOG.md export-ignore
 README.md export-ignore
 .github/workflows/browser-tests.yml export-ignore
-resources/js/components/* linguist-vendored
+resources/js/components/* linguist-vendored=true
