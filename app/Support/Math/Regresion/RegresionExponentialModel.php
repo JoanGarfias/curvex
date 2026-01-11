@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Support\Math;
+namespace App\Support\Math\Regresion;
 
-class RegresionModeloExponencial extends RegresionSolver {
+use App\Support\Math\RegresionSolver;
+
+class RegresionExponentialModel extends RegresionSolver {
 
     public function transformData() : void {
         foreach($this->data as $row_data){

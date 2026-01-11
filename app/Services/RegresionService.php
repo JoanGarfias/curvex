@@ -2,10 +2,9 @@
 
 namespace App\Services;
 
-use App\Support\Math\Regresion\RegresionModeloLineal;
+use App\Support\Math\Regresion\RegresionLinealModel;
+use App\Support\Math\Regresion\RegresionExponentialModel;
 use Illuminate\Support\Facades\Log;
-use ReflectionClass;
-use RegresionExponencial;
 
 class RegresionBetterResponse {
     public string $name = "";
@@ -20,8 +19,8 @@ class RegresionService
 
 
     public function getBetterModel(
-        RegresionModeloLineal $lineal = null,
-        RegresionExponencial $exponential = null,
+        RegresionLinealModel $lineal = null,
+        RegresionExponentialModel $exponential = null,
     ): RegresionBetterResponse {
         $response = new RegresionBetterResponse();
     
@@ -65,10 +64,10 @@ class RegresionService
         
         return
             match($variables_count){
-                1 => new RegresionModeloLineal($independent_variables, $dependent_values, $method),
-                2 => new RegresionModeloLineal($independent_variables, $dependent_values, $method),
-                3 => new RegresionModeloLineal($independent_variables, $dependent_values, $method),
-                default => new RegresionModeloLineal($independent_variables, $dependent_values, $method)
+                1 => new RegresionLinealModel($independent_variables, $dependent_values, $method),
+                2 => new RegresionLinealModel($independent_variables, $dependent_values, $method),
+                3 => new RegresionLinealModel($independent_variables, $dependent_values, $method),
+                default => new RegresionLinealModel($independent_variables, $dependent_values, $method)
             }
         ;
     }
