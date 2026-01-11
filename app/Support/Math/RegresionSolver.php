@@ -12,7 +12,6 @@ abstract class RegresionSolver {
     protected float $SSE = 0.0;
     protected float $SST = 0.0;
     protected float $y_avg = 0.0;
-    protected string $method = "lineal";
     protected int $n = 0;
 
     /** @var int[] */
@@ -27,7 +26,7 @@ abstract class RegresionSolver {
     /** @var float[] */
     protected array $dependent_data = [];
 
-    public function __construct(array $data, array $dependent_data, string $method = "lineal") {
+    public function __construct(array $data, array $dependent_data) {
         // Validar que data contiene objetos VariableData
         if (empty($data)) {
             throw new Exception("Debe proporcionar al menos una variable independiente");
@@ -55,10 +54,9 @@ abstract class RegresionSolver {
         
         $this->data = $data;
         $this->dependent_data = $dependent_data;
-        $this->method = $method;
         $this->n = $countDataPerVariable;
         
-        Log::info("Datos validados correctamente. Método: {$this->method}");
+        Log::info("Datos validados correctamente");
 
     }
 
@@ -154,7 +152,6 @@ abstract class RegresionSolver {
         Log::info("Iniciando cálculo de R**2 para regresión lineal");
         Log::info("Cantidad de datos (m): {$m}");
         Log::info("Cantidad de variables independientes: " . $this->countVariables());
-        Log::info("Método: {$this->method}");
 
         /*Paso 2: Calcular las sumatorias (SSE, SSR, SST) */
 
