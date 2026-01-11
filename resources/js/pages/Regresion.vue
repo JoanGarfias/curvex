@@ -5,7 +5,10 @@ import ThemeToggle from '@/components/ThemeToggle.vue';
 import CurvexIcon from '@/icons/CurvexIcon.vue';
 import FooterComp from '@/components/FooterComp.vue';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, TrendingUp, Calculator, AlertCircle, Info, RefreshCcw } from "lucide-vue-next";
+import { 
+    ArrowLeft, TrendingUp, Calculator, AlertCircle, RefreshCcw, 
+    Table, BarChart4, Sigma, CheckCircle2 
+} from "lucide-vue-next";
 import axios from 'axios';
 
 // --- ESTADO ---
@@ -15,196 +18,179 @@ const loading = ref(false);
 const errorMsg = ref('');
 const showResults = ref(false);
 
-// Resultados del Backend
-const serverR2 = ref<number | null>(null);
+// Configuración del método
+const selectedMethod = ref('lineal');
+const availableMethods = ref([
+    { id: 'lineal', name: 'Lineal / Multilineal' },
+    { id: 'exponencial', name: 'Exponencial' },
+    { id: 'potencial', name: 'Potencial' },
+    { id: 'cuadratica', name: 'Cuadrática' },
+]);
 
-// Resultados Calculados (Frontend para visualización inmediata)
-const localModel = ref({ a0: 0, a1: 0, r2: 0, sse: 0, sst: 0 });
-const points = ref<{x: number, y: number}[]>([]);
+// Datos procesados
+const matrixX = ref<number[][]>([]); // Filas de X
+const vectorY = ref<number[]>([]);   // Vector Y
+const numVars = ref(0); // Columnas
 
-// --- UTILIDADES ---
-const parseInput = (text: string) => {
-    return text.trim().split(/[\s,;\n]+/).filter(v => v !== '').map(Number);
-};
-
-const limpiar = () => {
-    inputX.value = '';
-    inputY.value = '';
-    showResults.value = false;
-    errorMsg.value = '';
-    serverR2.value = null;
-    points.value = [];
-};
-
-// --- CÁLCULO DE GRÁFICA (Visualización) ---
-const chartData = computed(() => {
-    if (points.value.length < 2) return null;
-    
-    const xs = points.value.map(p => p.x);
-    const ys = points.value.map(p => p.y);
-    
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
-    const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
-    
-    // Márgenes para dejar espacio a los números
-    const paddingLeft = 60;
-    const paddingRight = 20;
-    const paddingTop = 20;
-    const paddingBottom = 50;
-    const width = 400;
-    const height = 250;
-
-    // Calcular rangos
-    const rangeX = maxX - minX || 1;
-    const rangeY = maxY - minY || 1;
-
-    // Funciones de escala
-    const scaleX = (val: number) => {
-        return paddingLeft + ((val - minX) / rangeX) * (width - paddingLeft - paddingRight);
-    };
-    
-    const scaleY = (val: number) => {
-        return height - paddingBottom - ((val - minY) / rangeY) * (height - paddingTop - paddingBottom);
-    };
-
-    // Puntos para la gráfica
-    const svgPoints = points.value.map(p => ({
-        cx: scaleX(p.x),
-        cy: scaleY(p.y),
-        x: p.x,
-        y: p.y
-    }));
-
-    // Línea de regresión
-    const x1 = minX;
-    const y1 = localModel.value.a0 + localModel.value.a1 * x1;
-    const x2 = maxX;
-    const y2 = localModel.value.a0 + localModel.value.a1 * x2;
-
-    // GENERAR ETIQUETAS PARA LOS EJES (5 marcas en cada uno)
-    const xLabels = [];
-    const yLabels = [];
-    
-    for (let i = 0; i <= 4; i++) {
-        // Calcular valores intermedios
-        const xVal = minX + (rangeX * i / 4);
-        const yVal = minY + (rangeY * i / 4);
-        
-        // Etiquetas eje X (horizontal, abajo)
-        xLabels.push({
-            value: xVal.toFixed(1),  // 1 decimal
-            x: scaleX(xVal),
-            y: height - paddingBottom + 20  // Posición del texto
-        });
-        
-        // Etiquetas eje Y (vertical, izquierda)
-        yLabels.push({
-            value: yVal.toFixed(1),  // 1 decimal
-            x: paddingLeft - 10,  // Posición del texto
-            y: scaleY(yVal)
-        });
-    }
-
-    return {
-        width, 
-        height,
-        paddingLeft,
-        paddingRight,
-        paddingTop,
-        paddingBottom,
-        line: {
-            x1: scaleX(x1), 
-            y1: scaleY(y1),
-            x2: scaleX(x2), 
-            y2: scaleY(y2)
-        },
-        points: svgPoints,
-        xLabels,  // ← ESTO ES LO IMPORTANTE
-        yLabels   // ← ESTO TAMBIÉN
-    };
+// Resultados
+const results = ref({
+    r2: 0,
+    equation: '',
+    coefficients: [] as number[],
+    prediction: [] as number[], // Y predichas
+    sse: 0,
+    sst: 0
 });
 
-// --- LÓGICA PRINCIPAL ---
+// --- LÓGICA DE PARSEO ---
+const parseData = () => {
+    try {
+        errorMsg.value = '';
+        
+        // Parsear X (Soporta copiar desde Excel con tabs o espacios)
+        const rowsX = inputX.value.trim().split('\n');
+        const parsedX = rowsX.map(row => 
+            row.trim().split(/[\s,;\t]+/).filter(v => v !== '').map(Number)
+        ).filter(row => row.length > 0);
+
+        // Parsear Y
+        const parsedY = inputY.value.trim().split(/[\s,;\n]+/).filter(v => v !== '').map(Number);
+
+        if (parsedX.length === 0 || parsedY.length === 0) return;
+
+        if (parsedX.length !== parsedY.length) {
+            throw new Error(`Filas no coinciden: X tiene ${parsedX.length}, Y tiene ${parsedY.length}.`);
+        }
+
+        const cols = parsedX[0].length;
+        if (parsedX.some(row => row.length !== cols)) {
+            throw new Error("La matriz X no es uniforme (revisa las columnas).");
+        }
+
+        matrixX.value = parsedX;
+        vectorY.value = parsedY;
+        numVars.value = cols;
+
+    } catch (e: any) {
+        errorMsg.value = e.message;
+        matrixX.value = [];
+    }
+};
+
+watch([inputX, inputY], () => {
+    if (inputX.value && inputY.value) parseData();
+});
+
+// --- GRÁFICA ---
+const chartData = computed(() => {
+    if (vectorY.value.length < 2 || !showResults.value) return null;
+    
+    // Graficamos Y Real vs Y Predicha (Scatter Plot de Paridad)
+    // Esto funciona para 1 variable y para N variables
+    
+    const dataPoints = vectorY.value.map((yReal, i) => ({
+        x: results.value.prediction[i] || yReal, // Eje X: Predicción
+        y: yReal // Eje Y: Real
+    }));
+
+    const allVals = [...dataPoints.map(p => p.x), ...dataPoints.map(p => p.y)];
+    const minVal = Math.min(...allVals);
+    const maxVal = Math.max(...allVals);
+    
+    const width = 400; const height = 250; const padding = 30;
+
+    const scale = (val: number) => padding + ((val - minVal) / (maxVal - minVal || 1)) * (width - 2 * padding);
+    const scaleYInv = (val: number) => height - (padding + ((val - minVal) / (maxVal - minVal || 1)) * (height - 2 * padding));
+
+    const svgPoints = dataPoints.map(p => ({
+        cx: scale(p.x), 
+        cy: scaleYInv(p.y),
+        real: p.y, pred: p.x
+    }));
+
+    // Línea de identidad ideal (x=y)
+    const line = {
+        x1: scale(minVal), y1: scaleYInv(minVal),
+        x2: scale(maxVal), y2: scaleYInv(maxVal)
+    };
+
+    return { width, height, points: svgPoints, line };
+});
+
+// --- ENVIAR AL BACKEND ---
 const calcular = async () => {
-    errorMsg.value = '';
-    showResults.value = false;
+    parseData();
+    if(errorMsg.value || matrixX.value.length === 0) return;
+    
     loading.value = true;
+    showResults.value = false;
 
     try {
-        const arrX = parseInput(inputX.value);
-        const arrY = parseInput(inputY.value);
+        // 1. Transponer la matriz X (Convertir filas a columnas)
+        // El controlador espera un array donde cada elemento es UNA VARIABLE COMPLETA (una columna)
+        const numColumns = matrixX.value[0].length;
+        const independentPayload: string[] = [];
 
-        // 1. Validaciones
-        if (arrX.length !== arrY.length) throw new Error(`Las listas no coinciden: X tiene ${arrX.length} datos, Y tiene ${arrY.length}.`);
-        if (arrX.length < 2) throw new Error("Se necesitan al menos 2 pares de datos.");
+        for (let col = 0; col < numColumns; col++) {
+            // Extraemos la columna 'col' de todas las filas
+            const columnData = matrixX.value.map(row => row[col]);
+            // La convertimos a string separado por comas "10,20,30"
+            independentPayload.push(columnData.join(','));
+        }
 
-        // Verificar que los valores de X varíen
-        const uniqueX = new Set(arrX);
-        if (uniqueX.size === 1) throw new Error("Los valores de X deben variar para calcular la regresión lineal.");
+        // 2. Preparar payload en el formato específico que pide tu RegresionController.php
+        const payload = {
+            independent: independentPayload, // Array de strings ["x1,x1...", "x2,x2..."]
+            dependent: vectorY.value.join(','), // String "y1,y2,y3..."
+            method: selectedMethod.value
+        };
 
-        // Verificar que la suma de X o Y no sea cero
-        const sumx = arrX.reduce((a, b) => a + b, 0);
-        const sumy = arrY.reduce((a, b) => a + b, 0);
-        if (sumx === 0 || sumy === 0) throw new Error("La suma de los valores de X o Y no puede ser cero.");
+        const response = await axios.post('/calc-regresion', payload);
+        const data = response.data.data;
 
-        // Guardar puntos para gráfica
-        points.value = arrX.map((x, i) => ({ x, y: arrY[i] }));
-
-        // 2. Preparar payload para Backend "1,2;3,4"
-        const valuesString = points.value.map(p => `${p.x},${p.y}`).join(';');
-
-        // 3. Cálculo Local (Para mostrar A0, A1 y la Gráfica mientras el backend se actualiza)
-        // Nota: Esto es un cálculo auxiliar para cumplir con el diseño visual solicitado
-        const n = points.value.length;
-        const sumX = arrX.reduce((a, b) => a + b, 0);
-        const sumY = arrY.reduce((a, b) => a + b, 0);
-        const sumXY = points.value.reduce((acc, p) => acc + p.x * p.y, 0);
-        const sumX2 = points.value.reduce((acc, p) => acc + p.x * p.x, 0);
-        const meanY = sumY / n;
-
-        // Cramer o fórmulas directas para regresión lineal simple
-        const denominator = (n * sumX2 - sumX * sumX);
-        if (denominator === 0) throw new Error("No se puede calcular regresión (división por cero en pendiente).");
-        
-        const a1 = (n * sumXY - sumX * sumY) / denominator;
-        const a0 = (sumY - a1 * sumX) / n;
-
-        // Calcular SSE y SST locales para visualización
-        let sse = 0;
-        let sst = 0;
-        points.value.forEach(p => {
-            const yPred = a0 + a1 * p.x;
-            sse += Math.pow(p.y - yPred, 2);
-            sst += Math.pow(p.y - meanY, 2);
-        });
-        const r2Local = 1 - (sse/sst);
-
-        localModel.value = { a0, a1, r2: r2Local, sse, sst };
-
-        // 4. Petición al Backend (Lo que tus compañeros programaron)
-        const response = await axios.post('/calc-regresion', {
-            values: valuesString,
-            method: 'lineal'
-        });
-
-        // Obtener R2 del servidor (para validar que el endpoint funciona)
-        serverR2.value = response.data.data.R2;
+        // 3. Procesar resultados
+        // Nota: Tu controlador actual solo devuelve R2, method y counts.
+        // Ajustaremos para mostrar lo que llegue.
+        results.value = {
+            r2: data.R2 ?? 0,
+            equation: data.equation ?? `Modelo calculado (R² = ${data.R2?.toFixed(4)})`, 
+            coefficients: data.coefficients ?? [],
+            prediction: data.predictions ?? [], 
+            sse: data.sse ?? 0,
+            sst: data.sst ?? 0
+        };
 
         showResults.value = true;
 
     } catch (e: any) {
         console.error(e);
-        errorMsg.value = e.message || "Error al procesar los datos.";
+        errorMsg.value = e.response?.data?.message || "Error al calcular regresión. Verifica el formato de los datos.";
     } finally {
         loading.value = false;
     }
 };
+
+// Fallback para calcular Y gorrito si el backend no lo manda
+const calculatePredictionsLocal = (coeffs: number[], matrix: number[][]) => {
+    if(!coeffs.length) return [];
+    return matrix.map(row => {
+        let y = coeffs[0]; // a0
+        for(let i=0; i<row.length; i++) {
+            if(coeffs[i+1]) y += coeffs[i+1] * row[i];
+        }
+        return y;
+    });
+};
+
+const limpiar = () => {
+    inputX.value = ''; inputY.value = ''; 
+    matrixX.value = []; vectorY.value = [];
+    showResults.value = false; errorMsg.value = '';
+};
 </script>
 
 <template>
-  <Head title="Regresión Lineal" />
+  <Head title="Regresión Multivariable" />
 
   <div class="min-h-screen flex flex-col bg-gradient-to-br from-[#f8fafc] to-[#eef2f3] dark:from-[#0f0f0f] dark:to-[#1a1a1a] text-gray-800 dark:text-gray-100 transition-all p-4 sm:p-6">
     
@@ -218,227 +204,169 @@ const calcular = async () => {
       <div class="flex items-center gap-4">
          <Link href="/">
              <Button variant="ghost" class="gap-2 text-sm text-gray-500 hover:text-purple-600">
-                 <ArrowLeft class="w-4 h-4" /> Volver al Menú
+                 <ArrowLeft class="w-4 h-4" /> Volver
              </Button>
          </Link>
          <ThemeToggle />
       </div>
     </nav>
 
-    <header class="w-full max-w-7xl mx-auto mb-8 px-4 flex items-center gap-3">
-        <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl text-purple-600 dark:text-purple-400">
+    <header class="w-full max-w-7xl mx-auto mb-8 px-4 flex flex-col md:flex-row md:items-center gap-4">
+        <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl text-purple-600 dark:text-purple-400 w-fit">
             <TrendingUp class="w-8 h-8" />
         </div>
         <div>
             <h1 class="text-3xl font-extrabold leading-tight">Análisis de Regresión</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Ajuste de modelos lineales por Mínimos Cuadrados</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                Ajuste de modelos Lineales y Multivariables (Mínimos Cuadrados)
+            </p>
         </div>
     </header>
 
     <main class="w-full max-w-7xl mx-auto px-2 sm:px-4 flex-grow">
         
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            <div class="bg-white/90 dark:bg-[#0b0b0b]/90 backdrop-blur rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm h-fit">
-                <div class="flex items-center gap-2 mb-6 border-b border-gray-100 dark:border-gray-800 pb-4">
-                    <Calculator class="w-5 h-5 text-purple-500" />
-                    <h3 class="text-lg font-bold">Datos de Entrada</h3>
-                </div>
-
-                <div class="grid grid-cols-2 gap-6 mb-6">
-                    <div class="space-y-2">
-                        <label class="block text-xs font-bold uppercase text-gray-500 tracking-wider">Variable X (Independiente)</label>
-                        <textarea 
-                            v-model="inputX" 
-                            rows="12" 
-                            class="w-full rounded-xl bg-gray-50 dark:bg-[#151515] border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 p-4 text-sm font-mono leading-relaxed resize-none"
-                            placeholder="Ej:&#10;1&#10;2&#10;3&#10;4&#10;5"
-                        ></textarea>
-                        <p class="text-[10px] text-gray-400">Separa los datos con enter o comas.</p>
+            <div class="lg:col-span-5 space-y-6">
+                
+                <div class="bg-white/90 dark:bg-[#0b0b0b]/90 backdrop-blur rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+                    <div class="flex items-center gap-2 mb-4">
+                        <Calculator class="w-5 h-5 text-purple-500" />
+                        <h3 class="font-bold text-gray-700 dark:text-gray-200">Datos de Entrada</h3>
                     </div>
 
-                    <div class="space-y-2">
-                        <label class="block text-xs font-bold uppercase text-gray-500 tracking-wider">Variable Y (Dependiente)</label>
-                        <textarea 
-                            v-model="inputY" 
-                            rows="12" 
-                            class="w-full rounded-xl bg-gray-50 dark:bg-[#151515] border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 p-4 text-sm font-mono leading-relaxed resize-none"
-                            placeholder="Ej:&#10;2.5&#10;3.1&#10;3.9&#10;5.2&#10;6.1"
-                        ></textarea>
-                        <p class="text-[10px] text-gray-400">Debe tener la misma cantidad que X.</p>
+                    <div class="mb-4">
+                        <label class="block text-xs font-bold uppercase text-gray-500 mb-2">Método</label>
+                        <select v-model="selectedMethod" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-[#151515] border border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-purple-500 outline-none text-sm transition-all">
+                            <option v-for="method in availableMethods" :key="method.id" :value="method.id">
+                                {{ method.name }}
+                            </option>
+                        </select>
                     </div>
-                </div>
 
-                <div v-if="errorMsg" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg flex items-center gap-2">
-                    <AlertCircle class="w-4 h-4" /> {{ errorMsg }}
-                </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="col-span-2 space-y-2">
+                            <div class="flex justify-between items-end">
+                                <label class="block text-xs font-bold uppercase text-gray-500">Variables X</label>
+                                <span class="text-[10px] text-purple-500 font-mono bg-purple-50 dark:bg-purple-900/20 px-2 rounded" v-if="numVars > 0">{{ numVars }} Vars Detectadas</span>
+                            </div>
+                            <textarea 
+                                v-model="inputX" 
+                                rows="12" 
+                                class="w-full rounded-xl bg-gray-50 dark:bg-[#151515] border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 p-3 text-xs font-mono leading-relaxed resize-none whitespace-pre"
+                                placeholder="Pega aquí tus columnas de Excel&#10;Ej:&#10;10500  18.2  0.85&#10;12345  17.1  0.90"
+                            ></textarea>
+                        </div>
 
-                <div class="flex gap-3">
-                    <Button @click="calcular" :disabled="loading || !inputX || !inputY" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white h-12 text-base shadow-lg shadow-purple-500/20">
-                        {{ loading ? 'Calculando...' : 'Calcular Modelo' }}
-                    </Button>
-                    <Button @click="limpiar" variant="outline" class="h-12 w-12 p-0 border-gray-200 dark:border-gray-700">
-                        <RefreshCcw class="w-5 h-5 text-gray-500" />
-                    </Button>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold uppercase text-gray-500 text-center">Y</label>
+                            <textarea 
+                                v-model="inputY" 
+                                rows="12" 
+                                class="w-full rounded-xl bg-gray-50 dark:bg-[#151515] border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 p-3 text-xs font-mono leading-relaxed resize-none text-center"
+                                placeholder="Ej:&#10;97.5&#10;109.5&#10;129.9"
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <div v-if="errorMsg" class="mt-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs rounded-lg flex items-start gap-2">
+                        <AlertCircle class="w-4 h-4 shrink-0 mt-0.5" /> <span>{{ errorMsg }}</span>
+                    </div>
+
+                    <div class="flex gap-3 mt-6">
+                        <Button @click="calcular" :disabled="loading || matrixX.length === 0" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20">
+                            {{ loading ? 'Procesando...' : 'Calcular Regresión' }}
+                        </Button>
+                        <Button @click="limpiar" variant="outline" class="w-12 px-0"><RefreshCcw class="w-4 h-4" /></Button>
+                    </div>
                 </div>
             </div>
 
-            <div class="space-y-6">
+            <div class="lg:col-span-7 space-y-6">
                 
-                <div v-if="!showResults" class="h-full min-h-[400px] flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#0b0b0b]/30 text-gray-400">
-                    <TrendingUp class="w-16 h-16 mb-4 opacity-20" />
-                    <p class="text-lg font-medium text-gray-500">Esperando datos...</p>
-                    <p class="text-sm">Ingresa los pares (x,y) para ver el modelo.</p>
+                <div v-if="!showResults" class="h-full min-h-[400px] flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-[#0b0b0b]/30 text-gray-400">
+                    <BarChart4 class="w-16 h-16 mb-4 opacity-20" />
+                    <p class="text-lg font-medium text-gray-500">Esperando cálculo...</p>
+                    <p class="text-sm max-w-xs text-center mt-2 opacity-70">Ingresa las columnas de X y el vector Y para ajustar el modelo.</p>
                 </div>
 
                 <div v-else class="animate-in slide-in-from-right-4 duration-500 space-y-6">
                     
-                    <div class="bg-white dark:bg-[#0b0b0b] rounded-2xl border border-purple-100 dark:border-purple-900/30 p-6 shadow-sm relative overflow-hidden">
-                        <div class="absolute top-0 right-0 p-4 opacity-5">
-                            <TrendingUp class="w-32 h-32 text-purple-600" />
-                        </div>
-                        
-                        <h3 class="text-sm font-bold uppercase tracking-widest text-purple-600 dark:text-purple-400 mb-4">Modelo Lineal</h3>
-                        
-                        <div class="text-center py-4">
-                            <p class="text-4xl sm:text-5xl font-extrabold text-gray-800 dark:text-gray-100 tracking-tight">
-                                y = {{ localModel.a0.toFixed(4) }} + {{ localModel.a1.toFixed(4) }}x
-                            </p>
-                        </div>
+                    <div class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-1 shadow-lg">
+                        <div class="bg-white dark:bg-[#0b0b0b] rounded-xl p-6 h-full relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-4 opacity-5">
+                                <Sigma class="w-40 h-40 text-purple-600" />
+                            </div>
+                            
+                            <span class="inline-block px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-bold uppercase tracking-wider mb-2">
+                                {{ selectedMethod.charAt(0).toUpperCase() + selectedMethod.slice(1) }}
+                            </span>
+                            
+                            <div class="py-4 overflow-x-auto scrollbar-hide">
+                                <p class="text-xl sm:text-2xl font-mono font-bold text-gray-800 dark:text-gray-100 whitespace-nowrap">
+                                    {{ results.equation }}
+                                </p>
+                            </div>
 
-                        <div class="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
-                            <div class="text-center">
-                                <p class="text-xs text-gray-500 uppercase">Intercepto (a₀)</p>
-                                <p class="text-xl font-mono font-bold text-gray-700 dark:text-gray-200">{{ localModel.a0.toFixed(4) }}</p>
+                            <div class="grid grid-cols-2 gap-4 mt-2 pt-4 border-t border-gray-100 dark:border-gray-800">
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase font-bold">Coeficiente R²</p>
+                                    <p class="text-3xl font-bold text-green-500 leading-none">{{ (results.r2 * 100).toFixed(4) }}%</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-gray-500 uppercase font-bold">Correlación r</p>
+                                    <p class="text-xl font-mono text-gray-700 dark:text-gray-300">{{ Math.sqrt(results.r2).toFixed(4) }}</p>
+                                </div>
                             </div>
-                            <div class="text-center border-l border-gray-100 dark:border-gray-800">
-                                <p class="text-xs text-gray-500 uppercase">Pendiente (a₁)</p>
-                                <p class="text-xl font-mono font-bold text-gray-700 dark:text-gray-200">{{ localModel.a1.toFixed(4) }}</p>
-                            </div>
-                            <div class="text-center border-l border-gray-100 dark:border-gray-800">
-                                <p class="text-xs text-gray-500 uppercase">R²</p>
-                                <p class="text-xl font-mono font-bold text-purple-600 dark:text-purple-400">{{ serverR2?.toFixed(4) ?? localModel.r2.toFixed(4) }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-white dark:bg-[#0b0b0b] p-4 rounded-xl border border-gray-200 dark:border-gray-800 flex flex-col justify-between">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="text-xs font-bold text-gray-400">SST</span>
-                                <Info class="w-4 h-4 text-gray-300" />
-                            </div>
-                            <p class="text-2xl font-mono font-bold text-gray-800 dark:text-gray-100">{{ localModel.sst.toFixed(4) }}</p>
-                            <p class="text-[10px] text-gray-400 mt-1">Suma Total de Cuadrados</p>
-                        </div>
-                        <div class="bg-white dark:bg-[#0b0b0b] p-4 rounded-xl border border-gray-200 dark:border-gray-800 flex flex-col justify-between">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="text-xs font-bold text-gray-400">SSE</span>
-                                <Info class="w-4 h-4 text-gray-300" />
-                            </div>
-                            <p class="text-2xl font-mono font-bold text-gray-800 dark:text-gray-100">{{ localModel.sse.toFixed(4) }}</p>
-                            <p class="text-[10px] text-gray-400 mt-1">Suma Error de Cuadrados</p>
                         </div>
                     </div>
 
                     <div v-if="chartData" class="bg-white dark:bg-[#0b0b0b] rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
-    <h3 class="text-sm font-bold uppercase tracking-widest text-gray-500 mb-4">Gráfica de Tendencia</h3>
-    <div class="w-full aspect-video bg-gray-50 dark:bg-[#151515] rounded-lg relative overflow-hidden flex items-center justify-center border border-gray-100 dark:border-gray-800">
-        <svg :viewBox="`0 0 ${chartData.width} ${chartData.height}`" class="w-full h-full p-2">
-            
-            <!-- EJES PRINCIPALES (las líneas grises) -->
-            <line 
-                :x1="chartData.paddingLeft" 
-                :y1="chartData.height - chartData.paddingBottom" 
-                :x2="chartData.width - chartData.paddingRight" 
-                :y2="chartData.height - chartData.paddingBottom" 
-                stroke="currentColor" 
-                class="text-gray-400 dark:text-gray-600" 
-                stroke-width="2" 
-            />
-            <line 
-                :x1="chartData.paddingLeft" 
-                :y1="chartData.height - chartData.paddingBottom" 
-                :x2="chartData.paddingLeft" 
-                :y2="chartData.paddingTop" 
-                stroke="currentColor" 
-                class="text-gray-400 dark:text-gray-600" 
-                stroke-width="2" 
-            />
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-bold text-gray-700 dark:text-gray-200">Ajuste del Modelo</h3>
+                            <span class="text-xs text-gray-400">Gráfico de Paridad (Y Real vs Y Calculada)</span>
+                        </div>
+                        
+                        <div class="w-full aspect-video bg-gray-50 dark:bg-[#151515] rounded-lg relative overflow-hidden border border-gray-100 dark:border-gray-800">
+                            <svg :viewBox="`0 0 ${chartData.width} ${chartData.height}`" class="w-full h-full p-4">
+                                <line :x1="30" :y1="chartData.height-30" :x2="chartData.width" :y2="chartData.height-30" stroke="currentColor" class="text-gray-300" />
+                                <line :x1="30" :y1="chartData.height-30" :x2="30" :y2="0" stroke="currentColor" class="text-gray-300" />
 
-            <!-- NÚMEROS DEL EJE X (horizontal, abajo) -->
-            <g v-for="(label, i) in chartData.xLabels" :key="'x-' + i">
-                <!-- Marquita vertical -->
-                <line 
-                    :x1="label.x" 
-                    :y1="chartData.height - chartData.paddingBottom" 
-                    :x2="label.x" 
-                    :y2="chartData.height - chartData.paddingBottom + 5" 
-                    stroke="currentColor" 
-                    class="text-gray-400" 
-                    stroke-width="1.5" 
-                />
-                <!-- Número -->
-                <text 
-                    :x="label.x" 
-                    :y="label.y" 
-                    text-anchor="middle" 
-                    class="text-[10px] fill-gray-600 dark:fill-gray-400 font-mono font-bold"
-                >
-                    {{ label.value }}
-                </text>
-            </g>
+                                <line 
+                                    :x1="chartData.line.x1" :y1="chartData.line.y1" 
+                                    :x2="chartData.line.x2" :y2="chartData.line.y2" 
+                                    stroke="#9333ea" 
+                                    stroke-width="1" 
+                                    stroke-dasharray="5,5" 
+                                />
 
-            <!-- NÚMEROS DEL EJE Y (vertical, izquierda) -->
-            <g v-for="(label, i) in chartData.yLabels" :key="'y-' + i">
-                <!-- Marquita horizontal -->
-                <line 
-                    :x1="chartData.paddingLeft - 5" 
-                    :y1="label.y" 
-                    :x2="chartData.paddingLeft" 
-                    :y2="label.y" 
-                    stroke="currentColor" 
-                    class="text-gray-400" 
-                    stroke-width="1.5" 
-                />
-                <!-- Número -->
-                <text 
-                    :x="label.x" 
-                    :y="label.y + 4" 
-                    text-anchor="end" 
-                    class="text-[10px] fill-gray-600 dark:fill-gray-400 font-mono font-bold"
-                >
-                    {{ label.value }}
-                </text>
-            </g>
+                                <circle 
+                                    v-for="(p, i) in chartData.points" 
+                                    :key="i" 
+                                    :cx="p.cx" :cy="p.cy" r="4" 
+                                    class="fill-white dark:fill-black stroke-gray-600 hover:stroke-purple-500 transition-colors cursor-crosshair" 
+                                    stroke-width="2"
+                                >
+                                    <title>Real: {{ p.real.toFixed(2) }} | Pred: {{ p.pred.toFixed(2) }}</title>
+                                </circle>
+                            </svg>
+                        </div>
+                        <div class="flex justify-center items-center gap-4 mt-3 text-xs text-gray-400">
+                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-white border border-gray-600"></span> Datos</span>
+                            <span class="flex items-center gap-1"><span class="w-4 h-0.5 border-t border-dashed border-purple-500"></span> Ajuste Ideal</span>
+                        </div>
+                    </div>
 
-            <!-- LÍNEA DE REGRESIÓN (morada) -->
-            <line 
-                :x1="chartData.line.x1" 
-                :y1="chartData.line.y1" 
-                :x2="chartData.line.x2" 
-                :y2="chartData.line.y2" 
-                stroke="currentColor" 
-                class="text-purple-500" 
-                stroke-width="2" 
-            />
-
-            <!-- PUNTOS DE DATOS -->
-            <circle 
-                v-for="(p, i) in chartData.points" 
-                :key="i" 
-                :cx="p.cx" 
-                :cy="p.cy" 
-                r="5" 
-                class="fill-white stroke-purple-700 dark:fill-black dark:stroke-purple-400" 
-                stroke-width="2"
-            >
-                <title>({{ p.x }}, {{ p.y }})</title>
-            </circle>
-        </svg>
-    </div>
-    <p class="text-center text-xs text-gray-400 mt-2">La línea morada representa el modelo lineal ajustado.</p>
-</div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white dark:bg-[#0b0b0b] p-4 rounded-xl border border-gray-200 dark:border-gray-800">
+                            <p class="text-xs font-bold text-gray-400 uppercase mb-2">Intercepto (a₀)</p>
+                            <p class="text-xl font-mono">{{ results.coefficients[0]?.toFixed(4) }}</p>
+                        </div>
+                        <div class="bg-white dark:bg-[#0b0b0b] p-4 rounded-xl border border-gray-200 dark:border-gray-800">
+                            <p class="text-xs font-bold text-gray-400 uppercase mb-2">SSE (Error)</p>
+                            <p class="text-xl font-mono">{{ results.sse.toFixed(4) }}</p>
+                        </div>
+                    </div>
 
                 </div>
             </div>

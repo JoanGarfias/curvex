@@ -5,7 +5,8 @@ namespace App\Services;
 use App\Support\Math\RegresionModeloLineal;
 use Illuminate\Support\Facades\Log;
 use ReflectionClass;
-use RegresionExponencial;
+//use RegresionExponencial;
+use App\Support\Math\RegresionModeloExponencial; // <--- ASÍ DEBE SER
 
 class RegresionBetterResponse {
     public string $name = "";
