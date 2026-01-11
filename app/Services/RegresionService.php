@@ -2,34 +2,8 @@
 
 namespace App\Services;
 
+use App\Support\Math\RegresionLineal;
 use Illuminate\Support\Facades\Log;
-use App\ValueObjects\Point;
-use App\ValueObjects\Solution2VSystem;
-use Exception;
-use RegresionLineal;
-
-interface RegresionCalculator {
-    public function calculateCoefficients() : Solution2VSystem;
-    public function predict(float $x): float;
-    public function transform(): float;
-}
-
-interface RegresionOperations {
-    public function calculateSSE();
-    public function calculateSST();
-    public function calculateR2();
-}
-
-class RegresionData {
-    public float $SSE = 0.0;
-    public float $SST = 0.0;
-    public float $y_avg = 0.0;
-    public string $method = "lineal";
-    public int $n = 0;
-
-    /** @var int[] */
-    public array $solutions = [];
-}
 
 class RegresionService
 {
