@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Support\Math;
+namespace App\Support\Math\Regresion;
+
+use App\Support\Math\RegresionSolver;
 
 class RegresionModeloLineal extends RegresionSolver {
 

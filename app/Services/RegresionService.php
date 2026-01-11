@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Support\Math\RegresionModeloLineal;
+use App\Support\Math\Regresion\RegresionModeloLineal;
 use Illuminate\Support\Facades\Log;
 use ReflectionClass;
 use RegresionExponencial;
@@ -37,7 +37,7 @@ class RegresionService
 
         foreach($options as $model){
             $r2 = $model->getR2();
-            Log::info("Modelo". (new ReflectionClass($model))->getShortName() . "R**2 = {$r2}");
+            Log::info("Modelo". $model->getName() . "R**2 = {$r2}");
             if($r2 > $bestR2){
                 $bestR2 = $r2;
                 $bestModel = $model;
@@ -46,7 +46,7 @@ class RegresionService
 
         if($bestModel !== null){
             $response->R2 = $bestR2;
-            $response->name = new ReflectionClass($bestModel)->getShortName();
+            $response->name = $model->getName();
             $response->model = $model;
         }
 
