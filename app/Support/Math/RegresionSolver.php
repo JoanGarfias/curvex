@@ -12,6 +12,7 @@ abstract class RegresionSolver {
     protected float $SSE = 0.0;
     protected float $SST = 0.0;
     protected float $y_avg = 0.0;
+    protected float $R2 = 0.0;
     protected int $n = 0;
 
     /** @var int[] */
@@ -146,6 +147,10 @@ abstract class RegresionSolver {
         return $sst;
     }
 
+    public function getR2(): float {
+        return $this->R2;
+    }
+
     public function calculateR2(): float {
         /*Paso 1: Calcular m, la cantidad de datos */
         $m = (float) $this->getM();
@@ -252,6 +257,7 @@ abstract class RegresionSolver {
             }
             
             Log::info("Cálculo de R**2 completado. Resultado: {$R2}");
+            $this->R2 = 0.0;
             return $R2;
         } catch (Exception $e) {
             Log::error("Error al calcular los coeficientes de regresión: " . $e->getMessage());
