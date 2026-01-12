@@ -3,6 +3,7 @@
 namespace App\Support\Math\Regresion;
 
 use App\Support\Math\RegresionSolver;
+use Exception;
 
 class RegresionExponentialModel extends RegresionSolver {
 
@@ -28,6 +29,22 @@ class RegresionExponentialModel extends RegresionSolver {
         $b = $solutions[1];
 
         return $a * exp($b * $ind_term[0]);
+    }
+
+    public function calculateXValue(): float {
+        /**
+         * (y / a) ^ (1 / b) = x
+         */
+        
+        $y = $this->dependent_data[0];
+        $a = $this->solutions[0];
+        $b = $this->solutions[1];
+
+        if($a == 0.0){
+            throw new Exception("Se ha generado una división por cero, la solución 1 no puede ser 0");
+        }
+
+        return pow($y/$a, 1.0/$b);
     }
 
     public function getName(): string {

@@ -32,7 +32,7 @@ abstract class RegresionSolver {
     protected array $dependent_data = [];
     protected array $dependent_datacopy = [];
 
-    public function __construct(array $data, array $dependent_data) {
+    public function __construct(array $data, array $dependent_data, array $solutions = [] ) {
         // Validar que data contiene objetos VariableData
         if (empty($data)) {
             throw new Exception("Debe proporcionar al menos una variable independiente");
@@ -74,6 +74,8 @@ abstract class RegresionSolver {
         $this->dependent_datacopy = $dependent_data; // Esto es seguro si son solo floats/ints
 
         $this->n = $countDataPerVariable;
+
+        $this->solutions = $solutions;
         
         Log::info("Datos validados correctamente");
 
@@ -82,6 +84,10 @@ abstract class RegresionSolver {
     abstract public function calculateYModel(array $solutions, array $ind_term): float;
 
     abstract public function getName(): string;
+
+    // Hook: por defecto no hace nada; subclases que requieren
+    // transformar datos pueden sobreescribir este método.
+    protected function transformData(): void {}
 
     protected function countVariables(): int  {
         return count($this->data);
@@ -231,14 +237,9 @@ abstract class RegresionSolver {
         Log::info("Cantidad de datos (m): {$m}");
         Log::info("Cantidad de variables independientes: " . $this->countVariables());
 
-        switch($this->getName()){
-                case "Potencial":
-                    $this->transformData();
-                    break;
-                case "Exponencial":
-                    $this->transformData();
-                    break;
-            }
+        // Siempre llamamos al hook: en la base es no-op; subclases pueden
+        // sobreescribir para aplicar transformaciones cuando sea necesario.
+        $this->transformData();
 
         /*Paso 2: Calcular las sumatorias (SSE, SSR, SST) */
 
