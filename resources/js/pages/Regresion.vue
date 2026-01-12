@@ -232,27 +232,56 @@ const histogram = computed(() => {
 });
 
 // --- LÓGICA DE LA CALCULADORA FINAL ---
-const realizarPrediccion = () => {
+const realizarPrediccion = async () => {
     calcResult.value = null;
     const coeffs = results.value.coefficients;
     if (coeffs.length === 0) return;
 
     try {
         if (calcMode.value === 'calcY') {
-            let y = coeffs[0]; 
-            for (let i = 0; i < numVars.value; i++) {
-                const val = parseFloat(calcInputs.value[`x${i}`] || '0');
-                if (isNaN(val)) throw new Error("Valor inválido");
-                y += coeffs[i + 1] * val;
+            if(numVars.value > 1){
+                let y = coeffs[0]; 
+                for (let i = 0; i < numVars.value; i++) {
+                    const val = parseFloat(calcInputs.value[`x${i}`] || '0');
+                    if (isNaN(val)) throw new Error("Valor inválido");
+                    y += coeffs[i + 1] * val;
+                }
+                calcResult.value = y;
+            }else{
+                const payload = {
+                variable_input: "x",
+                value: calcInputs.value[`x0`],
+                method: selectedMethod.value,
+                solutions: coeffs
+                };
+
+                const response = await axios.post('/calc-regresion-value', payload);
+                const data = response.data.data;
+
+                calcResult.value = data.y;
             }
-            calcResult.value = y;
+            
         } 
         else if (calcMode.value === 'calcX' && numVars.value === 1) {
+            if(numVars.value > 1){
             const yTarget = parseFloat(calcInputs.value['y'] || '0');
             const a0 = coeffs[0];
             const a1 = coeffs[1];
             if (a1 === 0) throw new Error("Pendiente cero");
             calcResult.value = (yTarget - a0) / a1;
+            }else{
+                const payload = {
+                variable_input: "y",
+                value: calcInputs.value['y'],
+                method: selectedMethod.value,
+                solutions: coeffs
+                };
+
+                const response = await axios.post('/calc-regresion-value', payload);
+                const data = response.data.data;
+                console.log(data)
+                calcResult.value = data.x;
+            }
         }
     } catch (e) {
         console.error(e);
@@ -316,6 +345,7 @@ const calcular = async () => {
 
         const response = await axios.post('/calc-regresion', payload);
         const data = response.data.data;
+        
 
         // Generar ecuación formateada
         const equation = generateEquation(selectedMethod.value, data.solutions ?? []);
