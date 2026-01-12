@@ -58,6 +58,7 @@ const results = ref({
     sst: 0
 });
 
+
 // --- PARSEO ---
 const parseData = () => {
     try {
@@ -80,6 +81,7 @@ const parseData = () => {
         numVars.value = 0;
     }
 };
+
 
 watch([inputX, inputY], () => { if(inputX.value && inputY.value) parseData(); });
 
@@ -258,6 +260,43 @@ const realizarPrediccion = () => {
     }
 };
 
+// Función para generar la ecuación formateada
+const generateEquation = (method: string, coeffs: number[]): string => {
+    if (!coeffs || coeffs.length === 0) return 'Modelo no disponible';
+    
+    const format = (num: number) => num.toFixed(4);
+    
+    switch(method) {
+        case 'lineal':
+            if (numVars.value === 1) {
+                // Lineal simple: y = a + bx
+                return `y = ${format(coeffs[0])} + ${format(coeffs[1])}x`;
+            } else {
+                // Multilineal: y = a + b₁x₁ + b₂x₂ + ...
+                let eq = `y = ${format(coeffs[0])}`;
+                for (let i = 1; i < coeffs.length; i++) {
+                    eq += ` + ${format(coeffs[i])}x${i}`;
+                }
+                return eq;
+            }
+        
+        case 'cuadratico':
+            // y = a + bx + cx²
+            return `y = ${format(coeffs[0])} + ${format(coeffs[1])}x + ${format(coeffs[2])}x²`;
+        
+        case 'exponencial':
+            // y = a·e^(bx)
+            return `y = ${format(coeffs[0])}·e^(${format(coeffs[1])}x)`;
+        
+        case 'potencial':
+            // y = a·x^b
+            return `y = ${format(coeffs[0])}·x^${format(coeffs[1])}`;
+        
+        default:
+            return `Modelo (R²=${(results.value.r2*100).toFixed(2)}%)`;
+    }
+};
+
 // --- CALCULAR MODELO ---
 const calcular = async () => {
     parseData();
@@ -278,23 +317,21 @@ const calcular = async () => {
         const response = await axios.post('/calc-regresion', payload);
         const data = response.data.data;
 
-        // DEBUGGING - VER QUÉ ENVÍA EL BACKEND
-        console.log('=== RESPONSE FROM BACKEND ===');
-        console.log('Full data:', data);
-        console.log('Coefficients:', data.coefficients);
-        console.log('Type:', typeof data.coefficients);
-        console.log('=============================');
+        // Generar ecuación formateada
+        const equation = generateEquation(selectedMethod.value, data.solutions ?? []);
 
         results.value = {
             r2: data.R2 ?? 0,
-            equation: data.equation ?? `Modelo (R²=${(data.R2*100).toFixed(2)}%)`,
-             coefficients: data.solutions ?? [],
+            equation: equation,  // ← Usar la ecuación generada
+            coefficients: data.solutions ?? [],
             prediction: data.predictions ?? [],
             sse: data.SSE ?? 0,
             sst: data.SST ?? 0
         };
+        
         showResults.value = true;
-        calcResult.value = null; calcInputs.value = {};
+        calcResult.value = null; 
+        calcInputs.value = {};
 
     } catch (e: any) {
         console.error(e);
