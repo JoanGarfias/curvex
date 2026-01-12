@@ -343,6 +343,7 @@ const calcular = async () => {
             method: selectedMethod.value
         };
 
+        // 4. Petición Axios
         const response = await axios.post('/calc-regresion', payload);
         const data = response.data.data;
         
