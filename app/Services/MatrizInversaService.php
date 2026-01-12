@@ -2,97 +2,95 @@
 
 namespace App\Services;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Exception;
+use InvalidArgumentException;
 
-class MatrizInversaService{
-    public function inversa(Request $request)
+class MatrizInversaService
+{
+    /**
+     * Calcula la inversa. Lanza excepciones si hay error.
+     * Retorna array puro, NO una respuesta JSON.
+     */
+    public function calcular(array $matriz): array
     {
-        $matriz = $request->input('matriz');
-
         if (!$this->esCuadrada($matriz)) {
-            return response()->json([
-                'error' => 'La matriz no es cuadrada'
-            ], 400);
+            throw new InvalidArgumentException('La matriz debe ser cuadrada.');
         }
 
-        $resultado = $this->inversaMatriz($matriz);
-
-        if (is_string($resultado)) {
-            return response()->json([
-                'error' => $resultado
-            ], 400);
-        }
-
-        return response()->json([
-            'inversa' => $resultado
-        ]);
+        return $this->aplicarGaussJordan($matriz);
     }
 
-    private function esCuadrada($matriz)
+    private function esCuadrada(array $matriz): bool
     {
         $n = count($matriz);
         foreach ($matriz as $fila) {
-            if (count($fila) !== $n) {
+            if (!is_array($fila) || count($fila) !== $n) {
                 return false;
             }
         }
         return true;
     }
 
-    private function inversaMatriz($matriz)
+    private function aplicarGaussJordan(array $matriz): array
     {
         $n = count($matriz);
-
-        // Matriz identidad
-        $I = [];
+        // Crear matriz identidad
+        $identidad = [];
         for ($i = 0; $i < $n; $i++) {
             for ($j = 0; $j < $n; $j++) {
-                $I[$i][$j] = ($i === $j) ? 1 : 0;
+                $identidad[$i][$j] = ($i === $j) ? 1.0 : 0.0;
+                $matriz[$i][$j] = (float) $matriz[$i][$j]; // Asegurar float
             }
         }
 
-        // Convertir a float
+        // Algoritmo
         for ($i = 0; $i < $n; $i++) {
-            for ($j = 0; $j < $n; $j++) {
-                $matriz[$i][$j] = (float) $matriz[$i][$j];
-            }
-        }
+            $pivot = $matriz[$i][$i];
 
-        // Gauss-Jordan con pivoting
-        for ($i = 0; $i < $n; $i++) {
-
-            if ($matriz[$i][$i] == 0) {
+            // 1. Pivoteo (Buscar mejor pivote para estabilidad numérica)
+            if (abs($pivot) < 1e-10) { 
+                // Buscamos una fila debajo para intercambiar
+                $intercambiado = false;
                 for ($k = $i + 1; $k < $n; $k++) {
-                    if ($matriz[$k][$i] != 0) {
-                        [$matriz[$i], $matriz[$k]] = [$matriz[$k], $matriz[$i]];
-                        [$I[$i], $I[$k]] = [$I[$k], $I[$i]];
+                    if (abs($matriz[$k][$i]) > 1e-10) {
+                        // Intercambio de filas en Matriz y en Identidad
+                        $temp = $matriz[$i];
+                        $matriz[$i] = $matriz[$k];
+                        $matriz[$k] = $temp;
+
+                        $tempI = $identidad[$i];
+                        $identidad[$i] = $identidad[$k];
+                        $identidad[$k] = $tempI;
+                        
+                        $pivot = $matriz[$i][$i]; // Actualizamos pivote
+                        $intercambiado = true;
                         break;
                     }
                 }
+
+                if (!$intercambiado) {
+                    throw new Exception("La matriz es singular (no tiene inversa).");
+                }
             }
 
-            if ($matriz[$i][$i] == 0) {
-                return "La matriz no tiene inversa";
-            }
-
-            $div = $matriz[$i][$i];
+            // 2. Normalizar la fila del pivote (hacer que el pivote sea 1)
             for ($j = 0; $j < $n; $j++) {
-                $matriz[$i][$j] /= $div;
-                $I[$i][$j] /= $div;
+                $matriz[$i][$j] /= $pivot;
+                $identidad[$i][$j] /= $pivot;
             }
 
+            // 3. Hacer ceros en las otras filas
             for ($k = 0; $k < $n; $k++) {
                 if ($k != $i) {
                     $factor = $matriz[$k][$i];
                     for ($j = 0; $j < $n; $j++) {
                         $matriz[$k][$j] -= $factor * $matriz[$i][$j];
-                        $I[$k][$j] -= $factor * $I[$i][$j];
+                        $identidad[$k][$j] -= $factor * $identidad[$i][$j];
                     }
                 }
             }
         }
 
-        return $I;
+        return $identidad;
     }
 }

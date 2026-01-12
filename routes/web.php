@@ -46,6 +46,7 @@ Route::post('/correct-frequency', [CorreccionStatisticsController::class, 'corre
 Route::post('/calc-muestroaceptacion', [MuestroAceptacionController::class, 'calcular']);
 Route::post('/calc-muestroaceptacion2', [MuestroAceptacionController::class, 'calcular2']);
 Route::post('/calc-regresion', [RegresionController::class, 'calcular']);
+Route::post('/calc-regresion-value', [RegresionController::class, 'getRegresionValue']);
 
 // Prueba de proporciones (normal approx con corrección de continuidad)
 Route::post('/proportion-test', [ProporcionController::class, 'test']);

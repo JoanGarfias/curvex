@@ -4,6 +4,9 @@ namespace App\Support\Math;
 
 use App\Services\RegresionData;
 use App\ValueObjects\VariableData;
+use App\ValueObjects\Matrix;
+use App\Support\Math\MatrixSolver;
+use App\Services\MatrizInversaService;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -22,12 +25,14 @@ abstract class RegresionSolver {
     
     /** @var VariableData[] */
     protected array $data = [];
+    protected array $datacopy = [];
 
     //valor de las y
     /** @var float[] */
     protected array $dependent_data = [];
+    protected array $dependent_datacopy = [];
 
-    public function __construct(array $data, array $dependent_data) {
+    public function __construct(array $data, array $dependent_data, array $solutions = [] ) {
         // Validar que data contiene objetos VariableData
         if (empty($data)) {
             throw new Exception("Debe proporcionar al menos una variable independiente");
@@ -53,9 +58,24 @@ abstract class RegresionSolver {
             }
         }
         
-        $this->data = $data;
+        // 1. Guardamos la copia de seguridad (referencias originales)
+        $this->datacopy = $data; 
+
+        // 2. Para la data de trabajo, CLONAMOS cada objeto explícitamente
+        // Esto crea nuevos objetos independientes en memoria para $this->data
+        $this->data = array_map(function ($variable) {
+            return clone $variable;
+        }, $data);
+
+
+        // 3. Arrays de primitivos (números)
+        // PHP copia arrays de números por valor automáticamente, esto SÍ funciona bien directo:
         $this->dependent_data = $dependent_data;
+        $this->dependent_datacopy = $dependent_data; // Esto es seguro si son solo floats/ints
+
         $this->n = $countDataPerVariable;
+
+        $this->solutions = $solutions;
         
         Log::info("Datos validados correctamente");
 
@@ -95,6 +115,10 @@ abstract class RegresionSolver {
             }
         }
 
+        if($product_variables == null){
+            $product_variables = $mixed_variables;
+        }
+
         Log::debug("Producto de variables independientes: ". implode(', ', $product_variables));
 
         return $product_variables;
@@ -104,17 +128,34 @@ abstract class RegresionSolver {
         $sse = 0.0;
         $row_variable_value = [];
 
-        Log::info("Iniciando cálculo de SSE (Sum of Squared Errors)");
-
         for($i = 0; $i < $this->getM(); $i++){
             //por cada fila recorrida, obtenemos el valor de cada variable
-            $row_variable_value = array_map(
+            switch($this->getName()){
+                case "Potencial":
+                    $row_variable_value = array_map(
+                                    fn($variable) => $variable->getVariableAt($i),
+                                    $this->datacopy
+                                );
+                    $y_actual = $this->dependent_datacopy[$i];
+                    break;
+                case "Exponencial":
+                    $row_variable_value = array_map(
+                                    fn($variable) => $variable->getVariableAt($i),
+                                    $this->datacopy
+                                );
+                    $y_actual = $this->dependent_datacopy[$i];
+                    break;
+                default:
+                    $row_variable_value = array_map(
                                     fn($variable) => $variable->getVariableAt($i),
                                     $this->data
                                 );
-
+                    $y_actual = $this->dependent_data[$i];
+                    break;
+            }
+            
             $y_pri = $this->calculateYModel($this->solutions, $row_variable_value);
-            $y_actual = $this->dependent_data[$i];
+            
             $error = $y_actual - $y_pri;
             $squared_error = pow($error, 2);
             $sse += $squared_error;
@@ -131,19 +172,52 @@ abstract class RegresionSolver {
 
     protected function calculateSST(): float {
         Log::info("Iniciando cálculo de SST (Total Sum of Squares)");
-        
-        $sum_y = array_reduce($this->dependent_data, fn(float $s, float $y) => $s + $y, 0.0);
-        $this->y_avg = $sum_y / count($this->dependent_data);
-        
-        Log::debug("Suma de Y: {$sum_y}, Promedio de Y: {$this->y_avg}");
-        
         $sst = 0.0;
-        foreach($this->dependent_data as $y) {
-            $deviation = $y - $this->y_avg;
-            $squared_deviation = pow($deviation, 2);
-            $sst += $squared_deviation;
-            Log::debug("Y: {$y}, Desviación: {$deviation}, Desviación²: {$squared_deviation}");
-        }
+        
+        switch($this->getName()){
+                case "Potencial":
+                    $sum_y = array_reduce($this->dependent_datacopy, fn(float $s, float $y) => $s + $y, 0.0);
+                    $this->y_avg = $sum_y / count($this->dependent_datacopy);
+
+                    Log::debug("Suma de Y: {$sum_y}, Promedio de Y: {$this->y_avg}");
+        
+                    
+                    foreach($this->dependent_datacopy as $y) {
+                        $deviation = $y - $this->y_avg;
+                        $squared_deviation = pow($deviation, 2);
+                        $sst += $squared_deviation;
+                        Log::debug("Y: {$y}, Desviación: {$deviation}, Desviación²: {$squared_deviation}");
+                    }
+                    break;
+                case "Exponencial":
+                    $sum_y = array_reduce($this->dependent_datacopy, fn(float $s, float $y) => $s + $y, 0.0);
+                    $this->y_avg = $sum_y / count($this->dependent_datacopy);
+
+                    Log::debug("Suma de Y: {$sum_y}, Promedio de Y: {$this->y_avg}");
+        
+                    foreach($this->dependent_datacopy as $y) {
+                        $deviation = $y - $this->y_avg;
+                        $squared_deviation = pow($deviation, 2);
+                        $sst += $squared_deviation;
+                        Log::debug("Y: {$y}, Desviación: {$deviation}, Desviación²: {$squared_deviation}");
+                    }
+                    break;
+                default:
+                    $sum_y = array_reduce($this->dependent_data, fn(float $s, float $y) => $s + $y, 0.0);
+                    $this->y_avg = $sum_y / count($this->dependent_data);
+                    
+
+                    Log::debug("Suma de Y: {$sum_y}, Promedio de Y: {$this->y_avg}");
+            
+                    foreach($this->dependent_data as $y) {
+                        $deviation = $y - $this->y_avg;
+                        $squared_deviation = pow($deviation, 2);
+                        $sst += $squared_deviation;
+                        Log::debug("Y: {$y}, Desviación: {$deviation}, Desviación²: {$squared_deviation}");
+                    }
+                    break;
+            }
+        
         
         Log::info("SST calculado: {$sst}");
         return $sst;
@@ -153,118 +227,239 @@ abstract class RegresionSolver {
         return $this->R2;
     }
 
-    public function calculateR2(): float {
-        /*Paso 1: Calcular m, la cantidad de datos */
+    public function calculateR2(): array {
         $m = (float) $this->getM();
-        Log::info("Iniciando cálculo de R**2 para regresión lineal");
-        Log::info("Cantidad de datos (m): {$m}");
-        Log::info("Cantidad de variables independientes: " . $this->countVariables());
+        $num_vars = $this->countVariables();
 
-        /*Paso 2: Calcular las sumatorias (SSE, SSR, SST) */
+        Log::info("Iniciando cálculo de R**2. Datos: {$m}, Variables: {$num_vars}");
 
-        /** @var float[] */
-        $sum_value_variables = [];
+        // 1. Transformaciones (Logaritmos, etc.)
+        $this->transformData();
+
+        // 2. Inicializar Acumuladores
+        $sum_y = 0.0;
+        $sum_vars = array_fill(0, $num_vars, 0.0); // Suma simple de cada X
         
-        /** @var float[] */
-        $sum_value_variables_squared = [];
-        $sum_y = array_reduce($this->dependent_data, fn(float $s, float $y) => $s + $y, 0.0);
-        
-        Log::debug("Suma de valores Y: {$sum_y}");
-
-        /** @var float[] */
-        $product_variables = [];
-        /** @var float[] */
-        $sum_product_variables = [];
-
-        /* Calcular multiplicaciones de variables independientes con la variable dependiente
-        ejemplo: u*y, v*y, z*y
-        */
-        /** @var float[] */
-        $product_dep_ind_variables = [];
-
-        /** @var float[] */
-        $sum_product_dep_ind_variables = [];
-
-
-        for($i=0; $i < $this->countVariables(); $i++){ $sum_product_variables[] = 0.0; $sum_product_dep_ind_variables[] = 0.0;}
-
-        foreach($this->data as $idx => $variable_data){
-            $sum_val = array_reduce($variable_data->points, fn(float $s, float $value) => $s + $value, 0.0);
-            $sum_sq = array_reduce($variable_data->points, fn(float $s, float $value) => $s + pow($value, 2), 0.0);
-            
-            Log::debug("Variable independiente #{$idx}: suma={$sum_val}, suma_cuadrados={$sum_sq}");
+        // Matriz 2D para guardar Sum(Xi * Xj). 
+        // Ej: $sum_products[0][0] es Sum(X1^2), $sum_products[0][1] es Sum(X1*X2)
+        $sum_products = []; 
+        for($k=0; $k<$num_vars; $k++) {
+            for($l=0; $l<$num_vars; $l++) {
+                $sum_products[$k][$l] = 0.0;
+            }
         }
 
-        try{
-            $this->y_avg = $sum_y / $m;
-            Log::info("Promedio de Y: {$this->y_avg}");
+        $sum_prod_x_y = array_fill(0, $num_vars, 0.0); // Suma de Xi * Y
 
-            //Encontrar los productos entre los datos de cada variable
-            for($i = 0; $i < $m; $i++){
-                //Sacamos cada elemento de la variable y lo agregamos a un array para poder hacer el calculo de los productos
-                //u*v, v*z, z*u etc
-                $product_variables = $this
-                                    ->calculateProductVariables(
-                                        array_map(fn($value) => $value->getVariableAt($i), $this->data),
-                                    );    
+        // 3. Bucle Principal (Recorremos los datos UNA sola vez)
+        for ($i = 0; $i < $m; $i++) {
+            
+            // Obtener Y actual
+            $y = $this->dependent_data[$i]; // Ojo: Usar data transformada si aplica
+            
+            $sum_y += $y;
 
-                Log::info("Calculando la suma de la multiplicación de las variables");
-
-                $sum_product_variables = array_map(
-                                            function($sum_array_value, $index) use ($product_variables, $sum_product_variables) {
-                                                $sum_product_variables[$index] += $product_variables[$index];
-                                            },
-                                            $sum_product_variables, array_keys($sum_product_variables)
-                                        );
-
-                            $row_variable_value = array_map(
-                                    fn($variable) => $variable->getVariableAt($i),
-                                    $this->data
-                                );
-
-                Log::info("Calculando la suma de la multiplicación de cada variable independiente con los datos de la variable dependiente");
-
-                // Acumular el producto de cada variable independiente con la variable dependiente
-                foreach($this->data as $index => $variable_data) {
-                    $independ_value = $variable_data->getVariableAt($i);
-                    $dependent_value = $this->dependent_data[$i];
-                    $product = $independ_value * $dependent_value;
-                    
-                    $sum_product_dep_ind_variables[$index] += $product;
-                    
-                    Log::debug("Var ind #{$index} fila {$i}: valor={$independ_value}, Y={$dependent_value}, producto={$product}, suma_acumulada={$sum_product_dep_ind_variables[$index]}");
-                }
+            // Obtener valores de X para esta fila (Ej: [ValorX1, ValorX2])
+            $x_row_values = [];
+            foreach($this->data as $idx => $variable) {
+                $val = $variable->getVariableAt($i);
+                $x_row_values[$idx] = $val;
                 
-                Log::info("Acumulado multiplicación dep-ind en fila {$i}: " . implode(",", $sum_product_dep_ind_variables));
+                // Acumular suma simple y suma con Y
+                $sum_vars[$idx] += $val;
+                $sum_prod_x_y[$idx] += ($val * $y);
             }
 
-            Log::info("La suma de la multiplicación de las variables dependientes con las independientes es: " . implode(",", $sum_product_dep_ind_variables));
-            /**Aquí se tiene que implementar el armado de la matriz, el cálculo de la matriz inversa y su posterior multiplicación de matrices. */
-
-
-            //Calculamos SSE y SST
-            $this->SSE = $this->calculateSSE();
-            $this->SST = $this->calculateSST();
-
-            Log::info("Estadísticas finales:");
-            Log::info("SSE (Sum of Squared Errors): {$this->SSE}");
-            Log::info("SST (Total Sum of Squares): {$this->SST}");
-
-            if($this->SST == 0){
-                $R2 = 1;
-                Log::warning("SST es 0, R**2 asignado a 1");
-            }else{
-                $R2 = 1 - ($this->SSE / $this->SST);
-                Log::info("R**2 = 1 - (SSE/SST) = 1 - ({$this->SSE}/{$this->SST}) = {$R2}");
+            // Acumular productos cruzados entre variables (Para la matriz X'X)
+            for ($k = 0; $k < $num_vars; $k++) {
+                for ($l = 0; $l < $num_vars; $l++) {
+                    // Sumamos X_k * X_l
+                    $sum_products[$k][$l] += $x_row_values[$k] * $x_row_values[$l];
+                }
             }
-            
-            Log::info("Cálculo de R**2 completado. Resultado: {$R2}");
-            $this->R2 = 0.0;
-            return $R2;
-        } catch (Exception $e) {
-            Log::error("Error al calcular los coeficientes de regresión: " . $e->getMessage());
-            Log::error("Stack trace: " . $e->getTraceAsString());
-            throw $e;
         }
+
+        // 4. Promedio Y
+        $this->y_avg = $sum_y / $m;
+
+        // 5. Construcción de Matrices para el Solver
+        
+        if ($this->getName() == "Cuadrático") {
+            // 1. Validación: La regresión cuadrática simple solo acepta 1 variable independiente
+            if ($this->countVariables() !== 1) {
+                throw new Exception("La regresión cuadrática simple requiere exactamente 1 variable independiente.");
+            }
+
+            Log::info("Calculando regresión cuadrática (Parabólica)...");
+
+            // 2. Inicialización de acumuladores
+            // Necesitamos sumas hasta x^4 para la Matriz A, y hasta x^2*y para el Vector B
+            $sum_x = 0.0;
+            $sum_x2 = 0.0;
+            $sum_x3 = 0.0;
+            $sum_x4 = 0.0;
+            
+            $sum_y = 0.0;
+            $sum_xy = 0.0;
+            $sum_x2y = 0.0;
+
+            // Obtenemos la única variable independiente disponible
+            $variable_x = $this->data[0]; 
+
+            // 3. Bucle Único: Calculamos TODO en una sola pasada
+            for ($i = 0; $i < $m; $i++) {
+                $x = $variable_x->getVariableAt($i);
+                $y = $this->dependent_data[$i];
+
+                // Pre-cálculo de potencias para eficiencia
+                $x2 = $x * $x;
+                $x3 = $x2 * $x;
+                $x4 = $x3 * $x;
+
+                // Acumulación de X
+                $sum_x  += $x;
+                $sum_x2 += $x2;
+                $sum_x3 += $x3;
+                $sum_x4 += $x4;
+
+                // Acumulación de Y e interacciones
+                $sum_y   += $y;
+                $sum_xy  += ($x * $y);
+                $sum_x2y += ($x2 * $y);
+            }
+
+            Log::debug("Sumatorias calculadas: X=$sum_x, X2=$sum_x2, X3=$sum_x3, X4=$sum_x4");
+
+            // 4. Construcción manual de la Matriz Normal (3x3)
+            // |  N      Sx     Sx2  |
+            // |  Sx     Sx2    Sx3  |
+            // |  Sx2    Sx3    Sx4  |
+            
+            $matind = [
+                [$m,      $sum_x,  $sum_x2],
+                [$sum_x,  $sum_x2, $sum_x3],
+                [$sum_x2, $sum_x3, $sum_x4]
+            ];
+
+            // 5. Construcción del Vector B (3x1)
+            // | Sy   |
+            // | Sxy  |
+            // | Sx2y |
+            
+            $matdep = [
+                $sum_y,
+                $sum_xy,
+                $sum_x2y
+            ];
+
+            // 6. Resolución del Sistema
+            // Inversa de A
+            $MatrizInversaService = new MatrizInversaService();
+            // Asegúrate de que tu servicio devuelva array puro
+            $matindinv = $MatrizInversaService->calcular($matind); 
+
+            // Crear objetos Matrix
+            $mata = new Matrix($matindinv, 3, 3);
+            
+            // Convertimos el vector B plano a formato columna para la multiplicación
+            // [[Sy], [Sxy], [Sx2y]]
+            $matdepColumn = array_map(fn($val) => [$val], $matdep);
+            $matb = new Matrix($matdepColumn, 3, 1);
+
+            // Multiplicar (A^-1 * B)
+            $solver = new MatrixSolver();
+            $matres = $solver->multiply($mata, $matb);
+
+            // Guardar soluciones (aplanando el resultado)
+            $this->solutions = [];
+            foreach($matres->data as $row) {
+                $this->solutions[] = $row[0];
+            }
+        }
+        else {
+            // --- Lógica General Multivariable (Lineal, Potencial, Exponencial) ---
+            
+            $matrix_size = $num_vars + 1; // +1 por el intercepto
+            $matind = [];
+
+            // Llenado de la Matriz A (Lado Izquierdo)
+            for ($row = 0; $row < $matrix_size; $row++) {
+                for ($col = 0; $col < $matrix_size; $col++) {
+                    
+                    if ($row == 0 && $col == 0) {
+                        $matind[$row][$col] = $m; // N
+                    } 
+                    elseif ($row == 0) {
+                        $matind[$row][$col] = $sum_vars[$col - 1]; // Sum X
+                    } 
+                    elseif ($col == 0) {
+                        $matind[$row][$col] = $sum_vars[$row - 1]; // Sum X (Simetría)
+                    } 
+                    else {
+                        // Aquí usamos la matriz 2D que calculamos arriba
+                        // Restamos 1 a los índices por el offset del intercepto
+                        $matind[$row][$col] = $sum_products[$row - 1][$col - 1];
+                    }
+                }
+            }
+
+            Log::info($matind);
+
+            // Llenado del Vector B (Lado Derecho)
+            $matdep = [];
+            $matdep[] = $sum_y; // Primer elemento: Sum Y
+            foreach($sum_prod_x_y as $val) {
+                $matdep[] = $val; // Siguientes: Sum X*Y
+            }
+
+            Log::info($matdep);
+
+            // Resolver Sistema
+            $MatrizInversaService = new MatrizInversaService();
+            // Asegúrate que tu servicio de inversa devuelva array, no Response
+            $matindinv = $MatrizInversaService->calcular($matind); 
+
+            $mata = new Matrix($matindinv, $matrix_size, $matrix_size);
+            $matb = new Matrix(array_map(fn($v) => [$v], $matdep), $matrix_size, 1); // Convertir vector a columna
+
+            $solver = new MatrixSolver();
+            $matres = $solver->multiply($mata, $matb);
+            
+            // Aplanar resultado
+            $this->solutions = [];
+            foreach($matres->data as $row) {
+                $this->solutions[] = $row[0];
+            }
+        }
+
+        // 6. Post-Procesamiento de Soluciones
+        switch($this->getName()){
+            case "Potencial":
+                $this->solutions[0] = 10 ** ($this->solutions[0]); // A = 10^a0
+                break;
+            case "Exponencial":
+                $this->solutions[0] = exp($this->solutions[0]); // A = e^a0
+                break;
+        }
+
+        Log::info("Soluciones: " . implode(", ", $this->solutions));
+
+        // 7. Estadísticas finales (Esto estaba bien)
+        $this->SSE = $this->calculateSSE();
+        $this->SST = $this->calculateSST();
+
+        if($this->SST == 0){
+             $this->R2 = 1.0;
+        } else {
+             $this->R2 = 1.0 - ($this->SSE / $this->SST);
+        }
+
+        // CORRECCIÓN FINAL: Antes estabas devolviendo R2 local y seteando this->R2 a 0.0
+        return [
+            "R2" => $this->R2, 
+            "solutions" => $this->solutions, 
+            "SST" => $this->SST, 
+            "SSE" => $this->SSE
+        ];
     }
 }

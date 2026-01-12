@@ -1,0 +1,183 @@
+{
+  "descripcion": "Ejemplos de llamadas al endpoint /calc-regresion-value",
+  "endpoint": "POST /calc-regresion-value",
+  
+  "ejemplo_1_calcular_y_lineal": {
+    "descripcion": "Calcular Y dado X=4 en regresión lineal",
+    "request": {
+      "method": "lineal",
+      "variable": "x",
+      "value": 4,
+      "solutions": [
+        143.82438478747235,
+        1.8786353467561412
+      ]
+    },
+    "respuesta_esperada": {
+      "message": "Cálculo de Y realizado con éxito.",
+      "data": {
+        "method": "lineal",
+        "x": 4,
+        "y": 151.3391
+      }
+    }
+  },
+
+  "ejemplo_2_calcular_x_lineal": {
+    "descripcion": "Calcular X dado Y=157.6709 en regresión lineal",
+    "request": {
+      "method": "lineal",
+      "variable": "y",
+      "value": 157.6709,
+      "solutions": [
+        143.82438478747235,
+        1.8786353467561412
+      ]
+    },
+    "respuesta_esperada": {
+      "message": "Cálculo de X realizado con éxito.",
+      "data": {
+        "method": "lineal",
+        "y": 157.6709,
+        "x": 7.3664
+      }
+    }
+  },
+
+  "ejemplo_3_calcular_y_exponencial": {
+    "descripcion": "Calcular Y dado X=2 en regresión exponencial",
+    "request": {
+      "method": "exponential",
+      "variable": "x",
+      "value": 2,
+      "solutions": [
+        10.5,
+        0.25
+      ]
+    },
+    "respuesta_esperada": {
+      "message": "Cálculo de Y realizado con éxito.",
+      "data": {
+        "method": "exponential",
+        "x": 2,
+        "y": 17.3472
+      }
+    }
+  },
+
+  "ejemplo_4_calcular_x_exponencial": {
+    "descripcion": "Calcular X dado Y=20 en regresión exponencial",
+    "request": {
+      "method": "exponential",
+      "variable": "y",
+      "value": 20,
+      "solutions": [
+        10.5,
+        0.25
+      ]
+    },
+    "respuesta_esperada": {
+      "message": "Cálculo de X realizado con éxito.",
+      "data": {
+        "method": "exponential",
+        "y": 20,
+        "x": 2.5541
+      }
+    }
+  },
+
+  "ejemplo_5_calcular_y_potencial": {
+    "descripcion": "Calcular Y dado X=5 en regresión potencial",
+    "request": {
+      "method": "potential",
+      "variable": "x",
+      "value": 5,
+      "solutions": [
+        2.0,
+        1.5
+      ]
+    },
+    "respuesta_esperada": {
+      "message": "Cálculo de Y realizado con éxito.",
+      "data": {
+        "method": "potential",
+        "x": 5,
+        "y": 22.3607
+      }
+    }
+  },
+
+  "ejemplo_6_calcular_x_potencial": {
+    "descripcion": "Calcular X dado Y=22.3607 en regresión potencial",
+    "request": {
+      "method": "potential",
+      "variable": "y",
+      "value": 22.3607,
+      "solutions": [
+        2.0,
+        1.5
+      ]
+    },
+    "respuesta_esperada": {
+      "message": "Cálculo de X realizado con éxito.",
+      "data": {
+        "method": "potential",
+        "y": 22.3607,
+        "x": 5.0
+      }
+    }
+  },
+
+  "ejemplo_7_calcular_y_cuadratica": {
+    "descripcion": "Calcular Y dado X=3 en regresión cuadrática",
+    "request": {
+      "method": "cuadratic",
+      "variable": "x",
+      "value": 3,
+      "solutions": [
+        5.0,
+        2.0,
+        1.5
+      ]
+    },
+    "respuesta_esperada": {
+      "message": "Cálculo de Y realizado con éxito.",
+      "data": {
+        "method": "cuadratic",
+        "x": 3,
+        "y": 24.5
+      }
+    }
+  },
+
+  "ejemplo_8_calcular_x_cuadratica": {
+    "descripcion": "Calcular X dado Y=24.5 en regresión cuadrática (retorna 2 soluciones)",
+    "request": {
+      "method": "cuadratic",
+      "variable": "y",
+      "value": 24.5,
+      "solutions": [
+        5.0,
+        2.0,
+        1.5
+      ]
+    },
+    "respuesta_esperada": {
+      "message": "Cálculo de X realizado con éxito (ecuación cuadrática con 2 soluciones).",
+      "data": {
+        "method": "cuadratic",
+        "y": 24.5,
+        "x1": 3.0,
+        "x2": -4.333
+      }
+    }
+  },
+
+  "curl_examples": {
+    "calcular_y_lineal": "curl -X POST http://localhost:8000/calc-regresion-value -H 'Content-Type: application/json' -d '{\"method\":\"lineal\",\"variable\":\"x\",\"value\":4,\"solutions\":[143.82438478747235,1.8786353467561412]}'",
+    
+    "calcular_x_lineal": "curl -X POST http://localhost:8000/calc-regresion-value -H 'Content-Type: application/json' -d '{\"method\":\"lineal\",\"variable\":\"y\",\"value\":157.6709,\"solutions\":[143.82438478747235,1.8786353467561412]}'",
+    
+    "calcular_x_cuadratica": "curl -X POST http://localhost:8000/calc-regresion-value -H 'Content-Type: application/json' -d '{\"method\":\"cuadratic\",\"variable\":\"y\",\"value\":24.5,\"solutions\":[5.0,2.0,1.5]}'"
+  }
+}
