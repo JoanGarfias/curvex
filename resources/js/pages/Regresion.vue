@@ -11,6 +11,9 @@ import {
 } from "lucide-vue-next";
 import axios from 'axios';
 
+type ChartType = 'ajuste' | 'curva' | 'residuos' | 'histograma';
+
+
 // --- ESTADO ---
 const inputX = ref('');
 const inputY = ref('');
@@ -20,6 +23,7 @@ const showResults = ref(false);
 
 const selectedMethod = ref('lineal'); // Por defecto Lineal
 const numVars = ref(0);
+const activeChart = ref<ChartType>('ajuste');
 
 // --- OPCIONES DE MÉTODO (DINÁMICAS) ---
 const availableMethods = computed(() => {
@@ -35,6 +39,15 @@ const availableMethods = computed(() => {
         return methods.filter(m => m.id === 'lineal');
     }
     return methods;
+});
+
+const availableCharts = computed<ChartType[]>(() => {
+    // Multilineal → solo algunas
+    if (selectedMethod.value === 'lineal' && numVars.value > 1) {
+        return ['ajuste', 'residuos', 'histograma'];
+    }
+    // Resto → todas
+    return ['ajuste', 'curva', 'residuos', 'histograma'];
 });
 
 // Resultados
@@ -115,6 +128,32 @@ const chartData = computed(() => {
         }
     };
 });
+
+const residuals = computed(() => {
+    if (!showResults.value) return [];
+    const yReal = inputY.value
+        .trim()
+        .split(/[\s,;\n]+/)
+        .map(Number);
+
+    return yReal.map((y, i) => y - (results.value.prediction[i] ?? y));
+});
+
+const histogram = computed(() => {
+    if (residuals.value.length === 0) return [];
+    const bins = 5;
+    const max = Math.max(...residuals.value.map(r => Math.abs(r))) || 1;
+    const step = max / bins;
+
+    return Array.from({ length: bins }, (_, i) => ({
+        label: `${(i * step).toFixed(1)} – ${((i + 1) * step).toFixed(1)}`,
+        count: residuals.value.filter(r =>
+            Math.abs(r) >= i * step && Math.abs(r) < (i + 1) * step
+        ).length
+    }));
+});
+
+
 
 // --- CALCULAR ---
 const calcular = async () => {
@@ -265,6 +304,21 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
                     </div>
                 </div>
 
+                <div class="flex gap-2 mb-4">
+                    <button
+                        v-for="chart in availableCharts"
+                        :key="chart"
+                        @click="activeChart = chart"
+                        class="px-3 py-1 text-xs rounded-lg border transition capitalize"
+                        :class="activeChart === chart
+                        ? 'bg-purple-600 text-white border-purple-600'
+                        : 'border-gray-300 dark:border-gray-700 text-gray-400 hover:text-white'"
+                    >
+                        {{ chart }}
+                    </button>
+            </div>
+
+
                 <div v-if="chartData" class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
                     <h3 class="font-bold mb-4">Ajuste (Real vs Predicho)</h3>
                     <div class="w-full aspect-video bg-gray-50 dark:bg-[#151515] rounded-lg relative overflow-hidden">
@@ -277,6 +331,50 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
                             </circle>
                         </svg>
                     </div>
+                </div>
+
+                <div v-if="activeChart === 'curva'"
+                    class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
+                <h3 class="font-bold mb-4">Curva del Modelo</h3>
+                <svg viewBox="0 0 400 250" class="w-full h-full">
+                    <polyline
+                    :points="results.prediction.map((y, i) => `${i * 30 + 30},${220 - y}`).join(' ')"
+                    fill="none"
+                    stroke="#9333ea"
+                    stroke-width="2"
+                    />
+                </svg>
+                </div>
+
+                <div v-if="activeChart === 'residuos'"
+                    class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
+                <h3 class="font-bold mb-4">Residuos</h3>
+                <svg viewBox="0 0 400 250" class="w-full h-full">
+                    <circle
+                    v-for="(r, i) in residuals"
+                    :key="i"
+                    :cx="i * 30 + 30"
+                    :cy="125 - r"
+                    r="4"
+                    class="fill-purple-600"
+                    />
+                    <line x1="0" y1="125" x2="400" y2="125"
+                        class="stroke-gray-400" stroke-dasharray="4" />
+                </svg>
+                </div>
+
+                <div v-if="activeChart === 'histograma'"
+                    class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
+                <h3 class="font-bold mb-4">Distribución del Error</h3>
+                <div class="flex items-end gap-2 h-40">
+                    <div
+                    v-for="(bin, i) in histogram"
+                    :key="i"
+                    class="flex-1 bg-purple-500 rounded-t"
+                    :style="{ height: `${bin.count * 20}px` }"
+                    :title="bin.label"
+                    ></div>
+                </div>
                 </div>
             </div>
         </div>
