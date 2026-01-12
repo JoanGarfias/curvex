@@ -2,12 +2,9 @@
 
 namespace App\Services;
 
-use App\Support\Math\RegresionModeloLineal;
-use App\Support\Math\RegresionModeloExponencial;
+use App\Support\Math\Regresion\RegresionLinealModel;
+use App\Support\Math\Regresion\RegresionExponentialModel;
 use Illuminate\Support\Facades\Log;
-use ReflectionClass;
-//use RegresionExponencial;
-
 
 class RegresionBetterResponse {
     public string $name = "";
@@ -22,8 +19,8 @@ class RegresionService
 
 
     public function getBetterModel(
-        RegresionModeloLineal $lineal = null,
-        RegresionExponencial $exponential = null,
+        RegresionLinealModel $lineal = null,
+        RegresionExponentialModel $exponential = null,
     ): RegresionBetterResponse {
         $response = new RegresionBetterResponse();
     
@@ -39,7 +36,7 @@ class RegresionService
 
         foreach($options as $model){
             $r2 = $model->getR2();
-            Log::info("Modelo". (new ReflectionClass($model))->getShortName() . "R**2 = {$r2}");
+            Log::info("Modelo". $model->getName() . "R**2 = {$r2}");
             if($r2 > $bestR2){
                 $bestR2 = $r2;
                 $bestModel = $model;
@@ -48,7 +45,7 @@ class RegresionService
 
         if($bestModel !== null){
             $response->R2 = $bestR2;
-            $response->name = new ReflectionClass($bestModel)->getShortName();
+            $response->name = $model->getName();
             $response->model = $model;
         }
 
@@ -67,10 +64,11 @@ class RegresionService
         
         return
             match($variables_count){
-                1 => new RegresionModeloLineal($independent_variables, $dependent_values, $method),
-                2 => new RegresionModeloLineal($independent_variables, $dependent_values, $method),
-                3 => new RegresionModeloLineal($independent_variables, $dependent_values, $method),
-                default => new RegresionModeloLineal($independent_variables, $dependent_values, $method)
-        };
+                1 => new RegresionLinealModel($independent_variables, $dependent_values, $method),
+                2 => new RegresionLinealModel($independent_variables, $dependent_values, $method),
+                3 => new RegresionLinealModel($independent_variables, $dependent_values, $method),
+                default => new RegresionLinealModel($independent_variables, $dependent_values, $method)
+            }
+        ;
     }
 }
