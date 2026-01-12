@@ -33,9 +33,9 @@ const calcResult = ref<number | null>(null);
 const availableMethods = computed(() => {
     const methods = [
         { id: 'lineal', name: 'Lineal / Multilineal' },
-        { id: 'exponencial', name: 'Exponencial' },
-        { id: 'potencial', name: 'Potencial' },
-        { id: 'cuadratico', name: 'Cuadrática' },
+        { id: 'exponential', name: 'Exponencial' },
+        { id: 'potential', name: 'Potencial' },
+        { id: 'cuadratic', name: 'Cuadrática' },
     ];
     if (numVars.value > 1) return methods.filter(m => m.id === 'lineal');
     return methods;
