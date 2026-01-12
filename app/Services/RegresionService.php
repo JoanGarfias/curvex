@@ -3,10 +3,11 @@
 namespace App\Services;
 
 use App\Support\Math\RegresionModeloLineal;
+use App\Support\Math\RegresionModeloExponencial;
 use Illuminate\Support\Facades\Log;
 use ReflectionClass;
 //use RegresionExponencial;
-use App\Support\Math\RegresionModeloExponencial; // <--- ASÍ DEBE SER
+
 
 class RegresionBetterResponse {
     public string $name = "";
@@ -70,7 +71,6 @@ class RegresionService
                 2 => new RegresionModeloLineal($independent_variables, $dependent_values, $method),
                 3 => new RegresionModeloLineal($independent_variables, $dependent_values, $method),
                 default => new RegresionModeloLineal($independent_variables, $dependent_values, $method)
-            }
-        ;
+        };
     }
 }
