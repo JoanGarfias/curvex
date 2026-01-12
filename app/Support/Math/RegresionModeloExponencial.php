@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Support\Math;
+use App\Support\Math\RegresionSolver;
 
 class RegresionModeloExponencial extends RegresionSolver {
 
