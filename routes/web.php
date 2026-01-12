@@ -47,6 +47,8 @@ Route::post('/calc-muestroaceptacion', [MuestroAceptacionController::class, 'cal
 Route::post('/calc-muestroaceptacion2', [MuestroAceptacionController::class, 'calcular2']);
 Route::post('/calc-regresion', [RegresionController::class, 'calcular']);
 Route::post('/calc-regresion-value', [RegresionController::class, 'getRegresionValue']);
+Route::post('/calc-best-regresion', [RegresionController::class, 'getBestRegresionModel']);
+
 
 // Prueba de proporciones (normal approx con corrección de continuidad)
 Route::post('/proportion-test', [ProporcionController::class, 'test']);
