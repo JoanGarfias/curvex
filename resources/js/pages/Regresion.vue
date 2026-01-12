@@ -96,6 +96,7 @@ const parseData = () => {
 
 watch([inputX, inputY], () => { if(inputX.value && inputY.value) parseData(); });
 
+
 // --- GRÁFICA ---
 const chartData = computed(() => {
     if (!showResults.value || inputY.value === '') return null;
@@ -129,6 +130,8 @@ const chartData = computed(() => {
     };
 });
 
+
+
 const residuals = computed(() => {
     if (!showResults.value) return [];
     const yReal = inputY.value
@@ -154,6 +157,84 @@ const histogram = computed(() => {
 });
 
 
+const curveData = computed(() => {
+    if (!showResults.value || !inputX.value) return null;
+    
+    try {
+        // Parsear X e Y
+        const rowsX = inputX.value.trim().split('\n').map(r => 
+            r.trim().split(/[\s,;\t]+/).map(Number)
+        );
+        const xValues = rowsX.map(row => row[0]); // Primera columna
+        const yValues = inputY.value.trim().split(/[\s,;\n]+/).map(Number);
+        
+        if (xValues.length === 0 || yValues.length === 0) return null;
+        
+        const minX = Math.min(...xValues);
+        const maxX = Math.max(...xValues);
+        
+        // Generar 100 puntos para curva suave
+        const numPoints = 100;
+        const step = (maxX - minX) / (numPoints - 1);
+        
+        const curvePoints = [];
+        for (let i = 0; i < numPoints; i++) {
+            const xVal = minX + step * i;
+            let yVal;
+            
+            // Calcular Y según el método
+            switch(selectedMethod.value) {
+                case 'cuadratico':
+                    yVal = results.value.coefficients[0] + 
+                        results.value.coefficients[1] * xVal + 
+                        results.value.coefficients[2] * Math.pow(xVal, 2);
+                    break;
+                case 'exponencial':
+                    yVal = results.value.coefficients[0] * 
+                        Math.exp(results.value.coefficients[1] * xVal);
+                    break;
+                case 'potencial':
+                    yVal = results.value.coefficients[0] * 
+                        Math.pow(xVal, results.value.coefficients[1]);
+                    break;
+                case 'lineal':
+                default:
+                    yVal = results.value.coefficients[0] + 
+                        results.value.coefficients[1] * xVal;
+                    break;
+            }
+            
+            curvePoints.push({ x: xVal, y: yVal });
+        }
+        
+        // Calcular escala - AQUÍ ESTABA EL ERROR
+        const allYValues = curvePoints.map(p => p.y);
+        const minY = Math.min(...allYValues);
+        const maxY = Math.max(...allYValues);
+        
+        const width = 400;
+        const height = 250;
+        const padding = 40;
+        
+        // Funciones de escala con nombres diferentes para evitar confusión
+        const scaleX = (xCoord: number) => padding + ((xCoord - minX) / (maxX - minX || 1)) * (width - 2 * padding);
+        const scaleY = (yCoord: number) => height - (padding + ((yCoord - minY) / (maxY - minY || 1)) * (height - 2 * padding));
+        
+        return {
+            points: curvePoints.map(p => ({
+                x: scaleX(p.x),
+                y: scaleY(p.y)
+            })),
+            dataPoints: xValues.map((xVal, i) => ({
+                x: scaleX(xVal),
+                y: scaleY(yValues[i])
+            }))
+        };
+    } catch (error) {
+        console.error('Error en curveData:', error);
+        return null;
+    }
+});
 
 // --- CALCULAR ---
 const calcular = async () => {
@@ -318,32 +399,53 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
                     </button>
             </div>
 
-
-                <div v-if="chartData" class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
-                    <h3 class="font-bold mb-4">Ajuste (Real vs Predicho)</h3>
-                    <div class="w-full aspect-video bg-gray-50 dark:bg-[#151515] rounded-lg relative overflow-hidden">
-                        <svg :viewBox="`0 0 400 250`" class="w-full h-full p-4">
-                            <line x1="30" y1="220" x2="370" y2="220" stroke="currentColor" class="text-gray-300" />
-                            <line x1="30" y1="220" x2="30" y2="30" stroke="currentColor" class="text-gray-300" />
-                            <line :x1="chartData.line.x1" :y1="chartData.line.y1" :x2="chartData.line.x2" :y2="chartData.line.y2" stroke="#9333ea" stroke-width="1" stroke-dasharray="4" />
-                            <circle v-for="(p, i) in chartData.points" :key="i" :cx="p.cx" :cy="p.cy" r="4" class="fill-white stroke-purple-600 hover:fill-purple-600 transition-colors">
-                                <title>Real: {{ p.real.toFixed(2) }} / Pred: {{ p.pred.toFixed(2) }}</title>
-                            </circle>
-                        </svg>
-                    </div>
+            <!-- GRÁFICA DE AJUSTE -->
+            <div v-if="activeChart === 'ajuste' && chartData" 
+                class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
+                <h3 class="font-bold mb-4">Ajuste (Real vs Predicho)</h3>
+                <div class="w-full aspect-video bg-gray-50 dark:bg-[#151515] rounded-lg relative overflow-hidden">
+                    <svg :viewBox="`0 0 400 250`" class="w-full h-full p-4">
+                        <line x1="30" y1="220" x2="370" y2="220" stroke="currentColor" class="text-gray-300" />
+                        <line x1="30" y1="220" x2="30" y2="30" stroke="currentColor" class="text-gray-300" />
+                        <line :x1="chartData.line.x1" :y1="chartData.line.y1" :x2="chartData.line.x2" :y2="chartData.line.y2" stroke="#9333ea" stroke-width="1" stroke-dasharray="4" />
+                        <circle v-for="(p, i) in chartData.points" :key="i" :cx="p.cx" :cy="p.cy" r="4" class="fill-white stroke-purple-600 hover:fill-purple-600 transition-colors">
+                            <title>Real: {{ p.real.toFixed(2) }} / Pred: {{ p.pred.toFixed(2) }}</title>
+                        </circle>
+                    </svg>
                 </div>
+            </div>
 
-                <div v-if="activeChart === 'curva'"
+
+                <div v-if="activeChart === 'curva' && curveData"
                     class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
-                <h3 class="font-bold mb-4">Curva del Modelo</h3>
-                <svg viewBox="0 0 400 250" class="w-full h-full">
-                    <polyline
-                    :points="results.prediction.map((y, i) => `${i * 30 + 30},${220 - y}`).join(' ')"
-                    fill="none"
-                    stroke="#9333ea"
-                    stroke-width="2"
-                    />
-                </svg>
+                    <h3 class="font-bold mb-4">Curva del Modelo</h3>
+                    <svg viewBox="0 0 400 250" class="w-full h-full">
+                        <!-- Ejes -->
+                        <line x1="40" y1="210" x2="360" y2="210" 
+                            stroke="currentColor" class="text-gray-300" />
+                        <line x1="40" y1="210" x2="40" y2="40" 
+                            stroke="currentColor" class="text-gray-300" />
+                        
+                        <!-- Curva del modelo (línea suave) -->
+                        <polyline
+                            :points="curveData.points.map(p => `${p.x},${p.y}`).join(' ')"
+                            fill="none"
+                            stroke="#9333ea"
+                            stroke-width="2"
+                        />
+                        
+                        <!-- Puntos de datos reales -->
+                        <circle
+                            v-for="(p, i) in curveData.dataPoints"
+                            :key="i"
+                            :cx="p.x"
+                            :cy="p.y"
+                            r="4"
+                            class="fill-red-500 stroke-red-700"
+                        >
+                            <title>Punto {{ i + 1 }}</title>
+                        </circle>
+                    </svg>
                 </div>
 
                 <div v-if="activeChart === 'residuos'"
