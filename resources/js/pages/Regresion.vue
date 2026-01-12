@@ -106,13 +106,16 @@ const chartData = computed(() => {
     };
 });
 
-// Lógica de curva suave (de tu compañera)
+
 const curveData = computed(() => {
     if (!showResults.value || !inputX.value) return null;
     
     try {
-        const rowsX = inputX.value.trim().split('\n').map(r => r.trim().split(/[\s,;\t]+/).map(Number));
-        const xValues = rowsX.map(row => row[0]); 
+        // Parsear X e Y
+        const rowsX = inputX.value.trim().split('\n').map(r => 
+            r.trim().split(/[\s,;\t]+/).map(Number)
+        );
+        const xValues = rowsX.map(row => row[0]);
         const yValues = inputY.value.trim().split(/[\s,;\n]+/).map(Number);
         
         if (xValues.length === 0 || yValues.length === 0) return null;
@@ -120,50 +123,89 @@ const curveData = computed(() => {
         const minX = Math.min(...xValues);
         const maxX = Math.max(...xValues);
         
-        // Generar 100 puntos
+        // Generar 100 puntos para curva suave
         const numPoints = 100;
         const step = (maxX - minX) / (numPoints - 1);
         
         const curvePoints = [];
         for (let i = 0; i < numPoints; i++) {
             const xVal = minX + step * i;
-            let yVal = 0;
-            const coeffs = results.value.coefficients;
-
-            if (coeffs.length > 0) {
-                switch(selectedMethod.value) {
-                    case 'cuadratico':
-                        yVal = coeffs[0] + coeffs[1] * xVal + coeffs[2] * Math.pow(xVal, 2);
-                        break;
-                    case 'exponencial':
-                        // y = a * e^(bx)  -> coeffs[0] es 'a', coeffs[1] es 'b'
-                        yVal = coeffs[0] * Math.exp(coeffs[1] * xVal);
-                        break;
-                    case 'potencial':
-                        // y = a * x^b
-                        yVal = coeffs[0] * Math.pow(xVal, coeffs[1]);
-                        break;
-                    case 'lineal':
-                    default:
-                        yVal = coeffs[0] + coeffs[1] * xVal;
-                        break;
-                }
-                curvePoints.push({ x: xVal, y: yVal });
+            let yVal;
+            
+            // Calcular Y según el método
+            switch(selectedMethod.value) {
+                case 'cuadratico':
+                    yVal = results.value.coefficients[0] + 
+                        results.value.coefficients[1] * xVal + 
+                        results.value.coefficients[2] * Math.pow(xVal, 2);
+                    break;
+                case 'exponencial':
+                    yVal = results.value.coefficients[0] * 
+                        Math.exp(results.value.coefficients[1] * xVal);
+                    break;
+                case 'potencial':
+                    yVal = results.value.coefficients[0] * 
+                        Math.pow(xVal, results.value.coefficients[1]);
+                    break;
+                case 'lineal':
+                default:
+                    yVal = results.value.coefficients[0] + 
+                        results.value.coefficients[1] * xVal;
+                    break;
             }
+            
+            curvePoints.push({ x: xVal, y: yVal });
         }
         
-        const allYValues = curvePoints.map(p => p.y);
-        const minY = Math.min(...allYValues);
-        const maxY = Math.max(...allYValues);
+        // IMPORTANTE: Incluir los datos reales Y en el cálculo de escala
+        const allYValues = [...curvePoints.map(p => p.y), ...yValues];
+        const allXValues = [...curvePoints.map(p => p.x), ...xValues];
         
-        const width = 400; const height = 250; const padding = 40;
-        const scaleX = (xCoord: number) => padding + ((xCoord - minX) / (maxX - minX || 1)) * (width - 2 * padding);
-        const scaleY = (yCoord: number) => height - (padding + ((yCoord - minY) / (maxY - minY || 1)) * (height - 2 * padding));
+        const minXScale = Math.min(...allXValues);
+        const maxXScale = Math.max(...allXValues);
+        const minYScale = Math.min(...allYValues);
+        const maxYScale = Math.max(...allYValues);
         
-        return {
-            points: curvePoints.map(p => ({ x: scaleX(p.x), y: scaleY(p.y) })),
-            dataPoints: xValues.map((xVal, i) => ({ x: scaleX(xVal), y: scaleY(yValues[i]) }))
+        const width = 400;
+        const height = 250;
+        const padding = 40;
+        
+        // Funciones de escala corregidas
+        const scaleX = (xCoord: number): number => {
+            return padding + ((xCoord - minXScale) / (maxXScale - minXScale || 1)) * (width - 2 * padding);
         };
+        
+        const scaleY = (yCoord: number): number => {
+            return height - padding - ((yCoord - minYScale) / (maxYScale - minYScale || 1)) * (height - 2 * padding);
+        };
+        
+         const result = {
+            points: curvePoints.map(p => ({
+                x: scaleX(p.x),
+                y: scaleY(p.y)
+            })),
+            dataPoints: xValues.map((xVal, i) => ({
+                x: scaleX(xVal),
+                y: scaleY(yValues[i])
+            })),
+            minX: minXScale,
+            maxX: maxXScale,
+            minY: minYScale,
+            maxY: maxYScale
+        };
+
+        console.log('=== CURVE DATA DEBUG ===');
+        console.log('Coeficientes:', results.value.coefficients);
+        console.log('Rango X:', minXScale, 'a', maxXScale);
+        console.log('Rango Y:', minYScale, 'a', maxYScale);
+        console.log('Primer punto curva (raw):', curvePoints[0]);
+        console.log('Último punto curva (raw):', curvePoints[curvePoints.length - 1]);
+        console.log('Primer punto escalado:', result.points[0]);
+        console.log('Último punto escalado:', result.points[result.points.length - 1]);
+        console.log('DataPoints:', result.dataPoints);
+        console.log('========================');
+        return result;
+
     } catch (error) {
         console.error('Error en curveData:', error);
         return null;
@@ -236,13 +278,20 @@ const calcular = async () => {
         const response = await axios.post('/calc-regresion', payload);
         const data = response.data.data;
 
+        // DEBUGGING - VER QUÉ ENVÍA EL BACKEND
+        console.log('=== RESPONSE FROM BACKEND ===');
+        console.log('Full data:', data);
+        console.log('Coefficients:', data.coefficients);
+        console.log('Type:', typeof data.coefficients);
+        console.log('=============================');
+
         results.value = {
             r2: data.R2 ?? 0,
             equation: data.equation ?? `Modelo (R²=${(data.R2*100).toFixed(2)}%)`,
-            coefficients: data.coefficients ?? [],
+             coefficients: data.solutions ?? [],
             prediction: data.predictions ?? [],
-            sse: data.sse ?? 0,
-            sst: data.sst ?? 0
+            sse: data.SSE ?? 0,
+            sst: data.SST ?? 0
         };
         showResults.value = true;
         calcResult.value = null; calcInputs.value = {};
@@ -365,18 +414,41 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
                 </div>
 
                 <div v-if="activeChart === 'curva' && curveData" class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
-                    <h3 class="font-bold mb-4">Curva del Modelo</h3>
-                    <div class="w-full aspect-video bg-gray-50 dark:bg-[#151515] rounded-lg relative overflow-hidden">
-                        <svg viewBox="0 0 400 250" class="w-full h-full p-4">
-                            <line x1="40" y1="210" x2="360" y2="210" stroke="currentColor" class="text-gray-300" />
-                            <line x1="40" y1="210" x2="40" y2="40" stroke="currentColor" class="text-gray-300" />
-                            <polyline :points="curveData.points.map(p => `${p.x},${p.y}`).join(' ')" fill="none" stroke="#9333ea" stroke-width="2" />
-                            <circle v-for="(p, i) in curveData.dataPoints" :key="i" :cx="p.x" :cy="p.y" r="4" class="fill-red-500 stroke-red-700">
-                                <title>Punto {{ i + 1 }}</title>
-                            </circle>
-                        </svg>
-                    </div>
-                </div>
+    <h3 class="font-bold mb-4">Curva del Modelo</h3>
+    <div class="w-full aspect-video bg-gray-50 dark:bg-[#151515] rounded-lg relative overflow-hidden">
+        <svg viewBox="0 0 400 250" class="w-full h-full">
+            <!-- Ejes -->
+            <line x1="40" y1="210" x2="360" y2="210" stroke="currentColor" class="text-gray-300" stroke-width="2" />
+            <line x1="40" y1="210" x2="40" y2="40" stroke="currentColor" class="text-gray-300" stroke-width="2" />
+            
+            <!-- Curva del modelo -->
+            <polyline 
+                :points="curveData.points.map(p => `${p.x},${p.y}`).join(' ')" 
+                fill="none" 
+                stroke="#9333ea" 
+                stroke-width="2" 
+            />
+            
+            <!-- Puntos de datos reales -->
+            <circle 
+                v-for="(p, i) in curveData.dataPoints" 
+                :key="i" 
+                :cx="p.x" 
+                :cy="p.y" 
+                r="5" 
+                class="fill-red-500 stroke-red-700"
+                stroke-width="2"
+            >
+                <title>Punto {{ i + 1 }}</title>
+            </circle>
+            
+            <!-- Etiquetas -->
+            <text x="200" y="235" text-anchor="middle" class="text-xs fill-gray-500">X</text>
+            <text x="20" y="125" text-anchor="middle" class="text-xs fill-gray-500" transform="rotate(-90, 20, 125)">Y</text>
+        </svg>
+    </div>
+    <p class="text-xs text-gray-500 text-center mt-2">La curva muestra el modelo {{ selectedMethod }} ajustado.</p>
+</div>
 
                 <div v-if="activeChart === 'residuos'" class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
                     <h3 class="font-bold mb-4">Residuos</h3>
