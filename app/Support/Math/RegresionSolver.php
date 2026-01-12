@@ -85,10 +85,6 @@ abstract class RegresionSolver {
 
     abstract public function getName(): string;
 
-    // Hook: por defecto no hace nada; subclases que requieren
-    // transformar datos pueden sobreescribir este método.
-    protected function transformData(): void {}
-
     protected function countVariables(): int  {
         return count($this->data);
     }
@@ -208,8 +204,8 @@ abstract class RegresionSolver {
                     break;
                 default:
                     $sum_y = array_reduce($this->dependent_data, fn(float $s, float $y) => $s + $y, 0.0);
-                        $this->y_avg = $sum_y / count($this->dependent_data);
-                        break;
+                    $this->y_avg = $sum_y / count($this->dependent_data);
+                    
 
                     Log::debug("Suma de Y: {$sum_y}, Promedio de Y: {$this->y_avg}");
             
@@ -219,6 +215,7 @@ abstract class RegresionSolver {
                         $sst += $squared_deviation;
                         Log::debug("Y: {$y}, Desviación: {$deviation}, Desviación²: {$squared_deviation}");
                     }
+                    break;
             }
         
         
@@ -330,39 +327,94 @@ abstract class RegresionSolver {
             $sum_value_variables_squared[] = $sum_sq;
 
             $i = 0;
-            while($i < $this->countVariables()+1){
-                $j = 0;
-                while($j < $this->countVariables()+1){
-                    if($i == 0){
-                        if($j != 0){
-                        $matind[$i][$j] = $sum_value_variables[$j-1];
-                        }else{
-                            $j+=1;
-                            continue;
-                        }
-                    }else if($j == 0){
-                        $matind[$i][$j] = $sum_value_variables[$j];
-                    }else if($j == $i){
-                        $matind[$i][$j] = $sum_value_variables_squared[$i];
-                    }else{
-                        $matind[$i][$j] = 0; //test
+            if($this->getName() == "Cuadrático"){
+
+                    foreach($this->data as $idx => $variable_data){
+                    $sum_cube = array_reduce($variable_data->points, fn(float $s, float $value) => $s + pow($value, 3), 0.0);
+                    $sum_4 = array_reduce($variable_data->points, fn(float $s, float $value) => $s + pow($value, 4), 0.0);
                     }
-                    $j+=1;
-                }
-                $i+=1;
+                    $sum_value_variable = [$sum_val, $sum_sq, $sum_cube, $sum_4];
+                    Log::info($sum_value_variable);
+
+                    $sum_product_dep_ind_variables[1] = 0;
+                    for($i = 0; $i < $m; $i++){
+                        foreach($this->data as $index => $variable_data) {
+                        $independ_value = $variable_data->getVariableAt($i);
+                        $dependent_value = $this->dependent_data[$i];
+                        $product = pow($independ_value, 2) * $dependent_value;
+                        
+                        $sum_product_dep_ind_variables[$index+1] += $product;
+                        }
+                    }
+
+                    Log::info($sum_product_dep_ind_variables);
+
+                    $i = 0;
+                    while($i < $this->countVariables()+2){
+                        $j = 0;
+                        while($j < $this->countVariables()+2){
+                            if($i != 0 || $j != 0){
+                                $matind[$i][$j] = $sum_value_variable[$j+$i-1];
+                            }else{
+                                    $j+=1;
+                                    continue;
+                                }
+                            $j+=1;
+                        }
+                        $i+=1;
+                    }
+                    
+                    Log::info($matind);
+                    $MatrizInversaService = new MatrizInversaService();
+                    $matindinv = $MatrizInversaService->inversa($matind);
+
+                    $mata = new Matrix($matindinv,$this->countVariables()+2,$this->countVariables()+2, true);
+                    
+
+                    $matdep = array();
+                    $matdep[] = $sum_y;
+                    foreach($sum_product_dep_ind_variables as $sumprod_dep_ind){
+                        $matdep[] = $sumprod_dep_ind;
+                    }
+                    $matb = new Matrix($matdep,$this->countVariables()+2,1, true);
+
+
+            }else{
+                    while($i < $this->countVariables()+1){
+                        $j = 0;
+                        while($j < $this->countVariables()+1){
+                            if($i == 0){
+                                if($j != 0){
+                                $matind[$i][$j] = $sum_value_variables[$j-1];
+                                }else{
+                                    $j+=1;
+                                    continue;
+                                }
+                            }else if($j == 0){
+                                $matind[$i][$j] = $sum_value_variables[$j];
+                            }else if($j == $i){
+                                $matind[$i][$j] = $sum_value_variables_squared[$i];
+                            }else{
+                                $matind[$i][$j] = 0; //test
+                            }
+                            $j+=1;
+                        }
+                        $i+=1;
+                    }
+
+                    $MatrizInversaService = new MatrizInversaService();
+                    $matindinv = $MatrizInversaService->inversa($matind);
+
+                    $mata = new Matrix($matindinv,$this->countVariables()+1,$this->countVariables()+1);
+
+                    $matdep = array();
+                    $matdep[] = $sum_y;
+                    foreach($sum_product_dep_ind_variables as $sumprod_dep_ind){
+                        $matdep[] = $sumprod_dep_ind;
+                    }
+                    $matb = new Matrix($matdep,$this->countVariables()+1,1);
             }
-
-            $MatrizInversaService = new MatrizInversaService();
-            $matindinv = $MatrizInversaService->inversa($matind);
-
-            $mata = new Matrix($matindinv,$this->countVariables()+1,$this->countVariables()+1);
-
-            $matdep = array();
-            $matdep[] = $sum_y;
-            foreach($sum_product_dep_ind_variables as $sumprod_dep_ind){
-                $matdep[] = $sumprod_dep_ind;
-            }
-            $matb = new Matrix($matdep,$this->countVariables()+1,1);
+            
 
             $solver = new MatrixSolver();
             $matres= $solver->multiply($mata, $matb);
@@ -376,6 +428,8 @@ abstract class RegresionSolver {
                     $this->solutions[0] = exp($this->solutions[0]);
                     break;
             }
+
+            Log::info($this->solutions);
 
             //Calculamos SSE y SST
             $this->SSE = $this->calculateSSE();
@@ -395,7 +449,7 @@ abstract class RegresionSolver {
             
             Log::info("Cálculo de R**2 completado. Resultado: {$R2}");
             $this->R2 = 0.0;
-            return ["R2" => $R2, "solutions" => $this->solutions];
+            return ["R2" => $R2, "solutions" => $this->solutions, "SST" => $this->SST, "SSE" => $this->SSE];
         } catch (Exception $e) {
             Log::error("Error al calcular los coeficientes de regresión: " . $e->getMessage());
             Log::error("Stack trace: " . $e->getTraceAsString());

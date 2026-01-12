@@ -9,10 +9,17 @@ class Matrix{
     public int $rows;
     public int $cols;
 
-    public function __construct(array $data, int $rows, int $cols){
-        if($rows != count($data) || $rows <= 0 || $cols <= 0){
-            throw new InvalidArgumentException("No coinciden las filas con los datos");
+    public function __construct(array $data, int $rows, int $cols, bool $isCuadratic = false){
+        if($isCuadratic == true){
+            if($rows != count($data) || $rows <= 0 || $cols <= 0){
+                throw new InvalidArgumentException("No coinciden las filas con los datos");
+            }
+        }else{
+            if($rows != count($data) || $rows <= 0 || $cols <= 0){
+                throw new InvalidArgumentException("No coinciden las filas con los datos");
+            }
         }
+        
         $this->data = $data;
         $this->rows = $rows;
         $this->cols = $cols;
