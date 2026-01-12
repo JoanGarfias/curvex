@@ -21,7 +21,7 @@ class RegresionService
 {
 
 
-    public function getBetterModel(
+    public static function getBetterModel(
         RegresionLinealModel $lineal = null,
         RegresionExponentialModel $exponential = null,
         RegresionPotentialModel $potential = null,
@@ -50,8 +50,8 @@ class RegresionService
 
         if($bestModel !== null){
             $response->R2 = $bestR2;
-            $response->name = $model->getName();
-            $response->model = $model;
+            $response->name = $bestModel->getName();
+            $response->model = $bestModel;
         }
 
         return $response;
