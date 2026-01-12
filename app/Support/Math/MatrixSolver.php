@@ -23,7 +23,7 @@ class MatrixSolver
         for ($i = 0; $i < $a->rows; $i++) {
             
             // j: recorre columnas de B
-            //for ($j = 0; $j < $b->cols; $j++) {
+            for ($j = 0; $j < $b->cols; $j++) {
                 
                 $sum = 0;
                 
@@ -31,11 +31,11 @@ class MatrixSolver
                 // Aquí ocurre el producto punto
                 for ($k = 0; $k < $a->cols; $k++) {
                     // C[i][j] += A[i][k] * B[k][j]
-                    $sum += $a->data[$i][$k] * $b->data[$k];
+                    $sum += $a->data[$i][$k] * $b->data[$k][$j];
                 }
 
-                $resultData[$i] = $sum;
-            //}
+                $resultData[$i][$j] = $sum;
+            }
         }
 
         // Retornamos una nueva matriz con las dimensiones correctas
