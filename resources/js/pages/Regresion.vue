@@ -25,8 +25,8 @@ const numVars = ref(0);
 const activeChart = ref<ChartType>('ajuste');
 
 // Estado para la Calculadora Final
-const calcMode = ref<'calcY' | 'calcX'>('calcY'); // Qué queremos calcular
-const calcInputs = ref<Record<string, string>>({}); // Valores ingresados
+const calcMode = ref<'calcY' | 'calcX'>('calcY'); 
+const calcInputs = ref<Record<string, string>>({}); 
 const calcResult = ref<number | null>(null);
 
 // --- OPCIONES DE MÉTODO ---
@@ -83,11 +83,7 @@ const parseData = () => {
 
 watch([inputX, inputY], () => { if(inputX.value && inputY.value) parseData(); });
 
-
-
-// --- GRÁFICA ---
-
-// --- GRÁFICAS (LÓGICA DE TU COMPAÑERA INTACTA) ---
+// --- GRÁFICAS ---
 
 const chartData = computed(() => {
     if (!showResults.value || inputY.value === '') return null;
@@ -110,7 +106,69 @@ const chartData = computed(() => {
     };
 });
 
+// Lógica de curva suave (de tu compañera)
+const curveData = computed(() => {
+    if (!showResults.value || !inputX.value) return null;
+    
+    try {
+        const rowsX = inputX.value.trim().split('\n').map(r => r.trim().split(/[\s,;\t]+/).map(Number));
+        const xValues = rowsX.map(row => row[0]); 
+        const yValues = inputY.value.trim().split(/[\s,;\n]+/).map(Number);
+        
+        if (xValues.length === 0 || yValues.length === 0) return null;
+        
+        const minX = Math.min(...xValues);
+        const maxX = Math.max(...xValues);
+        
+        // Generar 100 puntos
+        const numPoints = 100;
+        const step = (maxX - minX) / (numPoints - 1);
+        
+        const curvePoints = [];
+        for (let i = 0; i < numPoints; i++) {
+            const xVal = minX + step * i;
+            let yVal = 0;
+            const coeffs = results.value.coefficients;
 
+            if (coeffs.length > 0) {
+                switch(selectedMethod.value) {
+                    case 'cuadratico':
+                        yVal = coeffs[0] + coeffs[1] * xVal + coeffs[2] * Math.pow(xVal, 2);
+                        break;
+                    case 'exponencial':
+                        // y = a * e^(bx)  -> coeffs[0] es 'a', coeffs[1] es 'b'
+                        yVal = coeffs[0] * Math.exp(coeffs[1] * xVal);
+                        break;
+                    case 'potencial':
+                        // y = a * x^b
+                        yVal = coeffs[0] * Math.pow(xVal, coeffs[1]);
+                        break;
+                    case 'lineal':
+                    default:
+                        yVal = coeffs[0] + coeffs[1] * xVal;
+                        break;
+                }
+                curvePoints.push({ x: xVal, y: yVal });
+            }
+        }
+        
+        const allYValues = curvePoints.map(p => p.y);
+        const minY = Math.min(...allYValues);
+        const maxY = Math.max(...allYValues);
+        
+        const width = 400; const height = 250; const padding = 40;
+        const scaleX = (xCoord: number) => padding + ((xCoord - minX) / (maxX - minX || 1)) * (width - 2 * padding);
+        const scaleY = (yCoord: number) => height - (padding + ((yCoord - minY) / (maxY - minY || 1)) * (height - 2 * padding));
+        
+        return {
+            points: curvePoints.map(p => ({ x: scaleX(p.x), y: scaleY(p.y) })),
+            dataPoints: xValues.map((xVal, i) => ({ x: scaleX(xVal), y: scaleY(yValues[i]) }))
+        };
+    } catch (error) {
+        console.error('Error en curveData:', error);
+        return null;
+    }
+});
 
 const residuals = computed(() => {
     if (!showResults.value) return [];
@@ -135,92 +193,9 @@ const realizarPrediccion = () => {
     const coeffs = results.value.coefficients;
     if (coeffs.length === 0) return;
 
-
-const curveData = computed(() => {
-    if (!showResults.value || !inputX.value) return null;
-    
     try {
-        // Parsear X e Y
-        const rowsX = inputX.value.trim().split('\n').map(r => 
-            r.trim().split(/[\s,;\t]+/).map(Number)
-        );
-        const xValues = rowsX.map(row => row[0]); // Primera columna
-        const yValues = inputY.value.trim().split(/[\s,;\n]+/).map(Number);
-        
-        if (xValues.length === 0 || yValues.length === 0) return null;
-        
-        const minX = Math.min(...xValues);
-        const maxX = Math.max(...xValues);
-        
-        // Generar 100 puntos para curva suave
-        const numPoints = 100;
-        const step = (maxX - minX) / (numPoints - 1);
-        
-        const curvePoints = [];
-        for (let i = 0; i < numPoints; i++) {
-            const xVal = minX + step * i;
-            let yVal;
-            
-            // Calcular Y según el método
-            switch(selectedMethod.value) {
-                case 'cuadratico':
-                    yVal = results.value.coefficients[0] + 
-                        results.value.coefficients[1] * xVal + 
-                        results.value.coefficients[2] * Math.pow(xVal, 2);
-                    break;
-                case 'exponencial':
-                    yVal = results.value.coefficients[0] * 
-                        Math.exp(results.value.coefficients[1] * xVal);
-                    break;
-                case 'potencial':
-                    yVal = results.value.coefficients[0] * 
-                        Math.pow(xVal, results.value.coefficients[1]);
-                    break;
-                case 'lineal':
-                default:
-                    yVal = results.value.coefficients[0] + 
-                        results.value.coefficients[1] * xVal;
-                    break;
-            }
-            
-            curvePoints.push({ x: xVal, y: yVal });
-        }
-        
-        // Calcular escala - AQUÍ ESTABA EL ERROR
-        const allYValues = curvePoints.map(p => p.y);
-        const minY = Math.min(...allYValues);
-        const maxY = Math.max(...allYValues);
-        
-        const width = 400;
-        const height = 250;
-        const padding = 40;
-        
-        // Funciones de escala con nombres diferentes para evitar confusión
-        const scaleX = (xCoord: number) => padding + ((xCoord - minX) / (maxX - minX || 1)) * (width - 2 * padding);
-        const scaleY = (yCoord: number) => height - (padding + ((yCoord - minY) / (maxY - minY || 1)) * (height - 2 * padding));
-        
-        return {
-            points: curvePoints.map(p => ({
-                x: scaleX(p.x),
-                y: scaleY(p.y)
-            })),
-            dataPoints: xValues.map((xVal, i) => ({
-                x: scaleX(xVal),
-                y: scaleY(yValues[i])
-            }))
-        };
-    } catch (error) {
-        console.error('Error en curveData:', error);
-        return null;
-    }
-});
-
-    try {
-        // Caso 1: Calcular Y (dado X)
         if (calcMode.value === 'calcY') {
-            let y = coeffs[0]; // a0 (Intercepto)
-            
-            // Sumar a_i * x_i
+            let y = coeffs[0]; 
             for (let i = 0; i < numVars.value; i++) {
                 const val = parseFloat(calcInputs.value[`x${i}`] || '0');
                 if (isNaN(val)) throw new Error("Valor inválido");
@@ -228,14 +203,11 @@ const curveData = computed(() => {
             }
             calcResult.value = y;
         } 
-        // Caso 2: Calcular X (dado Y) - Solo para Regresión Simple
         else if (calcMode.value === 'calcX' && numVars.value === 1) {
             const yTarget = parseFloat(calcInputs.value['y'] || '0');
             const a0 = coeffs[0];
             const a1 = coeffs[1];
-            
-            // Despeje simple: x = (y - a0) / a1
-            if (a1 === 0) throw new Error("Pendiente cero, no se puede despejar X");
+            if (a1 === 0) throw new Error("Pendiente cero");
             calcResult.value = (yTarget - a0) / a1;
         }
     } catch (e) {
@@ -243,7 +215,6 @@ const curveData = computed(() => {
         calcResult.value = null;
     }
 };
-
 
 // --- CALCULAR MODELO ---
 const calcular = async () => {
@@ -274,9 +245,7 @@ const calcular = async () => {
             sst: data.sst ?? 0
         };
         showResults.value = true;
-        // Reset calculadora
-        calcResult.value = null;
-        calcInputs.value = {};
+        calcResult.value = null; calcInputs.value = {};
 
     } catch (e: any) {
         console.error(e);
@@ -381,22 +350,7 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
                     <button v-for="chart in availableCharts" :key="chart" @click="activeChart = chart" class="px-3 py-1 text-xs rounded-lg border transition capitalize" :class="activeChart === chart ? 'bg-purple-600 text-white border-purple-600' : 'border-gray-300 dark:border-gray-700 text-gray-400 hover:text-white'">{{ chart }}</button>
                 </div>
 
-
-            <!-- GRÁFICA DE AJUSTE -->
-            <div v-if="activeChart === 'ajuste' && chartData" 
-                class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
-                <h3 class="font-bold mb-4">Ajuste (Real vs Predicho)</h3>
-                <div class="w-full aspect-video bg-gray-50 dark:bg-[#151515] rounded-lg relative overflow-hidden">
-                    <svg :viewBox="`0 0 400 250`" class="w-full h-full p-4">
-                        <line x1="30" y1="220" x2="370" y2="220" stroke="currentColor" class="text-gray-300" />
-                        <line x1="30" y1="220" x2="30" y2="30" stroke="currentColor" class="text-gray-300" />
-                        <line :x1="chartData.line.x1" :y1="chartData.line.y1" :x2="chartData.line.x2" :y2="chartData.line.y2" stroke="#9333ea" stroke-width="1" stroke-dasharray="4" />
-                        <circle v-for="(p, i) in chartData.points" :key="i" :cx="p.cx" :cy="p.cy" r="4" class="fill-white stroke-purple-600 hover:fill-purple-600 transition-colors">
-                            <title>Real: {{ p.real.toFixed(2) }} / Pred: {{ p.pred.toFixed(2) }}</title>
-                        </circle>
-                    </svg>
-
-                <div v-if="chartData && activeChart === 'ajuste'" class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
+                <div v-if="activeChart === 'ajuste' && chartData" class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
                     <h3 class="font-bold mb-4">Ajuste (Real vs Predicho)</h3>
                     <div class="w-full aspect-video bg-gray-50 dark:bg-[#151515] rounded-lg relative overflow-hidden">
                         <svg :viewBox="`0 0 400 250`" class="w-full h-full p-4">
@@ -408,55 +362,30 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
                             </circle>
                         </svg>
                     </div>
-
                 </div>
-            </div>
 
-
-
-                <div v-if="activeChart === 'curva' && curveData"
-                    class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
+                <div v-if="activeChart === 'curva' && curveData" class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
                     <h3 class="font-bold mb-4">Curva del Modelo</h3>
-                    <svg viewBox="0 0 400 250" class="w-full h-full">
-                        <!-- Ejes -->
-                        <line x1="40" y1="210" x2="360" y2="210" 
-                            stroke="currentColor" class="text-gray-300" />
-                        <line x1="40" y1="210" x2="40" y2="40" 
-                            stroke="currentColor" class="text-gray-300" />
-                        
-                        <!-- Curva del modelo (línea suave) -->
-                        <polyline
-                            :points="curveData.points.map(p => `${p.x},${p.y}`).join(' ')"
-                            fill="none"
-                            stroke="#9333ea"
-                            stroke-width="2"
-                        />
-                        
-                        <!-- Puntos de datos reales -->
-                        <circle
-                            v-for="(p, i) in curveData.dataPoints"
-                            :key="i"
-                            :cx="p.x"
-                            :cy="p.y"
-                            r="4"
-                            class="fill-red-500 stroke-red-700"
-                        >
-                            <title>Punto {{ i + 1 }}</title>
-                        </circle>
-                    </svg>
-
-                <div v-if="activeChart === 'curva'" class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
-                    <h3 class="font-bold mb-4">Curva del Modelo</h3>
-                    <div class="w-full aspect-video flex items-center justify-center text-gray-400 text-sm">Visualización simplificada de la curva</div>
-
+                    <div class="w-full aspect-video bg-gray-50 dark:bg-[#151515] rounded-lg relative overflow-hidden">
+                        <svg viewBox="0 0 400 250" class="w-full h-full p-4">
+                            <line x1="40" y1="210" x2="360" y2="210" stroke="currentColor" class="text-gray-300" />
+                            <line x1="40" y1="210" x2="40" y2="40" stroke="currentColor" class="text-gray-300" />
+                            <polyline :points="curveData.points.map(p => `${p.x},${p.y}`).join(' ')" fill="none" stroke="#9333ea" stroke-width="2" />
+                            <circle v-for="(p, i) in curveData.dataPoints" :key="i" :cx="p.x" :cy="p.y" r="4" class="fill-red-500 stroke-red-700">
+                                <title>Punto {{ i + 1 }}</title>
+                            </circle>
+                        </svg>
+                    </div>
                 </div>
 
                 <div v-if="activeChart === 'residuos'" class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
                     <h3 class="font-bold mb-4">Residuos</h3>
-                    <svg viewBox="0 0 400 250" class="w-full h-full p-4">
-                        <line x1="0" y1="125" x2="400" y2="125" class="stroke-gray-400" stroke-dasharray="4" />
-                        <circle v-for="(r, i) in residuals" :key="i" :cx="i * 30 + 30" :cy="125 - r*10" r="4" class="fill-purple-600" />
-                    </svg>
+                    <div class="w-full aspect-video bg-gray-50 dark:bg-[#151515] rounded-lg">
+                        <svg viewBox="0 0 400 250" class="w-full h-full p-4">
+                            <line x1="0" y1="125" x2="400" y2="125" class="stroke-gray-400" stroke-dasharray="4" />
+                            <circle v-for="(r, i) in residuals" :key="i" :cx="i * 30 + 30" :cy="125 - r*10" r="4" class="fill-purple-600" />
+                        </svg>
+                    </div>
                 </div>
 
                 <div v-if="activeChart === 'histograma'" class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
@@ -474,17 +403,14 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
 
                     <div class="flex gap-6 mb-6">
                         <label class="flex items-center gap-2 cursor-pointer group">
-                            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors"
-                                :class="calcMode === 'calcY' ? 'border-purple-600' : 'border-gray-300'">
+                            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors" :class="calcMode === 'calcY' ? 'border-purple-600' : 'border-gray-300'">
                                 <div v-if="calcMode === 'calcY'" class="w-2.5 h-2.5 bg-purple-600 rounded-full"></div>
                             </div>
                             <input type="radio" v-model="calcMode" value="calcY" class="hidden" />
                             <span :class="calcMode === 'calcY' ? 'text-purple-600 font-bold' : 'text-gray-500'">Calcular Y</span>
                         </label>
-
                         <label v-if="numVars === 1" class="flex items-center gap-2 cursor-pointer group">
-                            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors"
-                                :class="calcMode === 'calcX' ? 'border-purple-600' : 'border-gray-300'">
+                            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors" :class="calcMode === 'calcX' ? 'border-purple-600' : 'border-gray-300'">
                                 <div v-if="calcMode === 'calcX'" class="w-2.5 h-2.5 bg-purple-600 rounded-full"></div>
                             </div>
                             <input type="radio" v-model="calcMode" value="calcX" class="hidden" />
@@ -493,42 +419,26 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
                     </div>
 
                     <div class="flex items-end gap-4">
-                        
                         <div v-if="calcMode === 'calcY'" class="flex-grow grid gap-4" :class="numVars > 1 ? 'grid-cols-2' : 'grid-cols-1'">
                             <div v-for="i in numVars" :key="i">
                                 <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Valor de X{{ numVars > 1 ? i : '' }}</label>
-                                <input 
-                                    v-model="calcInputs[`x${i-1}`]" 
-                                    type="number" 
-                                    class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-[#151515] border dark:border-gray-700 outline-none focus:ring-2 focus:ring-purple-500 font-mono"
-                                    :placeholder="`Ingresa X${numVars > 1 ? i : ''}...`"
-                                />
+                                <input v-model="calcInputs[`x${i-1}`]" type="number" class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-[#151515] border dark:border-gray-700 outline-none focus:ring-2 focus:ring-purple-500 font-mono no-arrow" :placeholder="`Ingresa X${numVars > 1 ? i : ''}...`" />
                             </div>
                         </div>
-
                         <div v-else class="flex-grow">
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Valor de Y</label>
-                            <input 
-                                v-model="calcInputs['y']" 
-                                type="number" 
-                                class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-[#151515] border dark:border-gray-700 outline-none focus:ring-2 focus:ring-purple-500 font-mono"
-                                placeholder="Ingresa Y..."
-                            />
+                            <input v-model="calcInputs['y']" type="number" class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-[#151515] border dark:border-gray-700 outline-none focus:ring-2 focus:ring-purple-500 font-mono" placeholder="Ingresa Y..." />
                         </div>
-
-                        <Button @click="realizarPrediccion" class="bg-purple-600 hover:bg-purple-700 h-[42px] px-6">
-                            Calcular
-                        </Button>
+                        <Button @click="realizarPrediccion" class="bg-purple-600 hover:bg-purple-700 h-[42px] px-6">Calcular</Button>
                     </div>
 
                     <div v-if="calcResult !== null" class="mt-6 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-xl flex items-center justify-between animate-in slide-in-from-top-2">
-                        <span class="text-sm font-bold text-purple-800 dark:text-purple-300 uppercase tracking-wider">Resultado Calculado:</span>
+                        <span class="text-sm font-bold text-purple-800 dark:text-purple-300 uppercase tracking-wider">Resultado:</span>
                         <div class="flex items-center gap-2 text-2xl font-mono font-bold text-purple-700 dark:text-purple-200">
                             <span>{{ calcMode === 'calcY' ? 'Y' : 'X' }} =</span>
                             <span>{{ calcResult.toFixed(4) }}</span>
                         </div>
                     </div>
-
                 </div>
 
             </div>
@@ -537,3 +447,14 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
     <FooterComp class="mt-12" />
   </div>
 </template>
+
+<style>
+.no-arrow::-webkit-outer-spin-button,
+.no-arrow::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.no-arrow {
+  -moz-appearance: textfield;
+}
+</style>
