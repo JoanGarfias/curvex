@@ -160,7 +160,7 @@ abstract class RegresionSolver {
         return $this->R2;
     }
 
-    public function calculateR2(): float {
+    public function calculateR2(): array {
         /*Paso 1: Calcular m, la cantidad de datos */
         $m = (float) $this->getM();
         Log::info("Iniciando cálculo de R**2 para regresión lineal");
@@ -314,7 +314,7 @@ abstract class RegresionSolver {
             
             Log::info("Cálculo de R**2 completado. Resultado: {$R2}");
             $this->R2 = 0.0;
-            return $R2;
+            return ["R2" => $R2, "solutions" => $this->solutions];
         } catch (Exception $e) {
             Log::error("Error al calcular los coeficientes de regresión: " . $e->getMessage());
             Log::error("Stack trace: " . $e->getTraceAsString());

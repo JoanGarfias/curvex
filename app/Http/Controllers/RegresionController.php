@@ -56,12 +56,13 @@ class RegresionController extends Controller
             Log::info("Servicio de regresión creado: " . class_basename($regresionService));
 
             // Calcular R²
-            $R2 = $regresionService->calculateR2();
+            $datos = $regresionService->calculateR2();
 
-            Log::info("Cálculo de regresión completado exitosamente. R² = {$R2}");
+            Log::info("Cálculo de regresión completado exitosamente. R² = {$datos['R2']}");
 
             $result = [
-                'R2' => $R2,
+                'R2' => $datos['R2'],
+                'solutions' => $datos['solutions'],
                 'method' => $method,
                 'independent_variables_count' => count($independent_variables),
                 'data_points_count' => count($dependent_values)
