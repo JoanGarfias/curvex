@@ -28,16 +28,16 @@ const availableMethods = ref([
 ]);
 
 // Datos procesados
-const matrixX = ref<number[][]>([]); // Filas de X
+const matrixX = ref<number[][]>([]); // Matriz de filas (para visualización)
 const vectorY = ref<number[]>([]);   // Vector Y
-const numVars = ref(0); // Columnas
+const numVars = ref(0); // Cantidad de columnas (Variables independientes)
 
 // Resultados
 const results = ref({
     r2: 0,
     equation: '',
     coefficients: [] as number[],
-    prediction: [] as number[], // Y predichas
+    prediction: [] as number[],
     sse: 0,
     sst: 0
 });
@@ -47,24 +47,25 @@ const parseData = () => {
     try {
         errorMsg.value = '';
         
-        // Parsear X (Soporta copiar desde Excel con tabs o espacios)
+        // 1. Limpieza y Parseo de X (Soporta Excel: espacios, tabs, comas)
         const rowsX = inputX.value.trim().split('\n');
         const parsedX = rowsX.map(row => 
             row.trim().split(/[\s,;\t]+/).filter(v => v !== '').map(Number)
         ).filter(row => row.length > 0);
 
-        // Parsear Y
+        // 2. Limpieza y Parseo de Y
         const parsedY = inputY.value.trim().split(/[\s,;\n]+/).filter(v => v !== '').map(Number);
 
         if (parsedX.length === 0 || parsedY.length === 0) return;
 
+        // Validaciones según el MD
         if (parsedX.length !== parsedY.length) {
-            throw new Error(`Filas no coinciden: X tiene ${parsedX.length}, Y tiene ${parsedY.length}.`);
+            throw new Error(`Cantidad de datos desigual: X tiene ${parsedX.length} filas, Y tiene ${parsedY.length}.`);
         }
 
         const cols = parsedX[0].length;
         if (parsedX.some(row => row.length !== cols)) {
-            throw new Error("La matriz X no es uniforme (revisa las columnas).");
+            throw new Error("La matriz X no es uniforme. Asegúrate que todas las filas tengan la misma cantidad de columnas.");
         }
 
         matrixX.value = parsedX;
@@ -74,6 +75,7 @@ const parseData = () => {
     } catch (e: any) {
         errorMsg.value = e.message;
         matrixX.value = [];
+        numVars.value = 0;
     }
 };
 
@@ -85,12 +87,11 @@ watch([inputX, inputY], () => {
 const chartData = computed(() => {
     if (vectorY.value.length < 2 || !showResults.value) return null;
     
-    // Graficamos Y Real vs Y Predicha (Scatter Plot de Paridad)
-    // Esto funciona para 1 variable y para N variables
-    
+    // Si no tenemos predicciones del backend, usamos Y vs Y (identidad)
+    // Eje X: Predicción (o Y real si no hay predicción), Eje Y: Y Real
     const dataPoints = vectorY.value.map((yReal, i) => ({
-        x: results.value.prediction[i] || yReal, // Eje X: Predicción
-        y: yReal // Eje Y: Real
+        x: results.value.prediction[i] ?? yReal, 
+        y: yReal
     }));
 
     const allVals = [...dataPoints.map(p => p.x), ...dataPoints.map(p => p.y)];
@@ -99,6 +100,7 @@ const chartData = computed(() => {
     
     const width = 400; const height = 250; const padding = 30;
 
+    // Escalas
     const scale = (val: number) => padding + ((val - minVal) / (maxVal - minVal || 1)) * (width - 2 * padding);
     const scaleYInv = (val: number) => height - (padding + ((val - minVal) / (maxVal - minVal || 1)) * (height - 2 * padding));
 
@@ -108,13 +110,7 @@ const chartData = computed(() => {
         real: p.y, pred: p.x
     }));
 
-    // Línea de identidad ideal (x=y)
-    const line = {
-        x1: scale(minVal), y1: scaleYInv(minVal),
-        x2: scale(maxVal), y2: scaleYInv(maxVal)
-    };
-
-    return { width, height, points: svgPoints, line };
+    return { width, height, points: svgPoints, minVal, maxVal, scale, scaleYInv };
 });
 
 // --- ENVIAR AL BACKEND ---
@@ -126,60 +122,59 @@ const calcular = async () => {
     showResults.value = false;
 
     try {
-        // 1. Transponer la matriz X (Convertir filas a columnas)
-        // El controlador espera un array donde cada elemento es UNA VARIABLE COMPLETA (una columna)
-        const numColumns = matrixX.value[0].length;
-        const independentPayload: string[] = [];
-
-        for (let col = 0; col < numColumns; col++) {
-            // Extraemos la columna 'col' de todas las filas
-            const columnData = matrixX.value.map(row => row[col]);
-            // La convertimos a string separado por comas "10,20,30"
-            independentPayload.push(columnData.join(','));
+        // --- PREPARACIÓN DEL PAYLOAD SEGÚN EL MD ---
+        
+        // 1. Transponer Matriz X: Convertir filas a Columnas (Arrays de strings)
+        // El backend espera: independent: ["1,2,3", "4,5,6"]
+        const independentArray: string[] = [];
+        for (let col = 0; col < numVars.value; col++) {
+            const columnValues = matrixX.value.map(row => row[col]);
+            independentArray.push(columnValues.join(','));
         }
 
-        // 2. Preparar payload en el formato específico que pide tu RegresionController.php
+        // 2. Convertir Y a string: "2,4,6"
+        const dependentString = vectorY.value.join(',');
+
+        // 3. Payload Final
         const payload = {
-            independent: independentPayload, // Array de strings ["x1,x1...", "x2,x2..."]
-            dependent: vectorY.value.join(','), // String "y1,y2,y3..."
+            dependent: dependentString,
+            independent: independentArray,
             method: selectedMethod.value
         };
 
+        // 4. Petición Axios
         const response = await axios.post('/calc-regresion', payload);
         const data = response.data.data;
 
-        // 3. Procesar resultados
-        // Nota: Tu controlador actual solo devuelve R2, method y counts.
-        // Ajustaremos para mostrar lo que llegue.
+        // 5. Mapeo de Resultados
         results.value = {
             r2: data.R2 ?? 0,
-            equation: data.equation ?? `Modelo calculado (R² = ${data.R2?.toFixed(4)})`, 
+            equation: data.equation ?? `Modelo Calculado`, 
+            // Si el backend no envía coeficientes, dejamos vacío por ahora
             coefficients: data.coefficients ?? [],
-            prediction: data.predictions ?? [], 
-            sse: data.sse ?? 0,
-            sst: data.sst ?? 0
+            // Si el backend no envía predicciones, usamos los datos originales para no romper la gráfica
+            prediction: data.predictions ?? [],
+            sse: data.SSE ?? 0,
+            sst: data.SST ?? 0
         };
 
         showResults.value = true;
 
     } catch (e: any) {
         console.error(e);
-        errorMsg.value = e.response?.data?.message || "Error al calcular regresión. Verifica el formato de los datos.";
+        // Manejo de errores específicos del backend (422)
+        if (e.response && e.response.data && e.response.data.message) {
+             errorMsg.value = e.response.data.message;
+             if(e.response.data.errors) {
+                 // Si hay detalles de validación, mostrarlos
+                 errorMsg.value += ' ' + JSON.stringify(e.response.data.errors);
+             }
+        } else {
+            errorMsg.value = "Error de conexión o cálculo.";
+        }
     } finally {
         loading.value = false;
     }
-};
-
-// Fallback para calcular Y gorrito si el backend no lo manda
-const calculatePredictionsLocal = (coeffs: number[], matrix: number[][]) => {
-    if(!coeffs.length) return [];
-    return matrix.map(row => {
-        let y = coeffs[0]; // a0
-        for(let i=0; i<row.length; i++) {
-            if(coeffs[i+1]) y += coeffs[i+1] * row[i];
-        }
-        return y;
-    });
 };
 
 const limpiar = () => {
@@ -218,7 +213,7 @@ const limpiar = () => {
         <div>
             <h1 class="text-3xl font-extrabold leading-tight">Análisis de Regresión</h1>
             <p class="text-sm text-gray-500 dark:text-gray-400">
-                Ajuste de modelos Lineales y Multivariables (Mínimos Cuadrados)
+                Ajuste de modelos Lineales y Multivariables
             </p>
         </div>
     </header>
@@ -254,7 +249,7 @@ const limpiar = () => {
                                 v-model="inputX" 
                                 rows="12" 
                                 class="w-full rounded-xl bg-gray-50 dark:bg-[#151515] border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 p-3 text-xs font-mono leading-relaxed resize-none whitespace-pre"
-                                placeholder="Pega aquí tus columnas de Excel&#10;Ej:&#10;10500  18.2  0.85&#10;12345  17.1  0.90"
+                                placeholder="Pegar columnas de Excel (X1, X2...)"
                             ></textarea>
                         </div>
 
@@ -264,12 +259,12 @@ const limpiar = () => {
                                 v-model="inputY" 
                                 rows="12" 
                                 class="w-full rounded-xl bg-gray-50 dark:bg-[#151515] border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 p-3 text-xs font-mono leading-relaxed resize-none text-center"
-                                placeholder="Ej:&#10;97.5&#10;109.5&#10;129.9"
+                                placeholder="Pegar col Y"
                             ></textarea>
                         </div>
                     </div>
 
-                    <div v-if="errorMsg" class="mt-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs rounded-lg flex items-start gap-2">
+                    <div v-if="errorMsg" class="mt-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs rounded-lg flex items-start gap-2 break-all">
                         <AlertCircle class="w-4 h-4 shrink-0 mt-0.5" /> <span>{{ errorMsg }}</span>
                     </div>
 
@@ -323,8 +318,8 @@ const limpiar = () => {
 
                     <div v-if="chartData" class="bg-white dark:bg-[#0b0b0b] rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
                         <div class="flex justify-between items-center mb-6">
-                            <h3 class="font-bold text-gray-700 dark:text-gray-200">Ajuste del Modelo</h3>
-                            <span class="text-xs text-gray-400">Gráfico de Paridad (Y Real vs Y Calculada)</span>
+                            <h3 class="font-bold text-gray-700 dark:text-gray-200">Gráfica de Ajuste</h3>
+                            <span class="text-xs text-gray-400">Y Real vs Y Predicha</span>
                         </div>
                         
                         <div class="w-full aspect-video bg-gray-50 dark:bg-[#151515] rounded-lg relative overflow-hidden border border-gray-100 dark:border-gray-800">
@@ -333,8 +328,8 @@ const limpiar = () => {
                                 <line :x1="30" :y1="chartData.height-30" :x2="30" :y2="0" stroke="currentColor" class="text-gray-300" />
 
                                 <line 
-                                    :x1="chartData.line.x1" :y1="chartData.line.y1" 
-                                    :x2="chartData.line.x2" :y2="chartData.line.y2" 
+                                    :x1="chartData.scale(chartData.minVal)" :y1="chartData.scaleYInv(chartData.minVal)" 
+                                    :x2="chartData.scale(chartData.maxVal)" :y2="chartData.scaleYInv(chartData.maxVal)" 
                                     stroke="#9333ea" 
                                     stroke-width="1" 
                                     stroke-dasharray="5,5" 
@@ -350,21 +345,6 @@ const limpiar = () => {
                                     <title>Real: {{ p.real.toFixed(2) }} | Pred: {{ p.pred.toFixed(2) }}</title>
                                 </circle>
                             </svg>
-                        </div>
-                        <div class="flex justify-center items-center gap-4 mt-3 text-xs text-gray-400">
-                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-white border border-gray-600"></span> Datos</span>
-                            <span class="flex items-center gap-1"><span class="w-4 h-0.5 border-t border-dashed border-purple-500"></span> Ajuste Ideal</span>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-white dark:bg-[#0b0b0b] p-4 rounded-xl border border-gray-200 dark:border-gray-800">
-                            <p class="text-xs font-bold text-gray-400 uppercase mb-2">Intercepto (a₀)</p>
-                            <p class="text-xl font-mono">{{ results.coefficients[0]?.toFixed(4) }}</p>
-                        </div>
-                        <div class="bg-white dark:bg-[#0b0b0b] p-4 rounded-xl border border-gray-200 dark:border-gray-800">
-                            <p class="text-xs font-bold text-gray-400 uppercase mb-2">SSE (Error)</p>
-                            <p class="text-xl font-mono">{{ results.sse.toFixed(4) }}</p>
                         </div>
                     </div>
 
