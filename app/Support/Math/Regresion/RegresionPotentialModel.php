@@ -26,13 +26,20 @@ class RegresionPotentialModel extends RegresionSolver {
 }
 
     //remaning_solutions excluye a0, ya tiene el array_slice para solo hacer un loop de a_i * variable_i
-    public function calculateYModel(array $solutions, array $ind_term): float {
-        $a = $solutions[0];
-        $b = $solutions[1];
+     public function calculateYModel(array $solutions, array $ind_term): float {
+        $y_model = $solutions[0];
+        
+        for($i=0; $i < $this->countVariables(); $i++){
+            $y_model *= ($ind_term[$i] ** $solutions[$i+1]);
+        }
+        Log::info($y_model);
 
-        Log::info($ind_term);
+        return $y_model;
 
-        return $a * ($ind_term[0] ** $b);
+        //$a = 
+        //$b = $solutions[1];
+
+        //return $a * exp($b * $ind_term[0]);
     }
 
     public function getName(): string {

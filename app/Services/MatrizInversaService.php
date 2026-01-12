@@ -11,7 +11,7 @@ class MatrizInversaService
      * Calcula la inversa. Lanza excepciones si hay error.
      * Retorna array puro, NO una respuesta JSON.
      */
-    public function inversa(array $matriz): array
+    public function calcular(array $matriz): array
     {
         if (!$this->esCuadrada($matriz)) {
             throw new InvalidArgumentException('La matriz debe ser cuadrada.');

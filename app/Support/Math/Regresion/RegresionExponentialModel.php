@@ -25,10 +25,18 @@ class RegresionExponentialModel extends RegresionSolver {
 
     //remaning_solutions excluye a0, ya tiene el array_slice para solo hacer un loop de a_i * variable_i
     public function calculateYModel(array $solutions, array $ind_term): float {
-        $a = $solutions[0];
-        $b = $solutions[1];
+        $y_model = $solutions[0];
+        
+        for($i=0; $i < $this->countVariables(); $i++){
+            $y_model *= exp($solutions[$i+1] * $ind_term[$i]);
+        }
 
-        return $a * exp($b * $ind_term[0]);
+        return $y_model;
+
+        //$a = 
+        //$b = $solutions[1];
+
+        //return $a * exp($b * $ind_term[0]);
     }
 
     public function calculateXValue(): float {
