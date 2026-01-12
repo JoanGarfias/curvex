@@ -13,7 +13,6 @@ import axios from 'axios';
 
 type ChartType = 'ajuste' | 'curva' | 'residuos' | 'histograma';
 
-
 // --- ESTADO ---
 const inputX = ref('');
 const inputY = ref('');
@@ -152,8 +151,6 @@ const histogram = computed(() => {
         ).length
     }));
 });
-
-
 
 // --- CALCULAR ---
 const calcular = async () => {
