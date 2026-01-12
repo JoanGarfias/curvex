@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Support\Math\Regresion\RegresionLinealModel;
 use App\Support\Math\Regresion\RegresionExponentialModel;
+use App\Support\Math\Regresion\RegresionPotentialModel;
+use App\Support\Math\Regresion\RegresionCuadraticModel;
 use Illuminate\Support\Facades\Log;
 
 class RegresionBetterResponse {
@@ -21,11 +23,13 @@ class RegresionService
     public function getBetterModel(
         RegresionLinealModel $lineal = null,
         RegresionExponentialModel $exponential = null,
+        RegresionPotentialModel $potential = null,
+        RegresionCuadraticModel $cuadratic = null
     ): RegresionBetterResponse {
         $response = new RegresionBetterResponse();
     
 
-        $options = array_filter([$lineal, $exponential]);
+        $options = array_filter([$lineal, $exponential, $potential, $cuadratic]);
         if(empty($options)){
             Log::warning("No se recibieron modelos de regresión");
             return $response;
@@ -63,10 +67,11 @@ class RegresionService
         Log::info("Creando servicio de regresión con {$variables_count} variable(s) independiente(s)");
         
         return
-            match($variables_count){
-                1 => new RegresionLinealModel($independent_variables, $dependent_values, $method),
-                2 => new RegresionLinealModel($independent_variables, $dependent_values, $method),
-                3 => new RegresionLinealModel($independent_variables, $dependent_values, $method),
+            match($method){
+                "lineal" => new RegresionLinealModel($independent_variables, $dependent_values, $method),
+                "exponential" => new RegresionExponentialModel($independent_variables, $dependent_values, $method),
+                "potential" => new RegresionPotentialModel($independent_variables, $dependent_values, $method),
+                "cuadratic" => new RegresionCuadraticModel($independent_variables, $dependent_values, $method),
                 default => new RegresionLinealModel($independent_variables, $dependent_values, $method)
             }
         ;

@@ -25,10 +25,12 @@ abstract class RegresionSolver {
     
     /** @var VariableData[] */
     protected array $data = [];
+    protected array $datacopy = [];
 
     //valor de las y
     /** @var float[] */
     protected array $dependent_data = [];
+    protected array $dependent_datacopy = [];
 
     public function __construct(array $data, array $dependent_data) {
         // Validar que data contiene objetos VariableData
@@ -56,8 +58,21 @@ abstract class RegresionSolver {
             }
         }
         
-        $this->data = $data;
+        // 1. Guardamos la copia de seguridad (referencias originales)
+        $this->datacopy = $data; 
+
+        // 2. Para la data de trabajo, CLONAMOS cada objeto explícitamente
+        // Esto crea nuevos objetos independientes en memoria para $this->data
+        $this->data = array_map(function ($variable) {
+            return clone $variable;
+        }, $data);
+
+
+        // 3. Arrays de primitivos (números)
+        // PHP copia arrays de números por valor automáticamente, esto SÍ funciona bien directo:
         $this->dependent_data = $dependent_data;
+        $this->dependent_datacopy = $dependent_data; // Esto es seguro si son solo floats/ints
+
         $this->n = $countDataPerVariable;
         
         Log::info("Datos validados correctamente");
@@ -111,17 +126,34 @@ abstract class RegresionSolver {
         $sse = 0.0;
         $row_variable_value = [];
 
-        Log::info("Iniciando cálculo de SSE (Sum of Squared Errors)");
-
         for($i = 0; $i < $this->getM(); $i++){
             //por cada fila recorrida, obtenemos el valor de cada variable
-            $row_variable_value = array_map(
+            switch($this->getName()){
+                case "Potencial":
+                    $row_variable_value = array_map(
+                                    fn($variable) => $variable->getVariableAt($i),
+                                    $this->datacopy
+                                );
+                    $y_actual = $this->dependent_datacopy[$i];
+                    break;
+                case "Exponencial":
+                    $row_variable_value = array_map(
+                                    fn($variable) => $variable->getVariableAt($i),
+                                    $this->datacopy
+                                );
+                    $y_actual = $this->dependent_datacopy[$i];
+                    break;
+                default:
+                    $row_variable_value = array_map(
                                     fn($variable) => $variable->getVariableAt($i),
                                     $this->data
                                 );
-
+                    $y_actual = $this->dependent_data[$i];
+                    break;
+            }
+            
             $y_pri = $this->calculateYModel($this->solutions, $row_variable_value);
-            $y_actual = $this->dependent_data[$i];
+            
             $error = $y_actual - $y_pri;
             $squared_error = pow($error, 2);
             $sse += $squared_error;
@@ -138,19 +170,51 @@ abstract class RegresionSolver {
 
     protected function calculateSST(): float {
         Log::info("Iniciando cálculo de SST (Total Sum of Squares)");
-        
-        $sum_y = array_reduce($this->dependent_data, fn(float $s, float $y) => $s + $y, 0.0);
-        $this->y_avg = $sum_y / count($this->dependent_data);
-        
-        Log::debug("Suma de Y: {$sum_y}, Promedio de Y: {$this->y_avg}");
-        
         $sst = 0.0;
-        foreach($this->dependent_data as $y) {
-            $deviation = $y - $this->y_avg;
-            $squared_deviation = pow($deviation, 2);
-            $sst += $squared_deviation;
-            Log::debug("Y: {$y}, Desviación: {$deviation}, Desviación²: {$squared_deviation}");
-        }
+        
+        switch($this->getName()){
+                case "Potencial":
+                    $sum_y = array_reduce($this->dependent_datacopy, fn(float $s, float $y) => $s + $y, 0.0);
+                    $this->y_avg = $sum_y / count($this->dependent_datacopy);
+
+                    Log::debug("Suma de Y: {$sum_y}, Promedio de Y: {$this->y_avg}");
+        
+                    
+                    foreach($this->dependent_datacopy as $y) {
+                        $deviation = $y - $this->y_avg;
+                        $squared_deviation = pow($deviation, 2);
+                        $sst += $squared_deviation;
+                        Log::debug("Y: {$y}, Desviación: {$deviation}, Desviación²: {$squared_deviation}");
+                    }
+                    break;
+                case "Exponencial":
+                    $sum_y = array_reduce($this->dependent_datacopy, fn(float $s, float $y) => $s + $y, 0.0);
+                    $this->y_avg = $sum_y / count($this->dependent_datacopy);
+
+                    Log::debug("Suma de Y: {$sum_y}, Promedio de Y: {$this->y_avg}");
+        
+                    foreach($this->dependent_datacopy as $y) {
+                        $deviation = $y - $this->y_avg;
+                        $squared_deviation = pow($deviation, 2);
+                        $sst += $squared_deviation;
+                        Log::debug("Y: {$y}, Desviación: {$deviation}, Desviación²: {$squared_deviation}");
+                    }
+                    break;
+                default:
+                    $sum_y = array_reduce($this->dependent_data, fn(float $s, float $y) => $s + $y, 0.0);
+                        $this->y_avg = $sum_y / count($this->dependent_data);
+                        break;
+
+                    Log::debug("Suma de Y: {$sum_y}, Promedio de Y: {$this->y_avg}");
+            
+                    foreach($this->dependent_data as $y) {
+                        $deviation = $y - $this->y_avg;
+                        $squared_deviation = pow($deviation, 2);
+                        $sst += $squared_deviation;
+                        Log::debug("Y: {$y}, Desviación: {$deviation}, Desviación²: {$squared_deviation}");
+                    }
+            }
+        
         
         Log::info("SST calculado: {$sst}");
         return $sst;
@@ -166,6 +230,15 @@ abstract class RegresionSolver {
         Log::info("Iniciando cálculo de R**2 para regresión lineal");
         Log::info("Cantidad de datos (m): {$m}");
         Log::info("Cantidad de variables independientes: " . $this->countVariables());
+
+        switch($this->getName()){
+                case "Potencial":
+                    $this->transformData();
+                    break;
+                case "Exponencial":
+                    $this->transformData();
+                    break;
+            }
 
         /*Paso 2: Calcular las sumatorias (SSE, SSR, SST) */
 
@@ -294,7 +367,14 @@ abstract class RegresionSolver {
             $matres= $solver->multiply($mata, $matb);
             $this->solutions = $matres->data;
 
-            Log::info($this->solutions);
+            switch($this->getName()){
+                case "Potencial":
+                    $this->solutions[0] = 10 ** ($this->solutions[0]);
+                    break;
+                case "Exponencial":
+                    $this->solutions[0] = exp($this->solutions[0]);
+                    break;
+            }
 
             //Calculamos SSE y SST
             $this->SSE = $this->calculateSSE();
