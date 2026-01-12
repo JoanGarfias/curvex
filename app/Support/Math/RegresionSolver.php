@@ -4,6 +4,9 @@ namespace App\Support\Math;
 
 use App\Services\RegresionData;
 use App\ValueObjects\VariableData;
+use App\ValueObjects\Matrix;
+use App\Support\Math\MatrixSolver;
+use App\Services\MatrizInversaService;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -93,6 +96,10 @@ abstract class RegresionSolver {
                 if($i == $j) continue;
                 $product_variables[] = $mixed_variables[$i] * $mixed_variables[$j];
             }
+        }
+
+        if($product_variables == null){
+            $product_variables = $mixed_variables;
         }
 
         Log::debug("Producto de variables independientes: ". implode(', ', $product_variables));
@@ -193,6 +200,8 @@ abstract class RegresionSolver {
             $sum_sq = array_reduce($variable_data->points, fn(float $s, float $value) => $s + pow($value, 2), 0.0);
             
             Log::debug("Variable independiente #{$idx}: suma={$sum_val}, suma_cuadrados={$sum_sq}");
+            $sum_value_variables[] = $sum_val;
+            $sum_value_variables_squared[] = $sum_sq;
         }
 
         try{
@@ -240,7 +249,52 @@ abstract class RegresionSolver {
 
             Log::info("La suma de la multiplicación de las variables dependientes con las independientes es: " . implode(",", $sum_product_dep_ind_variables));
             /**Aquí se tiene que implementar el armado de la matriz, el cálculo de la matriz inversa y su posterior multiplicación de matrices. */
+            $matind = array();
+            $matind[0][0] = $this->n;
 
+            $sum_value_variables[] = $sum_val;
+            $sum_value_variables_squared[] = $sum_sq;
+
+            $i = 0;
+            while($i < $this->countVariables()+1){
+                $j = 0;
+                while($j < $this->countVariables()+1){
+                    if($i == 0){
+                        if($j != 0){
+                        $matind[$i][$j] = $sum_value_variables[$j-1];
+                        }else{
+                            $j+=1;
+                            continue;
+                        }
+                    }else if($j == 0){
+                        $matind[$i][$j] = $sum_value_variables[$j];
+                    }else if($j == $i){
+                        $matind[$i][$j] = $sum_value_variables_squared[$i];
+                    }else{
+                        $matind[$i][$j] = 0; //test
+                    }
+                    $j+=1;
+                }
+                $i+=1;
+            }
+
+            $MatrizInversaService = new MatrizInversaService();
+            $matindinv = $MatrizInversaService->inversa($matind);
+
+            $mata = new Matrix($matindinv,$this->countVariables()+1,$this->countVariables()+1);
+
+            $matdep = array();
+            $matdep[] = $sum_y;
+            foreach($sum_product_dep_ind_variables as $sumprod_dep_ind){
+                $matdep[] = $sumprod_dep_ind;
+            }
+            $matb = new Matrix($matdep,$this->countVariables()+1,1);
+
+            $solver = new MatrixSolver();
+            $matres= $solver->multiply($mata, $matb);
+            $this->solutions = $matres->data;
+
+            Log::info($this->solutions);
 
             //Calculamos SSE y SST
             $this->SSE = $this->calculateSSE();

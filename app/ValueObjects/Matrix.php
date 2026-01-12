@@ -14,6 +14,8 @@ class Matrix{
             throw new InvalidArgumentException("No coinciden las filas con los datos");
         }
         $this->data = $data;
+        $this->rows = $rows;
+        $this->cols = $cols;
     }
 
     public function getConstantTerms(): array {
