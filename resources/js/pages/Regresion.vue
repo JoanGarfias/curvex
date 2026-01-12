@@ -572,13 +572,3 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
   </div>
 </template>
 
-<style>
-.no-arrow::-webkit-outer-spin-button,
-.no-arrow::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.no-arrow {
-  -moz-appearance: textfield;
-}
-</style>
