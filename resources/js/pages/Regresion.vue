@@ -377,16 +377,31 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
                 </div>
                 <div class="grid grid-cols-3 gap-4">
                     <div class="col-span-2 space-y-2">
-                        <div class="flex justify-between items-end">
-                            <label class="text-xs font-bold uppercase text-gray-500">Matriz X</label>
-                            <span v-if="numVars > 0" class="text-[10px] bg-purple-100 text-purple-700 px-2 rounded">{{ numVars }} Vars</span>
-                        </div>
-                        <textarea v-model="inputX" rows="10" class="w-full rounded-xl bg-gray-50 dark:bg-[#151515] border dark:border-gray-700 p-3 text-xs font-mono" placeholder="Pega columnas X..."></textarea>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-xs font-bold uppercase text-gray-500 block text-center">Y</label>
-                        <textarea v-model="inputY" rows="10" class="w-full rounded-xl bg-gray-50 dark:bg-[#151515] border dark:border-gray-700 p-3 text-xs font-mono text-center" placeholder="Pega Y..."></textarea>
-                    </div>
+    <div class="flex justify-between items-end">
+        <label class="text-xs font-bold uppercase text-gray-500">Matriz X</label>
+        <span v-if="numVars > 0" class="text-[10px] bg-purple-100 text-purple-700 px-2 rounded">{{ numVars }} Vars</span>
+    </div>
+    <textarea 
+        v-model="inputX" 
+        rows="10" 
+        class="w-full rounded-xl bg-gray-50 dark:bg-[#151515] border dark:border-gray-700 p-3 text-xs font-mono"
+        placeholder="2, 3, 3
+2, 5, 6
+4, 7, 8"
+    ></textarea>
+</div>
+
+<div class="space-y-2">
+    <label class="text-xs font-bold uppercase text-gray-500 block text-center">Y</label>
+    <textarea 
+        v-model="inputY" 
+        rows="10" 
+        class="w-full rounded-xl bg-gray-50 dark:bg-[#151515] border dark:border-gray-700 p-3 text-xs font-mono text-center"
+        placeholder="10
+15
+20"
+    ></textarea>
+</div>
                 </div>
                 <div v-if="errorMsg" class="mt-4 p-3 bg-red-50 text-red-600 text-xs rounded-lg flex items-center gap-2"><AlertCircle class="w-4 h-4" /> {{ errorMsg }}</div>
                 <div class="flex gap-3 mt-6">
