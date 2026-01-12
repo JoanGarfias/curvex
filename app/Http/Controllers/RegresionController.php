@@ -65,7 +65,9 @@ class RegresionController extends Controller
                 'solutions' => $datos['solutions'],
                 'method' => $method,
                 'independent_variables_count' => count($independent_variables),
-                'data_points_count' => count($dependent_values)
+                'data_points_count' => count($dependent_values),
+                'SST' => $datos['SST'],
+                'SSE' => $datos['SSE'],
             ];
 
             return response()->json([

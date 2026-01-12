@@ -7,6 +7,8 @@ use Exception;
 
 class RegresionCuadraticModel extends RegresionSolver {
 
+    public function transformData() : void {}
+
     //remaning_solutions excluye a0, ya tiene el array_slice para solo hacer un loop de a_i * variable_i
     public function calculateYModel(array $solutions, array $ind_term): float {
         $x = $ind_term[0];

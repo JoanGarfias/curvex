@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Log;
 
 class RegresionLinealModel extends RegresionSolver {
 
+    public function transformData() : void {}
+
     public function calculateYModel(array $solutions, array $ind_term): float {
         $y_model = $this->solutions[0];
         
