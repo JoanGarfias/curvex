@@ -136,16 +136,16 @@ const curveData = computed(() => {
             
             // Calcular Y según el método
             switch(selectedMethod.value) {
-                case 'cuadratico':
+                case 'cuadratic':
                     yVal = results.value.coefficients[0] + 
                         results.value.coefficients[1] * xVal + 
                         results.value.coefficients[2] * Math.pow(xVal, 2);
                     break;
-                case 'exponencial':
+                case 'exponential':
                     yVal = results.value.coefficients[0] * 
                         Math.exp(results.value.coefficients[1] * xVal);
                     break;
-                case 'potencial':
+                case 'potential':
                     yVal = results.value.coefficients[0] * 
                         Math.pow(xVal, results.value.coefficients[1]);
                     break;
@@ -280,15 +280,15 @@ const generateEquation = (method: string, coeffs: number[]): string => {
                 return eq;
             }
         
-        case 'cuadratico':
+        case 'cuadratic':
             // y = a + bx + cx²
             return `y = ${format(coeffs[0])} + ${format(coeffs[1])}x + ${format(coeffs[2])}x²`;
         
-        case 'exponencial':
+        case 'exponential':
             // y = a·e^(bx)
             return `y = ${format(coeffs[0])}·e^(${format(coeffs[1])}x)`;
         
-        case 'potencial':
+        case 'potential':
             // y = a·x^b
             return `y = ${format(coeffs[0])}·x^${format(coeffs[1])}`;
         
