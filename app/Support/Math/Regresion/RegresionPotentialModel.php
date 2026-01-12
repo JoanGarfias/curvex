@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Log;
 
 class RegresionPotentialModel extends RegresionSolver {
 
+    protected bool $transformDataRequired = true;
+
     public function transformData() : void {
     
     // 1. Transformar $this->data

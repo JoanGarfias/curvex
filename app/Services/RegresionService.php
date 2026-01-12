@@ -68,12 +68,13 @@ class RegresionService
         
         return
             match($method){
-                "lineal" => new RegresionLinealModel($independent_variables, $dependent_values, $method),
-                "exponential" => new RegresionExponentialModel($independent_variables, $dependent_values, $method),
-                "potential" => new RegresionPotentialModel($independent_variables, $dependent_values, $method),
-                "cuadratic" => new RegresionCuadraticModel($independent_variables, $dependent_values, $method),
-                default => new RegresionLinealModel($independent_variables, $dependent_values, $method)
+                "lineal" => new RegresionLinealModel($independent_variables, $dependent_values),
+                "exponential" => new RegresionExponentialModel($independent_variables, $dependent_values),
+                "potential" => new RegresionPotentialModel($independent_variables, $dependent_values),
+                "cuadratic" => new RegresionCuadraticModel($independent_variables, $dependent_values),
+                default => new RegresionLinealModel($independent_variables, $dependent_values)
             }
         ;
     }
+
 }

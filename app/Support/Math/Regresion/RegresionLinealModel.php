@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Log;
 
 class RegresionLinealModel extends RegresionSolver {
 
-    //remaning_solutions excluye a0, ya tiene el array_slice para solo hacer un loop de a_i * variable_i
     public function calculateYModel(array $solutions, array $ind_term): float {
         $y_model = $this->solutions[0];
         
@@ -17,6 +16,9 @@ class RegresionLinealModel extends RegresionSolver {
         Log::info($y_model);
 
         return $y_model;
+    }
+
+    public function calculateXValue(): float {
     }
 
     public function getName(): string {

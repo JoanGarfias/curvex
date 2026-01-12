@@ -6,6 +6,8 @@ use App\Support\Math\RegresionSolver;
 
 class RegresionExponentialModel extends RegresionSolver {
 
+    protected bool $transformDataRequired = true;
+
     public function transformData() : void {
     
     // 1. Transformar $this->data
