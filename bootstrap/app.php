@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             '/pruebahipotesistabla23',
             '/proportion-test',
             '/calc-regresion',
+            '/calc-regresion-value',
         ]);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);

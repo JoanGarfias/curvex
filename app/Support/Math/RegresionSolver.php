@@ -32,6 +32,7 @@ abstract class RegresionSolver {
     protected array $dependent_data = [];
     protected array $dependent_datacopy = [];
 
+    //data = variables independientes
     public function __construct(array $data, array $dependent_data, array $solutions = [] ) {
         // Validar que data contiene objetos VariableData
         if (empty($data)) {

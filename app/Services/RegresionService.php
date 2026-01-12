@@ -6,6 +6,7 @@ use App\Support\Math\Regresion\RegresionLinealModel;
 use App\Support\Math\Regresion\RegresionExponentialModel;
 use App\Support\Math\Regresion\RegresionPotentialModel;
 use App\Support\Math\Regresion\RegresionCuadraticModel;
+use App\ValueObjects\VariableData;
 use Illuminate\Support\Facades\Log;
 
 class RegresionBetterResponse {
@@ -73,6 +74,27 @@ class RegresionService
                 "potential" => new RegresionPotentialModel($independent_variables, $dependent_values),
                 "cuadratic" => new RegresionCuadraticModel($independent_variables, $dependent_values),
                 default => new RegresionLinealModel($independent_variables, $dependent_values)
+            }
+        ;
+    }
+
+    public static function createRegresionValueSolver (
+        float $value, 
+        array $solutions,
+        string $method,
+    ){
+
+        //Solo la creamos para evitar problemas con el constructor ya que no habrá variable independiente
+        /** @var VariableData[] */
+        $scape = [new VariableData([0.0])];
+
+        return
+            match($method){
+                "lineal" => new RegresionLinealModel($scape, array($value), $solutions),
+                "exponential" => new RegresionExponentialModel($scape, array($value), $solutions),
+                "potential" => new RegresionPotentialModel($scape, array($value), $solutions),
+                "cuadratic" => new RegresionCuadraticModel($scape, array($value), $solutions),
+                default => new RegresionLinealModel($scape, array($value), $solutions)
             }
         ;
     }

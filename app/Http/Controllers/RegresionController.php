@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CoordsRequest;
+use App\Http\Requests\GetRegresionValueRequest;
 use App\Services\RegresionService;
 use App\ValueObjects\VariableData;
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use phpDocumentor\Reflection\PseudoTypes\LowercaseString;
 
 class RegresionController extends Controller
 {
@@ -74,12 +77,68 @@ class RegresionController extends Controller
                 'message' => 'Cálculo de regresión realizado con éxito.',
                 'data' => $result,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error("Error en cálculo de regresión: " . $e->getMessage());
             Log::error("Stack trace: " . $e->getTraceAsString());
 
             return response()->json([
                 'message' => 'Error al realizar el cálculo de regresión.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Calcula X dado Y o Y dado X según el método de regresión especificado.
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getRegresionValue(GetRegresionValueRequest $request)
+    {
+        try {
+            $data = $request->validated();
+
+            $method = $data['method'];
+            $variable = $data['variable_input'];
+            $value = (float) $data['value'];
+            $solutions = array_map('floatval', $data['solutions']);
+
+            Log::info("Calculando {$variable} con método {$method}");
+            Log::debug("Valor proporcionado: {$value}");
+            Log::debug("Soluciones: " . implode(', ', $solutions));
+
+            $result = null;
+
+            if($variable == "x" || $variable == "y"){
+                $solver = RegresionService::createRegresionValueSolver($value, $solutions, $method);
+
+                Log::info("Solver" . class_basename($solver));
+
+                $regresionValue = ($variable == "y") ? $solver->calculateXValue() : $solver->calculateYModel($solutions, array($value));
+
+                return response()->json([
+                    'message' => "Calculo de $variable realizado con exito",
+                    'data' => [
+                        'method' => $method,
+                        'y' => ($variable=="y")? $value : $regresionValue,
+                        'x' => ($variable=="x")? $value : $regresionValue,
+                    ]
+                ]);
+            }
+            else{
+                return response()->json([
+                    'message' => 'Error: la variable que se intenta calcular no es correcta, pruebe x o bien y',
+                    'error' => 'Error al intentar calcular el valor',
+                ], 500);
+            }
+
+        } catch (Exception $e) {
+            Log::error("Error en cálculo: " . $e->getMessage());
+            Log::error("Stack trace: " . $e->getTraceAsString());
+
+            return response()->json([
+                'message' => 'Error al realizar el cálculo.',
                 'error' => $e->getMessage(),
             ], 500);
         }
