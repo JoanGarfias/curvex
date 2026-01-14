@@ -31,6 +31,7 @@ abstract class RegresionSolver {
     /** @var float[] */
     protected array $dependent_data = [];
     protected array $dependent_datacopy = [];
+    protected array $predictions = [];
 
     public function __construct(array $data, array $dependent_data, array $solutions = [] ) {
         // Validar que data contiene objetos VariableData
@@ -155,6 +156,7 @@ abstract class RegresionSolver {
             }
             
             $y_pri = $this->calculateYModel($this->solutions, $row_variable_value);
+            $this->predictions[] = $y_pri;
             
             $error = $y_actual - $y_pri;
             $squared_error = pow($error, 2);
@@ -459,7 +461,8 @@ abstract class RegresionSolver {
             "R2" => $this->R2, 
             "solutions" => $this->solutions, 
             "SST" => $this->SST, 
-            "SSE" => $this->SSE
+            "SSE" => $this->SSE,
+            "predictions" => $this->predictions
         ];
     }
 }

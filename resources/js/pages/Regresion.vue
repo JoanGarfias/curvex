@@ -20,7 +20,7 @@ const loading = ref(false);
 const errorMsg = ref('');
 const showResults = ref(false);
 
-const selectedMethod = ref('lineal'); 
+const selectedMethod = ref('best'); 
 const numVars = ref(0);
 const activeChart = ref<ChartType>('ajuste');
 
@@ -32,6 +32,7 @@ const calcResult = ref<number | null>(null);
 // --- OPCIONES DE MÉTODO ---
 const availableMethods = computed(() => {
     const methods = [
+        { id: 'best', name: 'Automático' },
         { id: 'lineal', name: 'Lineal / Multilineal' },
         { id: 'exponential', name: 'Exponencial' },
         { id: 'potential', name: 'Potencial' },
@@ -92,7 +93,7 @@ const chartData = computed(() => {
     const yReal = inputY.value.trim().split(/[\s,;\n]+/).filter(v => v !== '').map(Number);
     const yPred = results.value.prediction;
     if (yReal.length < 2) return null;
-
+    console.log(results.value.prediction);
     const dataPoints = yReal.map((val, i) => ({ real: val, pred: yPred[i] ?? val }));
     const allVals = [...dataPoints.map(p => p.real), ...dataPoints.map(p => p.pred)];
     const minVal = Math.min(...allVals);
@@ -279,7 +280,6 @@ const realizarPrediccion = async () => {
 
                 const response = await axios.post('/calc-regresion-value', payload);
                 const data = response.data.data;
-                console.log(data)
                 calcResult.value = data.x;
             }
         }
@@ -343,9 +343,22 @@ const calcular = async () => {
             method: selectedMethod.value
         };
 
-        // 4. Petición Axios
-        const response = await axios.post('/calc-regresion', payload);
-        const data = response.data.data;
+        var data = null
+
+        if(selectedMethod.value == "best"){
+            // 4. Petición Axios
+            const response = await axios.post('/calc-best-regresion', payload);
+            data = response.data.data;
+        }else{
+            // 4. Petición Axios
+            const response = await axios.post('/calc-regresion', payload);
+            data = response.data.data;
+            
+        }
+
+        if(selectedMethod.value == "best"){
+            selectedMethod.value = data.method
+        }
         
 
         // Generar ecuación formateada

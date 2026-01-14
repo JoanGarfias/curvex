@@ -27,9 +27,9 @@ class RegresionController extends Controller
                 fn($val) => (float)trim($val),
                 explode(',', $ind_str)
             );
-            
+            Log::debug($ind_values);
             $variable_data = new VariableData($ind_values);
-            $independent_variables[] = $variable_data;
+            $n_array[] = $variable_data;
         }
 
         return $n_array;
@@ -84,6 +84,7 @@ class RegresionController extends Controller
                 'data_points_count' => count($dependent_values),
                 'SST' => $datos['SST'],
                 'SSE' => $datos['SSE'],
+                'predictions' => $datos['predictions'],
             ];
 
             return response()->json([
@@ -192,10 +193,17 @@ class RegresionController extends Controller
 
         $result = $bestModel->model->calculateR2();
 
+        $modelos = [
+            "RegresionLinealModel" => "lineal",
+            "RegresionExponentialModel" => "exponential",
+            "RegresionPotentialModel" => "potential",
+            "RegresionCuadraticModel" => "cuadratic",
+        ];
+
         $result = [
             'R2' => $result['R2'],
             'solutions' => $result['solutions'],
-            'method' => class_basename($bestModel),
+            'method' => $modelos[class_basename($bestModel->model)],
             'independent_variables_count' => count($independent_variables),
             'data_points_count' => count($dependent_values),
             'SST' => $result['SST'],
@@ -203,8 +211,9 @@ class RegresionController extends Controller
         ];
 
         return response()->json([
-            "R2"
-        ]);
+                'message' => 'Cálculo de regresión realizado con éxito.',
+                'data' => $result,
+            ]);
 
     }
 }
