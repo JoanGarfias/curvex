@@ -56,7 +56,7 @@ const results = ref({
     coefficients: [] as number[],
     prediction: [] as number[],
     sse: 0,
-    sst: 0
+    sst: 0,
 });
 
 
@@ -75,7 +75,6 @@ const parseData = () => {
         if (parsedX.some(row => row.length !== cols)) throw new Error("Matriz X no uniforme");
 
         numVars.value = cols;
-        if (cols > 1 && selectedMethod.value !== 'lineal') selectedMethod.value = 'lineal';
 
     } catch (e: any) {
         errorMsg.value = e.message;
@@ -242,11 +241,30 @@ const realizarPrediccion = async () => {
         if (calcMode.value === 'calcY') {
             if(numVars.value > 1){
                 let y = coeffs[0]; 
-                for (let i = 0; i < numVars.value; i++) {
-                    const val = parseFloat(calcInputs.value[`x${i}`] || '0');
-                    if (isNaN(val)) throw new Error("Valor inválido");
-                    y += coeffs[i + 1] * val;
+                switch(selectedMethod.value) {
+                    case 'lineal':
+                    for (let i = 0; i < numVars.value; i++) {
+                        const val = parseFloat(calcInputs.value[`x${i}`] || '0');
+                        if (isNaN(val)) throw new Error("Valor inválido");
+                        y += coeffs[i + 1] * val;
+                    }
+                    break;
+                    case 'exponential':
+                    for (let i = 0; i < numVars.value; i++) {
+                        const val = parseFloat(calcInputs.value[`x${i}`] || '0');
+                        if (isNaN(val)) throw new Error("Valor inválido");
+                        y *= Math.exp(coeffs[i + 1] * val) ;
+                    }
+                    break;
+                    case 'potential':
+                    for (let i = 0; i < numVars.value; i++) {
+                        const val = parseFloat(calcInputs.value[`x${i}`] || '0');
+                        if (isNaN(val)) throw new Error("Valor inválido");
+                        y *= val ^ coeffs[i + 1];
+                    }
+                    break;
                 }
+                
                 calcResult.value = y;
             }else{
                 const payload = {
@@ -314,13 +332,33 @@ const generateEquation = (method: string, coeffs: number[]): string => {
             return `y = ${format(coeffs[0])} + ${format(coeffs[1])}x + ${format(coeffs[2])}x²`;
         
         case 'exponential':
-            // y = a·e^(bx)
-            return `y = ${format(coeffs[0])}·e^(${format(coeffs[1])}x)`;
+            
+            if (numVars.value === 1) {
+                // y = a·e^(bx)
+                return `y = ${format(coeffs[0])}·e^(${format(coeffs[1])}x)`;
+            } else {
+                // Multilineal: y = a · e^(b₁x₁) · e^(b₂x₂) · e^( ...
+                let eq = `y = ${format(coeffs[0])}`;
+                for (let i = 1; i < coeffs.length; i++) {
+                    eq += ` · e^(${format(coeffs[i])}x${i})`;
+                }
+                return eq;
+            }
+            
         
         case 'potential':
-            // y = a·x^b
-            return `y = ${format(coeffs[0])}·x^${format(coeffs[1])}`;
-        
+            if (numVars.value === 1) {
+                // y = a·x^b
+                return `y = ${format(coeffs[0])}·x^${format(coeffs[1])}`;
+            } else {
+                // Multilineal: y = a · x₁^b₁ · x₂^b₂ · ...
+                let eq = `y = ${format(coeffs[0])}`;
+                for (let i = 1; i < coeffs.length; i++) {
+                    eq += ` · x${i}^${format(coeffs[i])}`;
+                }
+                return eq;
+            }
+            
         default:
             return `Modelo (R²=${(results.value.r2*100).toFixed(2)}%)`;
     }

@@ -174,7 +174,8 @@ class RegresionController extends Controller
         /**@var RegresionExponentialModel */
         $exponentialModel = RegresionService::createRegresion($independent_variables, $dependent_values, "exponential");
 
-        if(count($independent_variables == 1)){
+        $cuadraticModel = null;
+        if(count($independent_variables) == 1){
             $cuadraticModel = RegresionService::createRegresion($independent_variables, $dependent_values, "cuadratic");
             $cuadraticModel->calculateR2();
         }
