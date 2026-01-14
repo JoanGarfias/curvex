@@ -174,14 +174,17 @@ class RegresionController extends Controller
         /**@var RegresionExponentialModel */
         $exponentialModel = RegresionService::createRegresion($independent_variables, $dependent_values, "exponential");
 
+        if(count($independent_variables == 1)){
+            $cuadraticModel = RegresionService::createRegresion($independent_variables, $dependent_values, "cuadratic");
+            $cuadraticModel->calculateR2();
+        }
         /**@var RegresionCuadraticModel */
-        $cuadraticModel = RegresionService::createRegresion($independent_variables, $dependent_values, "cuadratic");
 
 
         $linealModel->calculateR2();
         $potentialModel->calculateR2();
         $exponentialModel->calculateR2();
-        $cuadraticModel->calculateR2();
+        
 
         /**@var RegresionBetterResponse */
         $bestModel = RegresionService::getBetterModel(
@@ -191,14 +194,16 @@ class RegresionController extends Controller
             $cuadraticModel
         );
 
-        $result = $bestModel->model->calculateR2();
-
         $modelos = [
             "RegresionLinealModel" => "lineal",
             "RegresionExponentialModel" => "exponential",
             "RegresionPotentialModel" => "potential",
             "RegresionCuadraticModel" => "cuadratic",
         ];
+
+        $bestestModel = RegresionService::createRegresion($independent_variables, $dependent_values, $modelos[class_basename($bestModel->model)]);
+
+        $result = $bestestModel->calculateR2();
 
         $result = [
             'R2' => $result['R2'],

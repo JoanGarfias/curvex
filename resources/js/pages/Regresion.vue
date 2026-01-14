@@ -38,12 +38,12 @@ const availableMethods = computed(() => {
         { id: 'potential', name: 'Potencial' },
         { id: 'cuadratic', name: 'Cuadrática' },
     ];
-    if (numVars.value > 1) return methods.filter(m => m.id === 'lineal');
+    if (numVars.value > 1) return methods.filter(m => m.id !== 'cuadratic');
     return methods;
 });
 
 const availableCharts = computed<ChartType[]>(() => {
-    if (selectedMethod.value === 'lineal' && numVars.value > 1) {
+    if (numVars.value > 1) {
         return ['ajuste', 'residuos', 'histograma'];
     }
     return ['ajuste', 'curva', 'residuos', 'histograma'];
@@ -415,9 +415,6 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
                     <select v-model="selectedMethod" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-[#151515] border dark:border-gray-700 outline-none text-sm">
                         <option v-for="method in availableMethods" :key="method.id" :value="method.id">{{ method.name }}</option>
                     </select>
-                    <p v-if="numVars > 1" class="text-[10px] text-orange-500 mt-1 flex items-center gap-1">
-                        <Ban class="w-3 h-3"/> Métodos no lineales deshabilitados para múltiple.
-                    </p>
                 </div>
                 <div class="grid grid-cols-3 gap-4">
                     <div class="col-span-2 space-y-2">

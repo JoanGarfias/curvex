@@ -234,6 +234,9 @@ abstract class RegresionSolver {
         $num_vars = $this->countVariables();
 
         Log::info("Iniciando cálculo de R**2. Datos: {$m}, Variables: {$num_vars}");
+        Log::info($this->getName());
+        Log::info($this->dependent_data);
+        Log::info($this->data);
 
         // 1. Transformaciones (Logaritmos, etc.)
         $this->transformData();
