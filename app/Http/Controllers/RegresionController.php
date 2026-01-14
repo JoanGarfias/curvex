@@ -208,6 +208,7 @@ class RegresionController extends Controller
             'data_points_count' => count($dependent_values),
             'SST' => $result['SST'],
             'SSE' => $result['SSE'],
+            'predictions' => $result['predictions'],
         ];
 
         return response()->json([
