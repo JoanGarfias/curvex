@@ -38,7 +38,7 @@ const availableMethods = computed(() => {
         { id: 'potential', name: 'Potencial' },
         { id: 'cuadratic', name: 'Cuadrática' },
     ];
-    if (numVars.value > 1) return methods.filter(m => m.id !== 'cuadratic');
+    if (numVars.value > 1) return methods.filter(m => m.id == 'lineal');
     return methods;
 });
 
@@ -241,29 +241,12 @@ const realizarPrediccion = async () => {
         if (calcMode.value === 'calcY') {
             if(numVars.value > 1){
                 let y = coeffs[0]; 
-                switch(selectedMethod.value) {
-                    case 'lineal':
+                    
                     for (let i = 0; i < numVars.value; i++) {
                         const val = parseFloat(calcInputs.value[`x${i}`] || '0');
                         if (isNaN(val)) throw new Error("Valor inválido");
                         y += coeffs[i + 1] * val;
                     }
-                    break;
-                    case 'exponential':
-                    for (let i = 0; i < numVars.value; i++) {
-                        const val = parseFloat(calcInputs.value[`x${i}`] || '0');
-                        if (isNaN(val)) throw new Error("Valor inválido");
-                        y *= Math.exp(coeffs[i + 1] * val) ;
-                    }
-                    break;
-                    case 'potential':
-                    for (let i = 0; i < numVars.value; i++) {
-                        const val = parseFloat(calcInputs.value[`x${i}`] || '0');
-                        if (isNaN(val)) throw new Error("Valor inválido");
-                        y *= val ^ coeffs[i + 1];
-                    }
-                    break;
-                }
                 
                 calcResult.value = y;
             }else{
@@ -453,6 +436,9 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
                     <select v-model="selectedMethod" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-[#151515] border dark:border-gray-700 outline-none text-sm">
                         <option v-for="method in availableMethods" :key="method.id" :value="method.id">{{ method.name }}</option>
                     </select>
+                    <p v-if="numVars > 1" class="text-[10px] text-orange-500 mt-1 flex items-center gap-1">
+                        <Ban class="w-3 h-3"/> Métodos no lineales deshabilitados para múltiple.
+                    </p>
                 </div>
                 <div class="grid grid-cols-3 gap-4">
                     <div class="col-span-2 space-y-2">
