@@ -76,6 +76,7 @@ const t_promedio = ref(''); const t_u0 = ref(''); const t_varianza = ref(''); co
 const t_promedio1 = ref(''); const t_varianza1 = ref(''); const t_cantidad1 = ref('');
 const t_promedio2 = ref(''); const t_varianza2 = ref(''); const t_cantidad2 = ref('');
 const t_asumeVarianzasIguales = ref(true);
+const t_elevar = ref(false);
 // Resultados T
 const t_t0 = ref<number | null>(null); const t_ta = ref<number | null>(null); const t_veredicto = ref('');
 
@@ -104,10 +105,18 @@ const t_limpiarFormulario = () => {
 const calcularT = async () => {
     if (!t_formularioValido.value) return;
     t_cargando.value = true;
+    let vari1 = parseFloat(t_varianza1.value);
+    let vari2 = parseFloat(t_varianza2.value);
+    if(t_elevar.value === true){
+        vari1 = Math.pow(parseFloat(t_varianza1.value), 2)
+        vari2 = Math.pow(parseFloat(t_varianza2.value), 2)
+    }
+
     try {
         let data: any = { modo: t_modoSeleccionado.value, confiabilidad: parseFloat(t_confiabilidad.value) };
-        if (t_esDoble.value) data = { ...data, promedio1: parseFloat(t_promedio1.value), varianza1: parseFloat(t_varianza1.value), cantidad1: parseInt(t_cantidad1.value), promedio2: parseFloat(t_promedio2.value), varianza2: parseFloat(t_varianza2.value), cantidad2: parseInt(t_cantidad2.value), boolEsVarianzaUnica: t_asumeVarianzasIguales.value ? true : null };
+        if (t_esDoble.value) data = { ...data, promedio1: parseFloat(t_promedio1.value), varianza1: vari1, cantidad1: parseInt(t_cantidad1.value), promedio2: parseFloat(t_promedio2.value), varianza2: vari2, cantidad2: parseInt(t_cantidad2.value), boolEsVarianzaUnica: t_asumeVarianzasIguales.value ? true : null };
         else data = { ...data, promedio: parseFloat(t_promedio.value), u0: parseFloat(t_u0.value), varianza: parseFloat(t_varianza.value), cantidad: parseInt(t_cantidad.value) };
+        console.log(data);
         const response = await axios.post('/pruebahipotesistabla23', data);
         t_t0.value = response.data.t0; t_ta.value = response.data.ta; t_veredicto.value = response.data.veredicto; t_mostrarResultados.value = true;
     } catch (error) { console.error(error); alert('Error en cálculo T'); } finally { t_cargando.value = false; }
@@ -372,6 +381,7 @@ const calcularProporcion = async () => {
                             </div>
                             <div v-else class="space-y-4">
                                 <label class="flex items-center gap-2 p-3 bg-teal-50 dark:bg-teal-900/10 rounded border border-teal-100 dark:border-teal-800"><input type="checkbox" v-model="t_asumeVarianzasIguales" class="text-teal-600 rounded" /><span class="text-xs font-bold">Asumir Varianzas Iguales</span></label>
+                                <label class="flex items-center gap-2 p-3 bg-teal-50 dark:bg-teal-900/10 rounded border border-teal-100 dark:border-teal-800"><input type="checkbox" v-model="t_elevar" class="text-teal-600 rounded" /><span class="text-xs font-bold">Elevar varianza (utilizar si se da S₁ y S₂, en lugar de S₁² y S₂²)</span></label>
                                 <div class="p-3 border rounded bg-gray-50 dark:bg-[#151515] dark:border-gray-700"><p class="text-xs font-bold mb-2">Muestra 1</p><div class="grid grid-cols-3 gap-2"><input v-model="t_promedio1" placeholder="x̄₁" type="number" step="any" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" /><input v-model="t_varianza1" placeholder="S₁²" type="number" step="any" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" /><input v-model="t_cantidad1" placeholder="n₁" type="number" min="1" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" /></div></div>
                                 <div class="p-3 border rounded bg-gray-50 dark:bg-[#151515] dark:border-gray-700"><p class="text-xs font-bold mb-2">Muestra 2</p><div class="grid grid-cols-3 gap-2"><input v-model="t_promedio2" placeholder="x̄₂" type="number" step="any" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" /><input v-model="t_varianza2" placeholder="S₂²" type="number" step="any" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" /><input v-model="t_cantidad2" placeholder="n₂" type="number" min="1" required class="px-2 py-1 text-sm rounded border dark:bg-black dark:border-gray-600" /></div></div>
                             </div>
