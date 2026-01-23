@@ -209,7 +209,7 @@ class RegresionController extends Controller
         $result = [
             'R2' => $result['R2'],
             'solutions' => $result['solutions'],
-            'method' => $modelos[class_basename($bestModel->model)],
+            'method' => $bestestModel->getName(),
             'independent_variables_count' => count($independent_variables),
             'data_points_count' => count($dependent_values),
             'SST' => $result['SST'],

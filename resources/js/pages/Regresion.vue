@@ -6,8 +6,8 @@ import CurvexIcon from '@/icons/CurvexIcon.vue';
 import FooterComp from '@/components/FooterComp.vue';
 import { Button } from '@/components/ui/button';
 import { 
-    ArrowLeft, TrendingUp, Calculator, AlertCircle, RefreshCcw, 
-    Table, BarChart4, Sigma, Trophy, Ban, ArrowRight, Target
+    ArrowLeft, Calculator, AlertCircle, RefreshCcw, 
+    BarChart4, Trophy, Target
 } from "lucide-vue-next";
 import axios from 'axios';
 
@@ -21,6 +21,7 @@ const errorMsg = ref('');
 const showResults = ref(false);
 
 const selectedMethod = ref('best'); 
+const actualMethod = ref('lineal'); // Método real usado por el backend
 const numVars = ref(0);
 const activeChart = ref<ChartType>('ajuste');
 
@@ -38,7 +39,7 @@ const availableMethods = computed(() => {
         { id: 'potential', name: 'Potencial' },
         { id: 'cuadratic', name: 'Cuadrática' },
     ];
-    if (numVars.value > 1) return methods.filter(m => m.id == 'lineal');
+    if (numVars.value > 1) return methods.filter(m => m.id != 'cuadratic');
     return methods;
 });
 
@@ -134,8 +135,8 @@ const curveData = computed(() => {
             const xVal = minX + step * i;
             let yVal;
             
-            // Calcular Y según el método
-            switch(selectedMethod.value) {
+            // Calcular Y según el método real usado
+            switch(actualMethod.value) {
                 case 'cuadratic':
                     yVal = results.value.coefficients[0] + 
                         results.value.coefficients[1] * xVal + 
@@ -253,7 +254,7 @@ const realizarPrediccion = async () => {
                 const payload = {
                 variable_input: "x",
                 value: calcInputs.value[`x0`],
-                method: selectedMethod.value,
+                method: actualMethod.value, // Usar el método real
                 solutions: coeffs
                 };
 
@@ -275,7 +276,7 @@ const realizarPrediccion = async () => {
                 const payload = {
                 variable_input: "y",
                 value: calcInputs.value['y'],
-                method: selectedMethod.value,
+                method: actualMethod.value, // Usar el método real
                 solutions: coeffs
                 };
 
@@ -364,26 +365,22 @@ const calcular = async () => {
             method: selectedMethod.value
         };
 
-        var data = null
+        let data = null;
 
         if(selectedMethod.value == "best"){
             // 4. Petición Axios
             const response = await axios.post('/calc-best-regresion', payload);
             data = response.data.data;
+            actualMethod.value = data.method; // Guardar el método real sin actualizar el select
         }else{
             // 4. Petición Axios
             const response = await axios.post('/calc-regresion', payload);
             data = response.data.data;
-            
+            actualMethod.value = selectedMethod.value; // Usar el método seleccionado
         }
 
-        if(selectedMethod.value == "best"){
-            selectedMethod.value = data.method
-        }
-        
-
-        // Generar ecuación formateada
-        const equation = generateEquation(selectedMethod.value, data.solutions ?? []);
+        // Generar ecuación formateada usando el método real aplicado
+        const equation = generateEquation(actualMethod.value, data.solutions ?? []);
 
         results.value = {
             r2: data.R2 ?? 0,
@@ -436,9 +433,6 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
                     <select v-model="selectedMethod" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-[#151515] border dark:border-gray-700 outline-none text-sm">
                         <option v-for="method in availableMethods" :key="method.id" :value="method.id">{{ method.name }}</option>
                     </select>
-                    <p v-if="numVars > 1" class="text-[10px] text-orange-500 mt-1 flex items-center gap-1">
-                        <Ban class="w-3 h-3"/> Métodos no lineales deshabilitados para múltiple.
-                    </p>
                 </div>
                 <div class="grid grid-cols-3 gap-4">
                     <div class="col-span-2 space-y-2">
@@ -486,8 +480,16 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
                 <div class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-1 shadow-lg">
                     <div class="bg-white dark:bg-[#0b0b0b] rounded-xl p-6 relative overflow-hidden">
                         <Trophy class="absolute top-0 right-0 p-4 w-32 h-32 text-purple-600 opacity-10" />
-                        <p class="text-xs font-bold uppercase text-purple-600 mb-2">Modelo Resultante</p>
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-xs font-bold uppercase text-purple-600">Modelo Resultante</p>
+                            <span v-if="selectedMethod === 'best'" class="px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold rounded-full shadow-sm">
+                                {{ actualMethod === 'lineal' ? 'Lineal' : actualMethod === 'exponential' ? 'Exponencial' : actualMethod === 'potential' ? 'Potencial' : actualMethod === 'cuadratic' ? 'Cuadrático' : actualMethod }}
+                            </span>
+                        </div>
                         <p class="text-xl font-mono font-bold whitespace-nowrap overflow-x-auto pb-2">{{ results.equation }}</p>
+                        <p v-if="selectedMethod === 'best'" class="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">
+                            Modelo óptimo seleccionado automáticamente según R²
+                        </p>
                         <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
                             <div>
                                 <p class="text-xs uppercase text-gray-500 font-bold">R² (Determinación)</p>
@@ -564,7 +566,7 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
             <text x="20" y="125" text-anchor="middle" class="text-xs fill-gray-500" transform="rotate(-90, 20, 125)">Y</text>
         </svg>
     </div>
-    <p class="text-xs text-gray-500 text-center mt-2">La curva muestra el modelo {{ selectedMethod }} ajustado.</p>
+    <p class="text-xs text-gray-500 text-center mt-2">La curva muestra el modelo {{ actualMethod }} ajustado.</p>
 </div>
 
                 <div v-if="activeChart === 'residuos'" class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
