@@ -299,6 +299,21 @@ const realizarPrediccion = async () => {
     }
 };
 
+// Función para normalizar el método del backend al formato interno
+const normalizeMethod = (backendMethod: string): string => {
+    const methodMap: Record<string, string> = {
+        'Lineal': 'lineal',
+        'lineal': 'lineal',
+        'Exponencial': 'exponential',
+        'exponential': 'exponential',
+        'Potencial': 'potential',
+        'potential': 'potential',
+        'Cuadrático': 'cuadratic',
+        'cuadratic': 'cuadratic',
+    };
+    return methodMap[backendMethod] || backendMethod.toLowerCase();
+};
+
 // Función para generar la ecuación formateada
 const generateEquation = (method: string, coeffs: number[]): string => {
     if (!coeffs || coeffs.length === 0) return 'Modelo no disponible';
@@ -379,7 +394,7 @@ const calcular = async () => {
             // 4. Petición Axios
             const response = await axios.post('/calc-best-regresion', payload);
             data = response.data.data;
-            actualMethod.value = data.method; // Guardar el método real sin actualizar el select
+            actualMethod.value = normalizeMethod(data.method); // Normalizar el método del backend
         }else{
             // 4. Petición Axios
             const response = await axios.post('/calc-regresion', payload);
@@ -501,11 +516,11 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
                         <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
                             <div>
                                 <p class="text-xs uppercase text-gray-500 font-bold">R² (Determinación)</p>
-                                <p class="text-3xl font-bold text-green-500">{{ (results.r2 * 100).toFixed(4) }}%</p>
+                                <p class="text-3xl font-bold text-green-500">{{ (results.r2 * 100).toFixed(8) }}%</p>
                             </div>
                             <div class="text-right">
                                 <p class="text-xs uppercase text-gray-500 font-bold">Coef. Correlación (r)</p>
-                                <p class="text-xl font-mono text-gray-700 dark:text-gray-300">{{ Math.sqrt(Math.abs(results.r2)).toFixed(4) }}</p>
+                                <p class="text-xl font-mono text-gray-700 dark:text-gray-300">{{ Math.sqrt(Math.abs(results.r2)).toFixed(10) }}</p>
                             </div>
                         </div>
                     </div>
