@@ -146,3 +146,158 @@ describe('Endpoint de Regresión', function () {
         expect($r2)->toBeGreaterThanOrEqual(0.999);
     });
 });
+
+describe('Endpoint de Predicción de Regresión', function () {
+    
+    beforeEach(function () {
+        Log::shouldReceive('info')->andReturnNull();
+        Log::shouldReceive('error')->andReturnNull();
+        Log::shouldReceive('debug')->andReturnNull();
+    });
+
+    it('calcula Y dado X para regresión lineal', function () {
+        // Para y = 2x + 1, si x = 3, entonces y = 7
+        $response = $this->postJson('/calc-regresion-value', [
+            'method' => 'lineal',
+            'variable_input' => 'x',
+            'value' => 3,
+            'solutions' => [1, 2] // intercepto = 1, pendiente = 2
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'message',
+                'data' => ['method', 'x', 'y']
+            ]);
+
+        $y = $response->json('data.y');
+        expect($y)->toBeGreaterThan(6.9)
+            ->and($y)->toBeLessThan(7.1);
+    });
+
+    it('calcula X dado Y para regresión lineal', function () {
+        // Para y = 2x + 1, si y = 7, entonces x = 3
+        $response = $this->postJson('/calc-regresion-value', [
+            'method' => 'lineal',
+            'variable_input' => 'y',
+            'value' => 7,
+            'solutions' => [1, 2]
+        ]);
+
+        $response->assertStatus(200);
+
+        $x = $response->json('data.x');
+        expect($x)->toBeGreaterThan(2.9)
+            ->and($x)->toBeLessThan(3.1);
+    });
+
+    it('calcula Y dado X para regresión exponencial', function () {
+        $response = $this->postJson('/calc-regresion-value', [
+            'method' => 'exponential',
+            'variable_input' => 'x',
+            'value' => 2,
+            'solutions' => [1, 0.5]
+        ]);
+
+        $response->assertStatus(200);
+        
+        $y = $response->json('data.y');
+        expect($y)->toBeNumeric();
+    });
+
+    it('calcula Y dado X para regresión potencial', function () {
+        $response = $this->postJson('/calc-regresion-value', [
+            'method' => 'potential',
+            'variable_input' => 'x',
+            'value' => 4,
+            'solutions' => [2, 2]
+        ]);
+
+        $response->assertStatus(200);
+        
+        $y = $response->json('data.y');
+        expect($y)->toBeNumeric();
+    });
+
+    it('valida que method sea requerido', function () {
+        $response = $this->postJson('/calc-regresion-value', [
+            'variable_input' => 'x',
+            'value' => 3,
+            'solutions' => [1, 2]
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['method']);
+    });
+
+    it('valida que variable_input sea requerido', function () {
+        $response = $this->postJson('/calc-regresion-value', [
+            'method' => 'lineal',
+            'value' => 3,
+            'solutions' => [1, 2]
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['variable_input']);
+    });
+
+    it('valida que value sea requerido', function () {
+        $response = $this->postJson('/calc-regresion-value', [
+            'method' => 'lineal',
+            'variable_input' => 'x',
+            'solutions' => [1, 2]
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['value']);
+    });
+
+    it('valida que solutions sea requerido', function () {
+        $response = $this->postJson('/calc-regresion-value', [
+            'method' => 'lineal',
+            'variable_input' => 'x',
+            'value' => 3
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['solutions']);
+    });
+
+    it('valida que method sea uno de los permitidos', function () {
+        $response = $this->postJson('/calc-regresion-value', [
+            'method' => 'invalido',
+            'variable_input' => 'x',
+            'value' => 3,
+            'solutions' => [1, 2]
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['method']);
+    });
+
+    it('valida que variable_input sea x o y', function () {
+        $response = $this->postJson('/calc-regresion-value', [
+            'method' => 'lineal',
+            'variable_input' => 'z',
+            'value' => 3,
+            'solutions' => [1, 2]
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['variable_input']);
+    });
+
+    it('maneja valores negativos correctamente', function () {
+        $response = $this->postJson('/calc-regresion-value', [
+            'method' => 'lineal',
+            'variable_input' => 'x',
+            'value' => -5,
+            'solutions' => [10, -2]
+        ]);
+
+        $response->assertStatus(200);
+        
+        $y = $response->json('data.y');
+        expect($y)->toBe(-5 * -2 + 10); // 20
+    });
+});

@@ -27,9 +27,9 @@ class RegresionController extends Controller
                 fn($val) => (float)trim($val),
                 explode(',', $ind_str)
             );
-            
+            Log::debug($ind_values);
             $variable_data = new VariableData($ind_values);
-            $independent_variables[] = $variable_data;
+            $n_array[] = $variable_data;
         }
 
         return $n_array;
@@ -84,6 +84,7 @@ class RegresionController extends Controller
                 'data_points_count' => count($dependent_values),
                 'SST' => $datos['SST'],
                 'SSE' => $datos['SSE'],
+                'predictions' => $datos['predictions'],
             ];
 
             return response()->json([
@@ -173,14 +174,18 @@ class RegresionController extends Controller
         /**@var RegresionExponentialModel */
         $exponentialModel = RegresionService::createRegresion($independent_variables, $dependent_values, "exponential");
 
+        $cuadraticModel = null;
+        if(count($independent_variables) == 1){
+            $cuadraticModel = RegresionService::createRegresion($independent_variables, $dependent_values, "cuadratic");
+            $cuadraticModel->calculateR2();
+        }
         /**@var RegresionCuadraticModel */
-        $cuadraticModel = RegresionService::createRegresion($independent_variables, $dependent_values, "cuadratic");
 
 
         $linealModel->calculateR2();
         $potentialModel->calculateR2();
         $exponentialModel->calculateR2();
-        $cuadraticModel->calculateR2();
+        
 
         /**@var RegresionBetterResponse */
         $bestModel = RegresionService::getBetterModel(
@@ -190,21 +195,32 @@ class RegresionController extends Controller
             $cuadraticModel
         );
 
-        $result = $bestModel->model->calculateR2();
+        $modelos = [
+            "RegresionLinealModel" => "lineal",
+            "RegresionExponentialModel" => "exponential",
+            "RegresionPotentialModel" => "potential",
+            "RegresionCuadraticModel" => "cuadratic",
+        ];
+
+        $bestestModel = RegresionService::createRegresion($independent_variables, $dependent_values, $modelos[class_basename($bestModel->model)]);
+
+        $result = $bestestModel->calculateR2();
 
         $result = [
             'R2' => $result['R2'],
             'solutions' => $result['solutions'],
-            'method' => class_basename($bestModel),
+            'method' => $bestestModel->getName(),
             'independent_variables_count' => count($independent_variables),
             'data_points_count' => count($dependent_values),
             'SST' => $result['SST'],
             'SSE' => $result['SSE'],
+            'predictions' => $result['predictions'],
         ];
 
         return response()->json([
-            "R2"
-        ]);
+                'message' => 'Cálculo de regresión realizado con éxito.',
+                'data' => $result,
+            ]);
 
     }
 }

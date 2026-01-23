@@ -6,8 +6,8 @@ import CurvexIcon from '@/icons/CurvexIcon.vue';
 import FooterComp from '@/components/FooterComp.vue';
 import { Button } from '@/components/ui/button';
 import { 
-    ArrowLeft, TrendingUp, Calculator, AlertCircle, RefreshCcw, 
-    Table, BarChart4, Sigma, Trophy, Ban, ArrowRight, Target
+    ArrowLeft, Calculator, AlertCircle, RefreshCcw, 
+    BarChart4, Trophy, Target
 } from "lucide-vue-next";
 import axios from 'axios';
 
@@ -20,7 +20,8 @@ const loading = ref(false);
 const errorMsg = ref('');
 const showResults = ref(false);
 
-const selectedMethod = ref('lineal'); 
+const selectedMethod = ref('best'); 
+const actualMethod = ref('lineal'); // Método real usado por el backend
 const numVars = ref(0);
 const activeChart = ref<ChartType>('ajuste');
 
@@ -28,21 +29,23 @@ const activeChart = ref<ChartType>('ajuste');
 const calcMode = ref<'calcY' | 'calcX'>('calcY'); 
 const calcInputs = ref<Record<string, string>>({}); 
 const calcResult = ref<number | null>(null);
+const calcResult2 = ref<number | null>(null);
 
 // --- OPCIONES DE MÉTODO ---
 const availableMethods = computed(() => {
     const methods = [
+        { id: 'best', name: 'Automático' },
         { id: 'lineal', name: 'Lineal / Multilineal' },
         { id: 'exponential', name: 'Exponencial' },
         { id: 'potential', name: 'Potencial' },
         { id: 'cuadratic', name: 'Cuadrática' },
     ];
-    if (numVars.value > 1) return methods.filter(m => m.id === 'lineal');
+    if (numVars.value > 1) return methods.filter(m => m.id != 'cuadratic');
     return methods;
 });
 
 const availableCharts = computed<ChartType[]>(() => {
-    if (selectedMethod.value === 'lineal' && numVars.value > 1) {
+    if (numVars.value > 1) {
         return ['ajuste', 'residuos', 'histograma'];
     }
     return ['ajuste', 'curva', 'residuos', 'histograma'];
@@ -55,7 +58,7 @@ const results = ref({
     coefficients: [] as number[],
     prediction: [] as number[],
     sse: 0,
-    sst: 0
+    sst: 0,
 });
 
 
@@ -74,7 +77,6 @@ const parseData = () => {
         if (parsedX.some(row => row.length !== cols)) throw new Error("Matriz X no uniforme");
 
         numVars.value = cols;
-        if (cols > 1 && selectedMethod.value !== 'lineal') selectedMethod.value = 'lineal';
 
     } catch (e: any) {
         errorMsg.value = e.message;
@@ -92,7 +94,7 @@ const chartData = computed(() => {
     const yReal = inputY.value.trim().split(/[\s,;\n]+/).filter(v => v !== '').map(Number);
     const yPred = results.value.prediction;
     if (yReal.length < 2) return null;
-
+    console.log(results.value.prediction);
     const dataPoints = yReal.map((val, i) => ({ real: val, pred: yPred[i] ?? val }));
     const allVals = [...dataPoints.map(p => p.real), ...dataPoints.map(p => p.pred)];
     const minVal = Math.min(...allVals);
@@ -134,8 +136,8 @@ const curveData = computed(() => {
             const xVal = minX + step * i;
             let yVal;
             
-            // Calcular Y según el método
-            switch(selectedMethod.value) {
+            // Calcular Y según el método real usado
+            switch(actualMethod.value) {
                 case 'cuadratic':
                     yVal = results.value.coefficients[0] + 
                         results.value.coefficients[1] * xVal + 
@@ -234,59 +236,77 @@ const histogram = computed(() => {
 // --- LÓGICA DE LA CALCULADORA FINAL ---
 const realizarPrediccion = async () => {
     calcResult.value = null;
+    calcResult2.value = null;
     const coeffs = results.value.coefficients;
     if (coeffs.length === 0) return;
 
+    console.log('=== PREDICCIÓN DEBUG ===');
+    console.log('Mode:', calcMode.value);
+    console.log('Num Vars:', numVars.value);
+    console.log('Inputs:', calcInputs.value);
+    console.log('Method:', actualMethod.value);
+    console.log('Coeffs:', coeffs);
+
     try {
         if (calcMode.value === 'calcY') {
-            if(numVars.value > 1){
-                let y = coeffs[0]; 
-                for (let i = 0; i < numVars.value; i++) {
-                    const val = parseFloat(calcInputs.value[`x${i}`] || '0');
-                    if (isNaN(val)) throw new Error("Valor inválido");
-                    y += coeffs[i + 1] * val;
-                }
-                calcResult.value = y;
-            }else{
-                const payload = {
+            // Siempre usar el backend para calcular Y
+            const payload = {
                 variable_input: "x",
-                value: calcInputs.value[`x0`],
-                method: selectedMethod.value,
+                value: parseFloat(calcInputs.value['x0']),
+                method: actualMethod.value,
                 solutions: coeffs
-                };
+            };
 
-                const response = await axios.post('/calc-regresion-value', payload);
-                const data = response.data.data;
-
-                calcResult.value = data.y;
-            }
-            
+            console.log('Llamando al backend con payload:', payload);
+            const response = await axios.post('/calc-regresion-value', payload);
+            const data = response.data.data;
+            console.log('Respuesta del backend:', data);
+            calcResult.value = data.y;
         } 
         else if (calcMode.value === 'calcX' && numVars.value === 1) {
-            if(numVars.value > 1){
-            const yTarget = parseFloat(calcInputs.value['y'] || '0');
-            const a0 = coeffs[0];
-            const a1 = coeffs[1];
-            if (a1 === 0) throw new Error("Pendiente cero");
-            calcResult.value = (yTarget - a0) / a1;
-            }else{
-                const payload = {
+            // Calcular X dado Y (solo para una variable)
+            const payload = {
                 variable_input: "y",
-                value: calcInputs.value['y'],
-                method: selectedMethod.value,
+                value: parseFloat(calcInputs.value['y']),
+                method: actualMethod.value,
                 solutions: coeffs
-                };
+            };
 
-                const response = await axios.post('/calc-regresion-value', payload);
-                const data = response.data.data;
-                console.log(data)
+            console.log('Llamando al backend con payload:', payload);
+            const response = await axios.post('/calc-regresion-value', payload);
+            const data = response.data.data;
+            console.log('Respuesta del backend:', data);
+            
+            // Para cuadrática pueden haber dos soluciones
+            if(actualMethod.value === 'cuadratic' && Array.isArray(data.x)){
+                calcResult.value = data.x[0];
+                calcResult2.value = data.x[1];
+            } else {
                 calcResult.value = data.x;
             }
         }
-    } catch (e) {
-        console.error(e);
+    } catch (e: any) {
+        console.error('Error en predicción:', e);
+        console.error('Detalles del error:', e.response?.data);
+        errorMsg.value = e.response?.data?.message || "Error al calcular predicción";
         calcResult.value = null;
+        calcResult2.value = null;
     }
+};
+
+// Función para normalizar el método del backend al formato interno
+const normalizeMethod = (backendMethod: string): string => {
+    const methodMap: Record<string, string> = {
+        'Lineal': 'lineal',
+        'lineal': 'lineal',
+        'Exponencial': 'exponential',
+        'exponential': 'exponential',
+        'Potencial': 'potential',
+        'potential': 'potential',
+        'Cuadrático': 'cuadratic',
+        'cuadratic': 'cuadratic',
+    };
+    return methodMap[backendMethod] || backendMethod.toLowerCase();
 };
 
 // Función para generar la ecuación formateada
@@ -314,13 +334,33 @@ const generateEquation = (method: string, coeffs: number[]): string => {
             return `y = ${format(coeffs[0])} + ${format(coeffs[1])}x + ${format(coeffs[2])}x²`;
         
         case 'exponential':
-            // y = a·e^(bx)
-            return `y = ${format(coeffs[0])}·e^(${format(coeffs[1])}x)`;
+            
+            if (numVars.value === 1) {
+                // y = a·e^(bx)
+                return `y = ${format(coeffs[0])}·e^(${format(coeffs[1])}x)`;
+            } else {
+                // Multilineal: y = a · e^(b₁x₁) · e^(b₂x₂) · e^( ...
+                let eq = `y = ${format(coeffs[0])}`;
+                for (let i = 1; i < coeffs.length; i++) {
+                    eq += ` · e^(${format(coeffs[i])}x${i})`;
+                }
+                return eq;
+            }
+            
         
         case 'potential':
-            // y = a·x^b
-            return `y = ${format(coeffs[0])}·x^${format(coeffs[1])}`;
-        
+            if (numVars.value === 1) {
+                // y = a·x^b
+                return `y = ${format(coeffs[0])}·x^${format(coeffs[1])}`;
+            } else {
+                // Multilineal: y = a · x₁^b₁ · x₂^b₂ · ...
+                let eq = `y = ${format(coeffs[0])}`;
+                for (let i = 1; i < coeffs.length; i++) {
+                    eq += ` · x${i}^${format(coeffs[i])}`;
+                }
+                return eq;
+            }
+            
         default:
             return `Modelo (R²=${(results.value.r2*100).toFixed(2)}%)`;
     }
@@ -343,13 +383,22 @@ const calcular = async () => {
             method: selectedMethod.value
         };
 
-        // 4. Petición Axios
-        const response = await axios.post('/calc-regresion', payload);
-        const data = response.data.data;
-        
+        let data = null;
 
-        // Generar ecuación formateada
-        const equation = generateEquation(selectedMethod.value, data.solutions ?? []);
+        if(selectedMethod.value == "best"){
+            // 4. Petición Axios
+            const response = await axios.post('/calc-best-regresion', payload);
+            data = response.data.data;
+            actualMethod.value = normalizeMethod(data.method); // Normalizar el método del backend
+        }else{
+            // 4. Petición Axios
+            const response = await axios.post('/calc-regresion', payload);
+            data = response.data.data;
+            actualMethod.value = selectedMethod.value; // Usar el método seleccionado
+        }
+
+        // Generar ecuación formateada usando el método real aplicado
+        const equation = generateEquation(actualMethod.value, data.solutions ?? []);
 
         results.value = {
             r2: data.R2 ?? 0,
@@ -402,9 +451,6 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
                     <select v-model="selectedMethod" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-[#151515] border dark:border-gray-700 outline-none text-sm">
                         <option v-for="method in availableMethods" :key="method.id" :value="method.id">{{ method.name }}</option>
                     </select>
-                    <p v-if="numVars > 1" class="text-[10px] text-orange-500 mt-1 flex items-center gap-1">
-                        <Ban class="w-3 h-3"/> Métodos no lineales deshabilitados para múltiple.
-                    </p>
                 </div>
                 <div class="grid grid-cols-3 gap-4">
                     <div class="col-span-2 space-y-2">
@@ -452,16 +498,24 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
                 <div class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-1 shadow-lg">
                     <div class="bg-white dark:bg-[#0b0b0b] rounded-xl p-6 relative overflow-hidden">
                         <Trophy class="absolute top-0 right-0 p-4 w-32 h-32 text-purple-600 opacity-10" />
-                        <p class="text-xs font-bold uppercase text-purple-600 mb-2">Modelo Resultante</p>
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-xs font-bold uppercase text-purple-600">Modelo Resultante</p>
+                            <span v-if="selectedMethod === 'best'" class="px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold rounded-full shadow-sm">
+                                {{ actualMethod === 'lineal' ? 'Lineal' : actualMethod === 'exponential' ? 'Exponencial' : actualMethod === 'potential' ? 'Potencial' : actualMethod === 'cuadratic' ? 'Cuadrático' : actualMethod }}
+                            </span>
+                        </div>
                         <p class="text-xl font-mono font-bold whitespace-nowrap overflow-x-auto pb-2">{{ results.equation }}</p>
+                        <p v-if="selectedMethod === 'best'" class="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">
+                            Modelo óptimo seleccionado automáticamente según R²
+                        </p>
                         <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
                             <div>
                                 <p class="text-xs uppercase text-gray-500 font-bold">R² (Determinación)</p>
-                                <p class="text-3xl font-bold text-green-500">{{ (results.r2 * 100).toFixed(4) }}%</p>
+                                <p class="text-3xl font-bold text-green-500">{{ (results.r2 * 100).toFixed(8) }}%</p>
                             </div>
                             <div class="text-right">
                                 <p class="text-xs uppercase text-gray-500 font-bold">Coef. Correlación (r)</p>
-                                <p class="text-xl font-mono text-gray-700 dark:text-gray-300">{{ Math.sqrt(Math.abs(results.r2)).toFixed(4) }}</p>
+                                <p class="text-xl font-mono text-gray-700 dark:text-gray-300">{{ Math.sqrt(Math.abs(results.r2)).toFixed(10) }}</p>
                             </div>
                         </div>
                     </div>
@@ -530,7 +584,7 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
             <text x="20" y="125" text-anchor="middle" class="text-xs fill-gray-500" transform="rotate(-90, 20, 125)">Y</text>
         </svg>
     </div>
-    <p class="text-xs text-gray-500 text-center mt-2">La curva muestra el modelo {{ selectedMethod }} ajustado.</p>
+    <p class="text-xs text-gray-500 text-center mt-2">La curva muestra el modelo {{ actualMethod }} ajustado.</p>
 </div>
 
                 <div v-if="activeChart === 'residuos'" class="bg-white dark:bg-[#0b0b0b] p-6 rounded-2xl border dark:border-gray-800">
@@ -592,6 +646,7 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
                         <div class="flex items-center gap-2 text-2xl font-mono font-bold text-purple-700 dark:text-purple-200">
                             <span>{{ calcMode === 'calcY' ? 'Y' : 'X' }} =</span>
                             <span>{{ calcResult.toFixed(4) }}</span>
+                            <span v-if="calcResult2 !== null">X2 = {{ calcResult2.toFixed(4) }}</span>
                         </div>
                     </div>
                 </div>

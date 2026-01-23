@@ -4,6 +4,7 @@ namespace App\Support\Math\Regresion;
 
 use App\Support\Math\RegresionSolver;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class RegresionCuadraticModel extends RegresionSolver {
 
@@ -18,15 +19,19 @@ class RegresionCuadraticModel extends RegresionSolver {
     //retorna un array de flotantes
     public function calculateXValue() : array {
         /**
-         * (y / a) ^ (1 / b) = x
+         * Resolver ax² + bx + c = 0
+         * donde: solutions[2]x² + solutions[1]x + (solutions[0] - y) = 0
          */
         $y = $this->dependent_data[0];
-        $a = $this->solutions[0] - $y;
-        $b = $this->solutions[1];
-        $c = $this->solutions[2];
+        $a = $this->solutions[2];  // coeficiente de x²
+        $b = $this->solutions[1];  // coeficiente de x
+        $c = $this->solutions[0] - $y;  // término constante
+
+        Log::info("Calculando valor de X para Y = $y usando modelo cuadrático");
+        Log::debug("Ecuación: 0 = {$a}x^2 + {$b}x + ({$c})");
 
         if(2.0 * $a == 0.0){
-            throw new Exception("Se ha generado una división por cero, la solución 1 no puede ser 0");
+            throw new Exception("Se ha generado una división por cero, el coeficiente de x² no puede ser 0");
         }
 
         $discriminant = pow($b, 2) - (4.0 * $a * $c);
@@ -36,10 +41,16 @@ class RegresionCuadraticModel extends RegresionSolver {
             return [];
         }
 
+        Log::debug("Discriminante: $discriminant");
+
         $sqrt = sqrt($discriminant);
 
-        $x1 = (-$b + $sqrt) / (2.0 * $a);
-        $x2 = (-$b - $sqrt) / (2.0 * $a);
+        Log::debug("Raíz cuadrada del discriminante: $sqrt");
+
+        $x1 = ((-1.0 * $b) + $sqrt) / (2.0 * $a);
+        $x2 = ((-1.0 * $b) - $sqrt) / (2.0 * $a);
+
+        Log::info("Valores calculados de X: x1 = $x1, x2 = $x2");
 
         return [$x1, $x2];
     }
