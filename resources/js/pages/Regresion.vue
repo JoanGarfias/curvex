@@ -29,6 +29,7 @@ const activeChart = ref<ChartType>('ajuste');
 const calcMode = ref<'calcY' | 'calcX'>('calcY'); 
 const calcInputs = ref<Record<string, string>>({}); 
 const calcResult = ref<number | null>(null);
+const calcResult2 = ref<number | null>(null);
 
 // --- OPCIONES DE MÉTODO ---
 const availableMethods = computed(() => {
@@ -235,6 +236,7 @@ const histogram = computed(() => {
 // --- LÓGICA DE LA CALCULADORA FINAL ---
 const realizarPrediccion = async () => {
     calcResult.value = null;
+    calcResult2.value = null;
     const coeffs = results.value.coefficients;
     if (coeffs.length === 0) return;
 
@@ -282,7 +284,13 @@ const realizarPrediccion = async () => {
 
                 const response = await axios.post('/calc-regresion-value', payload);
                 const data = response.data.data;
-                calcResult.value = data.x;
+                if(selectedMethod.value != 'cuadratic'){
+                    calcResult.value = data.x;
+                }else{
+                    calcResult.value = data.x[0];
+                    calcResult2.value = data.x[1];
+                } 
+                
             }
         }
     } catch (e) {
@@ -628,6 +636,7 @@ const limpiar = () => { inputX.value = ''; inputY.value = ''; showResults.value 
                         <div class="flex items-center gap-2 text-2xl font-mono font-bold text-purple-700 dark:text-purple-200">
                             <span>{{ calcMode === 'calcY' ? 'Y' : 'X' }} =</span>
                             <span>{{ calcResult.toFixed(4) }}</span>
+                            <span v-if="calcResult2 !== null">X2 = {{ calcResult2.toFixed(4) }}</span>
                         </div>
                     </div>
                 </div>
