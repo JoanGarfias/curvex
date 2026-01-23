@@ -89,6 +89,11 @@ class ProporcionService
         }
 
         $reject = is_nan($pValue) ? false : ($pValue < $alpha);
+        if($reject == true){
+            $reject = 'rechaza';
+        }else{  
+            $reject = 'acepta';
+        }
 
         return [
             'x' => $x,

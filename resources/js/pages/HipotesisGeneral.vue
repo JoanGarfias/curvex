@@ -190,7 +190,7 @@ const calcularProporcion = async () => {
         // Intentamos leer 'p_value' O 'pvalue' (lo que usaba tu compañera)
         p_p_value.value = response.data.p_value ?? response.data.pvalue;
         
-        p_veredicto.value = response.data.decision || response.data.verdict || response.data.veredicto || 'Cálculo realizado';
+        p_veredicto.value = response.data.decision || response.data.verdict || response.data.reject || 'Cálculo realizado';
         
         p_mostrarResultados.value = true;
 
@@ -474,7 +474,7 @@ const calcularProporcion = async () => {
                             <div v-if="!p_mostrarResultados" class="text-orange-300 dark:text-orange-800"><PieChart class="w-12 h-12 mx-auto mb-2 opacity-50" /><p class="text-sm">Resultados aquí</p></div>
                             <div v-else class="w-full space-y-4">
                                 <div :class="`p-4 rounded-lg border ${p_veredicto.toLowerCase().includes('rechaza') ? 'bg-red-50 border-red-200 text-red-500' : 'bg-emerald-50 border-emerald-200 text-emerald-600'}`">
-                                    <p class="font-bold text-lg">{{ p_veredicto }}</p>
+                                    <p class="font-bold text-lg">{{ p_veredicto.toLowerCase().includes('rechaza') ? "Se rechaza la hipotesis nula." : "No se puede rechazar la hipotesis nula." }}</p>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="bg-white dark:bg-black p-3 rounded border dark:border-gray-700">
