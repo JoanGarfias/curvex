@@ -240,62 +240,57 @@ const realizarPrediccion = async () => {
     const coeffs = results.value.coefficients;
     if (coeffs.length === 0) return;
 
+    console.log('=== PREDICCIÓN DEBUG ===');
+    console.log('Mode:', calcMode.value);
+    console.log('Num Vars:', numVars.value);
+    console.log('Inputs:', calcInputs.value);
+    console.log('Method:', actualMethod.value);
+    console.log('Coeffs:', coeffs);
+
     try {
         if (calcMode.value === 'calcY') {
-            if(numVars.value > 1){
-                let y = coeffs[0]; 
-                    
-                    for (let i = 0; i < numVars.value; i++) {
-                        const val = parseFloat(calcInputs.value[`x${i}`] || '0');
-                        if (isNaN(val)) throw new Error("Valor inválido");
-                        y += coeffs[i + 1] * val;
-                    }
-                
-                calcResult.value = y;
-            }else{
-                const payload = {
+            // Siempre usar el backend para calcular Y
+            const payload = {
                 variable_input: "x",
-                value: calcInputs.value[`x0`],
-                method: actualMethod.value, // Usar el método real
+                value: parseFloat(calcInputs.value['x0']),
+                method: actualMethod.value,
                 solutions: coeffs
-                };
+            };
 
-                const response = await axios.post('/calc-regresion-value', payload);
-                const data = response.data.data;
-
-                calcResult.value = data.y;
-            }
-            
+            console.log('Llamando al backend con payload:', payload);
+            const response = await axios.post('/calc-regresion-value', payload);
+            const data = response.data.data;
+            console.log('Respuesta del backend:', data);
+            calcResult.value = data.y;
         } 
         else if (calcMode.value === 'calcX' && numVars.value === 1) {
-            if(numVars.value > 1){
-            const yTarget = parseFloat(calcInputs.value['y'] || '0');
-            const a0 = coeffs[0];
-            const a1 = coeffs[1];
-            if (a1 === 0) throw new Error("Pendiente cero");
-            calcResult.value = (yTarget - a0) / a1;
-            }else{
-                const payload = {
+            // Calcular X dado Y (solo para una variable)
+            const payload = {
                 variable_input: "y",
-                value: calcInputs.value['y'],
-                method: actualMethod.value, // Usar el método real
+                value: parseFloat(calcInputs.value['y']),
+                method: actualMethod.value,
                 solutions: coeffs
-                };
+            };
 
-                const response = await axios.post('/calc-regresion-value', payload);
-                const data = response.data.data;
-                if(selectedMethod.value != 'cuadratic'){
-                    calcResult.value = data.x;
-                }else{
-                    calcResult.value = data.x[0];
-                    calcResult2.value = data.x[1];
-                } 
-                
+            console.log('Llamando al backend con payload:', payload);
+            const response = await axios.post('/calc-regresion-value', payload);
+            const data = response.data.data;
+            console.log('Respuesta del backend:', data);
+            
+            // Para cuadrática pueden haber dos soluciones
+            if(actualMethod.value === 'cuadratic' && Array.isArray(data.x)){
+                calcResult.value = data.x[0];
+                calcResult2.value = data.x[1];
+            } else {
+                calcResult.value = data.x;
             }
         }
-    } catch (e) {
-        console.error(e);
+    } catch (e: any) {
+        console.error('Error en predicción:', e);
+        console.error('Detalles del error:', e.response?.data);
+        errorMsg.value = e.response?.data?.message || "Error al calcular predicción";
         calcResult.value = null;
+        calcResult2.value = null;
     }
 };
 
